@@ -1,2 +1,39 @@
-// Your React code here (it's too long to include in the command)
-// You should copy your existing App.jsx content here
+// src/App.jsx
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import 'highlight.js/styles/github-dark.css';
+
+// Components
+import ProtectedRoute from './components/ProtectedRoute';
+import Chatbot from './pages/Chatbot';
+import AuthLayout from './layouts/AuthLayout';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
+import Profile from './pages/Profile';
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<AuthLayout />}>
+          <Route index element={<Navigate to="/login" />} />
+          <Route path="signup" element={<Signup />} />
+          <Route path="login" element={<Login />} />
+        </Route>
+        
+        <Route element={<ProtectedRoute />}>
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/chat" element={<Chatbot />} />
+        </Route>
+        
+        <Route path="*" element={<Navigate to="/login" />} />
+      </Routes>
+      
+      <ToastContainer position="top-right" autoClose={3000} />
+    </Router>
+  );
+}
+
+export default App;
