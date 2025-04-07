@@ -1,30 +1,25 @@
-// src/pages/Chatbot.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import {
-  FaPlus,
-  FaPencilAlt,
-  FaTrash,
-  FaDownload,
-  FaUser,
-  FaMoon,
-  FaSun
-} from 'react-icons/fa';
+import { useSpeech } from '../context/SpeechContext';
+import { supportedLanguages } from '../config/languages';
+import { FaPlus, FaPencilAlt, FaTrash, FaDownload, FaUser, FaMoon, FaSun } from 'react-icons/fa';
 import { auth } from '../utils/auth';
 import { exportChatToPDF } from '../utils/exportPdf';
 import ChatMessage from '../components/ChatMessage';
-import { 
-  createChat, 
-  saveMessage, 
-  loadChats, 
-  renameChat, 
-  deleteChat 
-} from '../db';
+import { createChat, saveMessage, loadChats, renameChat, deleteChat } from '../db';
 
 const Chatbot = () => {
   const navigate = useNavigate();
   const [input, setInput] = useState("");
+  const {
+    isListening,
+    currentLanguage,
+    setCurrentLanguage,
+    startListening,
+    stopListening,
+    speakText
+  } = useSpeech();
   const [chats, setChats] = useState([]);
   const [currentChatId, setCurrentChatId] = useState(null);
   const [chatHistory, setChatHistory] = useState({});
@@ -36,21 +31,24 @@ const Chatbot = () => {
   const [newTitle, setNewTitle] = useState("");
   const [chatTitles, setChatTitles] = useState({});
   const [loading, setLoading] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [audioAvailable, setAudioAvailable] = useState(false);
   
   const chatEndRef = useRef(null);
   const inputRef = useRef(null);
 
-  // Dark mode effect
   useEffect(() => {
     document.documentElement.classList.toggle("dark", darkMode);
   }, [darkMode]);
 
-  // Auto-scroll effect
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chats]);
 
-  // Initialize with a default chat if none exists
+  useEffect(() => {
+    setAudioAvailable(!!navigator.mediaDevices && !!navigator.mediaDevices.getUserMedia);
+  }, []);
+
   useEffect(() => {
     const loadInitialChats = async () => {
       const result = await loadChats();
@@ -59,12 +57,10 @@ const Chatbot = () => {
         setChatHistory(result.chatHistory || {});
         setChatTitles(result.chatTitles || {});
         
-        // Set the current chat to the first one
         const firstChatId = Object.keys(result.chatHistory)[0];
         setCurrentChatId(firstChatId);
         setChats(result.chatHistory[firstChatId] || []);
       } else {
-        // Create a default chat if none exists
         const defaultId = `chat-${Date.now()}`;
         await createChat(defaultId, 'New Chat');
         setChatTitles({ [defaultId]: 'New Chat' });
@@ -79,18 +75,23 @@ const Chatbot = () => {
   const handleSend = async () => {
     if (!input.trim() || loading) return;
 
+    // Store chat language preference
+    localStorage.setItem(`chatLang_${currentChatId}`, currentLanguage);
+
     setLoading(true);
-    const userMessage = { role: "user", content: input };
+    const userMessage = { 
+      role: "user", 
+      content: input,
+      language: currentLanguage 
+    };
     const updatedChat = [...chats, userMessage];
     setChats(updatedChat);
     setInput("");
 
-    // Add a placeholder for the bot response
     const placeholder = { role: "bot", content: "..." };
     const newChats = [...updatedChat, placeholder];
     setChats(newChats);
 
-    // Auto-generate chat title if none exists
     if (!chatTitles[currentChatId] || chatTitles[currentChatId] === 'New Chat') {
       const words = input.trim().split(" ");
       const autoTitle = words.slice(0, 3).join(" ") + (words.length > 3 ? "..." : "");
@@ -103,7 +104,11 @@ const Chatbot = () => {
       const res = await fetch("http://localhost:5000/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: input, model }),
+                body: JSON.stringify({ 
+                  message: input,
+                  model,
+                  language: currentLanguage
+                }),
       });
       
       if (!res.ok) {
@@ -112,10 +117,9 @@ const Chatbot = () => {
       
       const data = await res.json();
       
-      // Streaming effect for bot response
       let i = 0;
       const responseLength = data.reply.length;
-      const chunkSize = Math.max(1, Math.floor(responseLength / 20)); // Divide into ~20 chunks
+      const chunkSize = Math.max(1, Math.floor(responseLength / 20));
       
       const interval = setInterval(() => {
         if (i <= responseLength) {
@@ -131,7 +135,6 @@ const Chatbot = () => {
           const finalChats = updatedChat.concat({ role: "bot", content: data.reply });
           setChats(finalChats);
           
-          // Save to chat history
           setChatHistory(prev => ({ ...prev, [currentChatId]: finalChats }));
           saveMessage(currentChatId, finalChats);
           setLoading(false);
@@ -140,7 +143,7 @@ const Chatbot = () => {
     } catch (err) {
       console.error("Error:", err);
       toast.error("Failed to fetch response!");
-      setChats(updatedChat); // Remove the placeholder
+      setChats(updatedChat);
       setLoading(false);
     }
   };
@@ -159,7 +162,6 @@ const Chatbot = () => {
       [newId]: [],
     }));
     
-    // Focus the input field
     setTimeout(() => {
       inputRef.current?.focus();
     }, 100);
@@ -187,7 +189,6 @@ const Chatbot = () => {
           setCurrentChatId(newChatId);
           setChats(restHistory[newChatId] || []);
         } else {
-          // Create a new chat if there are no chats left
           handleNewChat();
         }
       }
@@ -225,19 +226,27 @@ const Chatbot = () => {
   return (
     <div className={`flex flex-col h-screen ${darkMode ? 'dark' : ''}`}>
       <div className="flex flex-1 overflow-hidden bg-gray-100 dark:bg-gray-900">
-        {/* Sidebar */}
-        <div className="w-64 bg-gray-200 dark:bg-gray-800 flex flex-col">
+        {/* Collapsible Sidebar */}
+        <div className={`bg-gray-200 dark:bg-gray-800 flex flex-col transition-all duration-300 ${sidebarCollapsed ? 'w-16' : 'w-64'}`}>
           {/* Sidebar Header */}
-          <div className="p-4 border-b border-gray-300 dark:border-gray-700">
+          <div className="p-4 border-b border-gray-300 dark:border-gray-700 flex items-center justify-between">
+            {!sidebarCollapsed && (
+              <button
+                onClick={handleNewChat}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center justify-center flex-1 mr-2"
+              >
+                <FaPlus className="mr-2" /> New Chat
+              </button>
+            )}
             <button
-              onClick={handleNewChat}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded w-full flex items-center justify-center"
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              className="p-2 rounded hover:bg-gray-300 dark:hover:bg-gray-700"
             >
-              <FaPlus className="mr-2" /> New Chat
+              {sidebarCollapsed ? '→' : '←'}
             </button>
           </div>
           
-          {/* Chat List */}
+          {/* Chat List with Timestamps */}
           <div className="flex-1 overflow-y-auto p-2">
             {Object.keys(chatHistory).length === 0 ? (
               <div className="text-center text-gray-500 dark:text-gray-400 mt-4">
@@ -294,6 +303,18 @@ const Chatbot = () => {
           <div className="p-4 border-t border-gray-300 dark:border-gray-700">
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Language
+              </label>
+              <select
+                value={currentLanguage}
+                onChange={(e) => setCurrentLanguage(e.target.value)}
+                className="w-full p-2 rounded border dark:bg-gray-700 dark:border-gray-600 dark:text-white mb-4"
+              >
+                {Object.entries(supportedLanguages).map(([code, name]) => (
+                  <option key={code} value={code}>{name}</option>
+                ))}
+              </select>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Model
               </label>
               <select
@@ -305,6 +326,7 @@ const Chatbot = () => {
                 <option>LLaMA2</option>
               </select>
             </div>
+
             
             <div className="flex flex-col space-y-2">
               <button
@@ -343,9 +365,14 @@ const Chatbot = () => {
         <div className="flex-1 flex flex-col">
           {/* Chat Header */}
           <div className="bg-white dark:bg-gray-800 p-4 shadow flex justify-between items-center">
-            <h2 className="text-lg font-semibold dark:text-white">
-              {chatTitles[currentChatId] || 'New Chat'}
-            </h2>
+            <div className="flex items-center gap-4">
+              <h2 className="text-lg font-semibold dark:text-white">
+                {chatTitles[currentChatId] || 'New Chat'}
+              </h2>
+              <div className="text-sm px-2 py-1 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center gap-1">
+                {supportedLanguages[currentLanguage] || currentLanguage}
+              </div>
+            </div>
             
             <button
               onClick={handleExportChat}
@@ -376,16 +403,66 @@ const Chatbot = () => {
           {/* Input Area */}
           <div className="bg-white dark:bg-gray-800 p-4 border-t dark:border-gray-700">
             <div className="flex gap-2">
-              <input
-                ref={inputRef}
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && handleSend()}
-                placeholder="Type your message..."
-                className="flex-1 p-2 rounded border dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                disabled={loading}
-              />
+              <div className="flex items-center gap-2 flex-1">
+                <button
+                  onClick={async () => {
+                    if (isListening) {
+                      stopListening();
+                    } else {
+                      try {
+          const result = await startListening(currentLanguage);
+          if (result) {
+            setInput(result.text);
+            // Update language if different from current
+            if (result.language && result.language !== currentLanguage) {
+              setCurrentLanguage(result.language);
+            }
+          }
+                      } catch (error) {
+                        alert(error.message);
+                      }
+                    }
+                  }}
+                  className={`p-2 rounded-full ${
+                    isListening 
+                      ? 'bg-red-500 hover:bg-red-600 text-white'
+                      : 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600'
+                  }`}
+                  disabled={!audioAvailable}
+                  title={audioAvailable ? "Voice input" : "Voice input not available"}
+                >
+                  🎤
+                </button>
+                
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyPress={(e) => e.key === "Enter" && handleSend()}
+                  placeholder="Type your message..."
+                  className="flex-1 p-2 rounded border dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  disabled={loading}
+                />
+                
+                <button
+                  onClick={() => speakText(input)}
+                  className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600"
+                  disabled={!input.trim()}
+                  title={`Speak in ${currentLanguage.toUpperCase()}`}
+                >
+                  🔊
+                </button>
+                <select
+                  value={currentLanguage}
+                  onChange={(e) => setCurrentLanguage(e.target.value)}
+                  className="p-2 rounded border dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                >
+                  {Object.entries(supportedLanguages).map(([code, name]) => (
+                    <option key={code} value={code}>{name}</option>
+                  ))}
+                </select>
+              </div>
               <button
                 onClick={handleSend}
                 className={`bg-blue-600 text-white px-4 py-2 rounded ${

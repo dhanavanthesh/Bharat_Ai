@@ -13,26 +13,31 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Profile from './pages/Profile';
 
+// Context
+import { SpeechProvider } from './context/SpeechContext';
+
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<AuthLayout />}>
-          <Route index element={<Navigate to="/login" />} />
-          <Route path="signup" element={<Signup />} />
-          <Route path="login" element={<Login />} />
-        </Route>
+    <SpeechProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<AuthLayout />}>
+            <Route index element={<Navigate to="/login" />} />
+            <Route path="signup" element={<Signup />} />
+            <Route path="login" element={<Login />} />
+          </Route>
+          
+          <Route element={<ProtectedRoute />}>
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/chat" element={<Chatbot />} />
+          </Route>
+          
+          <Route path="*" element={<Navigate to="/login" />} />
+        </Routes>
         
-        <Route element={<ProtectedRoute />}>
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/chat" element={<Chatbot />} />
-        </Route>
-        
-        <Route path="*" element={<Navigate to="/login" />} />
-      </Routes>
-      
-      <ToastContainer position="top-right" autoClose={3000} />
-    </Router>
+        <ToastContainer position="top-right" autoClose={3000} />
+      </Router>
+    </SpeechProvider>
   );
 }
 
