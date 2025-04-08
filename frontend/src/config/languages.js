@@ -8,7 +8,15 @@ export const supportedLanguages = {
   bn: '🇮🇳 Bengali',
   gu: '🇮🇳 Gujarati',
   pa: '🇮🇳 Punjabi',
-  or: '🇮🇳 Odia'
+  or: '🇮🇳 Odia',
+  es: '🇪🇸 Spanish',
+  fr: '🇫🇷 French',
+  de: '🇩🇪 German',
+  zh: '🇨🇳 Chinese',
+  ar: '🇸🇦 Arabic',
+  ru: '🇷🇺 Russian',
+  pt: '🇵🇹 Portuguese',
+  ja: '🇯🇵 Japanese'
 };
 
 export const getLanguageName = (code) => {

@@ -19,7 +19,7 @@ import { SpeechProvider } from './context/SpeechContext';
 function App() {
   return (
     <SpeechProvider>
-      <Router>
+      <Router future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
         <Routes>
           <Route path="/" element={<AuthLayout />}>
             <Route index element={<Navigate to="/login" />} />

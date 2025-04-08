@@ -59,7 +59,9 @@ const Chatbot = () => {
         
         const firstChatId = Object.keys(result.chatHistory)[0];
         setCurrentChatId(firstChatId);
-        setChats(result.chatHistory[firstChatId] || []);
+        // Ensure chats is always an array, even if the data is null/undefined
+        const initialChats = result.chatHistory[firstChatId];
+        setChats(Array.isArray(initialChats) ? initialChats : []);
       } else {
         const defaultId = `chat-${Date.now()}`;
         await createChat(defaultId, 'New Chat');
@@ -117,6 +119,10 @@ const Chatbot = () => {
       
       const data = await res.json();
       
+      if (!data || !data.reply) {
+        throw new Error('Invalid response from server');
+      }
+      
       let i = 0;
       const responseLength = data.reply.length;
       const chunkSize = Math.max(1, Math.floor(responseLength / 20));
@@ -169,7 +175,9 @@ const Chatbot = () => {
 
   const handleSelectChat = (id) => {
     setCurrentChatId(id);
-    setChats(chatHistory[id] || []);
+    // Ensure chats is always an array when selecting a chat
+    const selectedChat = chatHistory[id];
+    setChats(Array.isArray(selectedChat) ? selectedChat : []);
   };
 
   const handleDeleteChat = async (id, e) => {

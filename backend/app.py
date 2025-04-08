@@ -69,14 +69,29 @@ def get_error_message(language):
         "kn": "ಕ್ಷಮಿಸಿ, ನಾನು ಸಮಸ್ಯೆಯನ್ನು ಎದುರಿಸಿದ್ದೇನೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
         "ta": "மன்னிக்கவும், நான் ஒரு சிக்கலை எதிர்கொண்டேன். தயவு செய்து மீண்டும் முயற்சிக்கவும்.",
         "te": "క్షమించండి, నేను ఒక సమస్యను ఎదుర్కొన్నాను. దయచేసి మళ్లీ ప్రయత్నించండి.",
-        "sa": "क्षम्यताम्, अहं समस्याम् अनुभवम्। कृपया पुनः प्रयत्नं कुरुत।"
+        "mr": "माफ करा, मला एक समस्या आली. कृपया पुन्हा प्रयत्न करा.",
+        "bn": "দুঃখিত, আমি একটি সমস্যার সম্মুখীন হয়েছি। অনুগ্রহ করে আবার চেষ্টা করুন।",
+        "gu": "માફ કરશો, મને એક સમસ્યા આવી. કૃપા કરીને ફરી પ્રયાસ કરો.",
+        "pa": "ਮਾਫ਼ ਕਰਨਾ, ਮੈਨੂੰ ਇੱਕ ਸਮੱਸਿਆ ਆਈ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+        "or": "କ୍ଷମା କରିବେ, ମୁଁ ଏକ ସମସ୍ୟାର ସମ୍ମୁଖୀନ ହୋଇଛି। ଦୟାକରି ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ।"
     }
     return messages.get(language, messages["en"])
 
-# Languages supported for speech recognition
-SPEECH_LANGUAGES = ["en", "hi", "kn", "ta", "te"]
+# Languages supported for speech recognition (using Google's language codes)
+SPEECH_LANGUAGES = [
+    "en-US",  # English (United States)
+    "hi-IN",  # Hindi (India)
+    "kn-IN",  # Kannada (India)
+    "ta-IN",  # Tamil (India)
+    "te-IN",  # Telugu (India)
+    "mr-IN",  # Marathi (India)
+    "bn-IN",  # Bengali (India)
+    "gu-IN",  # Gujarati (India)
+    "pa-IN",  # Punjabi (India)
+    "or-IN"   # Odia (India)
+]
 
-def process_audio(audio_data, language="en"):
+def process_audio(audio_data, language="en-US"):
     """Process audio data and return text"""
     if language not in SPEECH_LANGUAGES:
         print(f"Language {language} not supported for speech recognition")
@@ -91,7 +106,10 @@ def process_audio(audio_data, language="en"):
         return None
 
 # Languages supported for text-to-speech
-TTS_LANGUAGES = ["en", "hi", "kn", "ta", "te"]
+TTS_LANGUAGES = [
+    "en", "hi", "kn", "ta", "te",
+    "mr", "bn", "gu", "pa", "or"
+]
 
 def text_to_speech(text, lang="en"):
     """Convert text to speech and return audio file path"""
@@ -177,43 +195,73 @@ def speech_to_text():
             audio_data = recognizer.record(source)
             
             # If preferred language is specified, try that first
-            if preferred_lang and preferred_lang in SPEECH_LANGUAGES:
-                try:
-                    text = recognizer.recognize_google(audio_data, language=preferred_lang)
-                    if text:
-                        print(f"Detected language: {preferred_lang}, text: {text}")
-                        return jsonify({
-                            "text": text,
-                            "language": preferred_lang
-                        })
-                except Exception as e:
-                    print(f"Recognition failed for preferred language {preferred_lang}: {str(e)}")
+            if preferred_lang:
+                # Map preferred language to Google's language code
+                lang_map = {
+                    "en": "en-US",
+                    "hi": "hi-IN",
+                    "kn": "kn-IN",
+                    "ta": "ta-IN",
+                    "te": "te-IN",
+                    "mr": "mr-IN",
+                    "bn": "bn-IN",
+                    "gu": "gu-IN",
+                    "pa": "pa-IN",
+                    "or": "or-IN"
+                }
+                google_lang = lang_map.get(preferred_lang)
+                
+                if google_lang and google_lang in SPEECH_LANGUAGES:
+                    try:
+                        text = recognizer.recognize_google(audio_data, language=google_lang)
+                        if text:
+                            print(f"Detected language: {preferred_lang}, text: {text}")
+                            return jsonify({
+                                "text": text,
+                                "language": preferred_lang  # Return the simple code
+                            })
+                    except Exception as e:
+                        print(f"Recognition failed for preferred language {preferred_lang}: {str(e)}")
             
             # Fallback to trying all supported languages
             detected_text = None
             detected_lang = "en"  # default fallback
             
             # Try Kannada first if not already tried
-            if preferred_lang != "kn" and "kn" in SPEECH_LANGUAGES:
+            if preferred_lang != "kn" and "kn-IN" in SPEECH_LANGUAGES:
                 try:
-                    text = recognizer.recognize_google(audio_data, language="kn")
+                    text = recognizer.recognize_google(audio_data, language="kn-IN")
                     if text:
                         detected_text = text
-                        detected_lang = "kn"
+                        detected_lang = "kn"  # Return simple code
                         print(f"Detected language: kn, text: {text}")
                 except:
                     pass
             
             if not detected_text:
-                for lang in SPEECH_LANGUAGES:
-                    if lang == "kn":  # Already tried
+                # Try all supported languages with their Google codes
+                lang_pairs = [
+                    ("en", "en-US"),
+                    ("hi", "hi-IN"),
+                    ("kn", "kn-IN"),
+                    ("ta", "ta-IN"),
+                    ("te", "te-IN"),
+                    ("mr", "mr-IN"),
+                    ("bn", "bn-IN"),
+                    ("gu", "gu-IN"),
+                    ("pa", "pa-IN"),
+                    ("or", "or-IN")
+                ]
+                
+                for simple_lang, google_lang in lang_pairs:
+                    if google_lang == "kn-IN":  # Already tried
                         continue
                     try:
-                        text = recognizer.recognize_google(audio_data, language=lang)
+                        text = recognizer.recognize_google(audio_data, language=google_lang)
                         if text:
                             detected_text = text
-                            detected_lang = lang
-                            print(f"Detected language: {lang}, text: {text}")
+                            detected_lang = simple_lang  # Return simple code
+                            print(f"Detected language: {simple_lang}, text: {text}")
                             break
                     except:
                         continue
