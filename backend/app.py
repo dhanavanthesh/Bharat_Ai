@@ -20,6 +20,7 @@ from datetime import datetime
 load_dotenv()
 
 # Initialize Flask app
+# Initialize Flask app
 app = Flask(__name__, static_folder='../frontend/build', static_url_path='')
 CORS(app)
 
@@ -52,6 +53,7 @@ except (ImportError, AttributeError):
     
 # Model mapping
 MODEL_MAPPING = {
+    "LLaMA3-versatile": "llama-3.3-70b-versatile",
     "LLaMA3-versatile": "llama-3.3-70b-versatile",
     "LLaMA3": "llama3-70b-8192",
     "LLaMA2": "llama2-70b-4096"
@@ -216,6 +218,8 @@ def health():
 
 from langdetect import detect
 
+from langdetect import detect
+
 @app.route("/api/chat", methods=["POST"])
 def chat():
     data = request.get_json()
@@ -242,6 +246,7 @@ def chat():
             language = 'en'
     
     model = MODEL_MAPPING.get(model_name, MODEL_MAPPING["LLaMA3"])
+    
     
     try:
         response = get_groq_response(user_message, language, model)
