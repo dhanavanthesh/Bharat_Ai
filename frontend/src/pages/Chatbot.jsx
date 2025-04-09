@@ -1,9 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+// src/pages/Chatbot.jsx
+import React, { useState,useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { useSpeech } from '../context/SpeechContext';
-import { supportedLanguages } from '../config/languages';
-import { FaPlus, FaPencilAlt, FaTrash, FaDownload, FaUser, FaMoon, FaSun } from 'react-icons/fa';
 import { useSpeech } from '../context/SpeechContext';
 import { supportedLanguages } from '../config/languages';
 import { FaPlus, FaPencilAlt, FaTrash, FaDownload, FaUser, FaMoon, FaSun } from 'react-icons/fa';
@@ -15,14 +13,6 @@ import ChatMessage from '../components/ChatMessage';
 const Chatbot = () => {
   const navigate = useNavigate();
   const [input, setInput] = useState("");
-  const {
-    isListening,
-    currentLanguage,
-    setCurrentLanguage,
-    startListening,
-    stopListening,
-    speakText
-  } = useSpeech();
   const {
     isListening,
     currentLanguage,
@@ -62,9 +52,40 @@ const Chatbot = () => {
     setAudioAvailable(!!navigator.mediaDevices && !!navigator.mediaDevices.getUserMedia);
   }, []);
 
-  useEffect(() => {
-    setAudioAvailable(!!navigator.mediaDevices && !!navigator.mediaDevices.getUserMedia);
-  }, []);
+  const handleNewChat = useCallback(async () => {
+    if (!user || !user.id) {
+      toast.error('You need to log in first');
+      navigate('/login');
+      return;
+    }
+    
+    try {
+      const result = await chatApi.createChat(user.id);
+      
+      if (result.success) {
+        const newChatId = result.chatId;
+        setCurrentChatId(newChatId);
+        setChats([]);
+        setChatTitles(prev => ({
+          ...prev,
+          [newChatId]: 'New Chat',
+        }));
+        setChatHistory(prev => ({
+          ...prev,
+          [newChatId]: [],
+        }));
+        
+        setTimeout(() => {
+          inputRef.current?.focus();
+        }, 100);
+      } else {
+        toast.error('Failed to create new chat');
+      }
+    } catch (error) {
+      console.error('Error creating new chat:', error);
+      toast.error('Failed to create new chat');
+    }
+  }, [user, navigate]);
 
   useEffect(() => {
     const loadChats = async () => {
@@ -113,7 +134,7 @@ const Chatbot = () => {
     };
     
     loadChats();
-  }, []);
+  }, [handleNewChat, user]);  // Add handleNewChat and user to dependency array to fix ESLint warning
 
   const handleSend = async () => {
     if (!input.trim() || loading) return;
@@ -202,45 +223,11 @@ const Chatbot = () => {
       console.error("Error:", err);
       toast.error("Failed to fetch response!");
       setChats(updatedChat);
-      setChats(updatedChat);
       setLoading(false);
     }
   };
 
-  const handleNewChat = async () => {
-    if (!user || !user.id) {
-      toast.error('You need to log in first');
-      navigate('/login');
-      return;
-    }
-    
-    try {
-      const result = await chatApi.createChat(user.id);
-      
-      if (result.success) {
-        const newChatId = result.chatId;
-        setCurrentChatId(newChatId);
-        setChats([]);
-        setChatTitles(prev => ({
-          ...prev,
-          [newChatId]: 'New Chat',
-        }));
-        setChatHistory(prev => ({
-          ...prev,
-          [newChatId]: [],
-        }));
-        
-        setTimeout(() => {
-          inputRef.current?.focus();
-        }, 100);
-      } else {
-        toast.error('Failed to create new chat');
-      }
-    } catch (error) {
-      console.error('Error creating new chat:', error);
-      toast.error('Failed to create new chat');
-    }
-  };
+
 
   const handleSelectChat = (id) => {
     setCurrentChatId(id);
@@ -348,18 +335,7 @@ const Chatbot = () => {
       <div className="flex flex-1 overflow-hidden bg-gray-100 dark:bg-gray-900">
         {/* Collapsible Sidebar */}
         <div className={`bg-gray-200 dark:bg-gray-800 flex flex-col transition-all duration-300 ${sidebarCollapsed ? 'w-16' : 'w-64'}`}>
-        {/* Collapsible Sidebar */}
-        <div className={`bg-gray-200 dark:bg-gray-800 flex flex-col transition-all duration-300 ${sidebarCollapsed ? 'w-16' : 'w-64'}`}>
           {/* Sidebar Header */}
-          <div className="p-4 border-b border-gray-300 dark:border-gray-700 flex items-center justify-between">
-            {!sidebarCollapsed && (
-              <button
-                onClick={handleNewChat}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center justify-center flex-1 mr-2"
-              >
-                <FaPlus className="mr-2" /> New Chat
-              </button>
-            )}
           <div className="p-4 border-b border-gray-300 dark:border-gray-700 flex items-center justify-between">
             {!sidebarCollapsed && (
               <button
@@ -372,10 +348,7 @@ const Chatbot = () => {
             <button
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
               className="p-2 rounded hover:bg-gray-300 dark:hover:bg-gray-700"
-              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="p-2 rounded hover:bg-gray-300 dark:hover:bg-gray-700"
             >
-              {sidebarCollapsed ? '→' : '←'}
               {sidebarCollapsed ? '→' : '←'}
             </button>
           </div>
@@ -464,18 +437,6 @@ const Chatbot = () => {
                 ))}
               </select>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Language
-              </label>
-              <select
-                value={currentLanguage}
-                onChange={(e) => setCurrentLanguage(e.target.value)}
-                className="w-full p-2 rounded border dark:bg-gray-700 dark:border-gray-600 dark:text-white mb-4"
-              >
-                {Object.entries(supportedLanguages).map(([code, name]) => (
-                  <option key={code} value={code}>{name}</option>
-                ))}
-              </select>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Model
               </label>
               <select
@@ -487,7 +448,6 @@ const Chatbot = () => {
                 <option>LLaMA2</option>
               </select>
             </div>
-
 
             
             <div className="flex flex-col space-y-2">
@@ -527,14 +487,6 @@ const Chatbot = () => {
         <div className="flex-1 flex flex-col">
           {/* Chat Header */}
           <div className="bg-white dark:bg-gray-800 p-4 shadow flex justify-between items-center">
-            <div className="flex items-center gap-4">
-              <h2 className="text-lg font-semibold dark:text-white">
-                {chatTitles[currentChatId] || 'New Chat'}
-              </h2>
-              <div className="text-sm px-2 py-1 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center gap-1">
-                {supportedLanguages[currentLanguage] || currentLanguage}
-              </div>
-            </div>
             <div className="flex items-center gap-4">
               <h2 className="text-lg font-semibold dark:text-white">
                 {chatTitles[currentChatId] || 'New Chat'}
