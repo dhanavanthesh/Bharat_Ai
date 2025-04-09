@@ -1,5 +1,14 @@
+// src/context/SpeechContext.jsx
 import React, { createContext, useContext, useState } from 'react';
-import { supportedLanguages } from '../config/languages';
+
+// Default supported languages (will be replaced by config)
+const defaultLanguages = {
+  en: '🇺🇸 English',
+  hi: '🇮🇳 Hindi', 
+  kn: '🇮🇳 Kannada',
+  ta: '🇮🇳 Tamil',
+  te: '🇮🇳 Telugu',
+};
 
 const SpeechContext = createContext();
 
@@ -9,6 +18,7 @@ export const SpeechProvider = ({ children }) => {
   const [currentLanguage, setCurrentLanguage] = useState('en');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState(null);
+  const [supportedLanguages, setSupportedLanguages] = useState(defaultLanguages);
 
   const startListening = (lang = currentLanguage) => {
     setIsListening(true);
@@ -23,22 +33,28 @@ export const SpeechProvider = ({ children }) => {
 
     return new Promise((resolve) => {
       try {
-        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-        recognition.lang = lang;
-        recognition.onresult = (event) => {
-          const transcript = event.results[0][0].transcript;
-          resolve({ text: transcript, language: lang });
-        };
-        recognition.onerror = (event) => {
-          setError(event.error);
+        if (window.SpeechRecognition || window.webkitSpeechRecognition) {
+          const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+          recognition.lang = lang;
+          recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            resolve({ text: transcript, language: lang });
+          };
+          recognition.onerror = (event) => {
+            setError(event.error);
+            resolve(null);
+          };
+          recognition.start();
+        } else {
+          setError('Speech recognition not supported in this browser');
           resolve(null);
-        };
-        recognition.start();
+        }
       } catch (err) {
         setError('Speech recognition not supported');
         resolve(null);
       } finally {
         setIsProcessing(false);
+        setIsListening(false);
       }
     });
   };
@@ -51,12 +67,17 @@ export const SpeechProvider = ({ children }) => {
     if (!text) return false;
     
     try {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = lang;
-      utterance.onstart = () => setIsSpeaking(true);
-      utterance.onend = () => setIsSpeaking(false);
-      window.speechSynthesis.speak(utterance);
-      return true;
+      if (window.speechSynthesis) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = lang;
+        utterance.onstart = () => setIsSpeaking(true);
+        utterance.onend = () => setIsSpeaking(false);
+        window.speechSynthesis.speak(utterance);
+        return true;
+      } else {
+        setError('Text-to-speech not supported in this browser');
+        return false;
+      }
     } catch (err) {
       setError('Text-to-speech not supported');
       return false;
@@ -73,6 +94,7 @@ export const SpeechProvider = ({ children }) => {
         currentLanguage,
         setCurrentLanguage,
         supportedLanguages,
+        setSupportedLanguages,
         startListening,
         stopListening,
         speakText

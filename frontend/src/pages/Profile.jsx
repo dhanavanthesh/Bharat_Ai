@@ -21,26 +21,37 @@ const Profile = () => {
     e.preventDefault();
     setLoading(true);
     
-    // Simulate updating profile
+    // Profile updates not implemented in the backend yet
+    // In a real app, you would send a request to update the user profile
+    
     setTimeout(() => {
-      // In a real app, you would update the user profile
       toast.success('Profile updated successfully!');
       setLoading(false);
     }, 1000);
   };
+  
+  if (!user) {
+    navigate('/login');
+    return null;
+  }
   
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg">
-            <div className="px-4 py-5 sm:px-6">
-              <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
-                User Profile
-              </h3>
-              <p className="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-400">
-                Manage your account details
-              </p>
+            <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
+              <div>
+                <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
+                  User Profile
+                </h3>
+                <p className="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-400">
+                  Manage your account details
+                </p>
+              </div>
+              <div className="w-16 h-16 rounded-full bg-blue-500 flex items-center justify-center text-white text-2xl font-bold">
+                {name.charAt(0).toUpperCase()}
+              </div>
             </div>
             
             <div className="border-t border-gray-200 dark:border-gray-700">
@@ -88,12 +99,32 @@ const Profile = () => {
               </form>
               
               <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
-                <button
-                  onClick={handleLogout}
-                  className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                >
-                  Logout
-                </button>
+                <div className="flex flex-col space-y-4">
+                  <div className="bg-yellow-50 dark:bg-yellow-900 p-4 rounded-md">
+                    <div className="flex">
+                      <div className="flex-shrink-0">
+                        <svg className="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                          <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <div className="ml-3">
+                        <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">Account Security</h3>
+                        <div className="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
+                          <p>
+                            For additional security, you can enable two-factor authentication and update your password regularly.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                
+                  <button
+                    onClick={handleLogout}
+                    className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                  >
+                    Logout
+                  </button>
+                </div>
               </div>
             </div>
           </div>

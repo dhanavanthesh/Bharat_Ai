@@ -1,13 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+// src/pages/Chatbot.jsx
+import React, { useState,useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useSpeech } from '../context/SpeechContext';
 import { supportedLanguages } from '../config/languages';
 import { FaPlus, FaPencilAlt, FaTrash, FaDownload, FaUser, FaMoon, FaSun } from 'react-icons/fa';
 import { auth } from '../utils/auth';
+import { chatApi } from '../utils/chatApi';
 import { exportChatToPDF } from '../utils/exportPdf';
 import ChatMessage from '../components/ChatMessage';
-import { createChat, saveMessage, loadChats, renameChat, deleteChat } from '../db';
 
 const Chatbot = () => {
   const navigate = useNavigate();
@@ -33,9 +34,11 @@ const Chatbot = () => {
   const [loading, setLoading] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [audioAvailable, setAudioAvailable] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   
   const chatEndRef = useRef(null);
   const inputRef = useRef(null);
+  const user = auth.getCurrentUser();
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", darkMode);
@@ -49,31 +52,98 @@ const Chatbot = () => {
     setAudioAvailable(!!navigator.mediaDevices && !!navigator.mediaDevices.getUserMedia);
   }, []);
 
-  useEffect(() => {
-    const loadInitialChats = async () => {
-      const result = await loadChats();
+  const handleNewChat = useCallback(async () => {
+    if (!user || !user.id) {
+      toast.error('You need to log in first');
+      navigate('/login');
+      return;
+    }
+    
+    try {
+      const result = await chatApi.createChat(user.id);
       
-      if (result && Object.keys(result.chatHistory).length > 0) {
-        setChatHistory(result.chatHistory || {});
-        setChatTitles(result.chatTitles || {});
+      if (result.success) {
+        const newChatId = result.chatId;
+        setCurrentChatId(newChatId);
+        setChats([]);
+        setChatTitles(prev => ({
+          ...prev,
+          [newChatId]: 'New Chat',
+        }));
+        setChatHistory(prev => ({
+          ...prev,
+          [newChatId]: [],
+        }));
         
-        const firstChatId = Object.keys(result.chatHistory)[0];
-        setCurrentChatId(firstChatId);
-        setChats(result.chatHistory[firstChatId] || []);
+        setTimeout(() => {
+          inputRef.current?.focus();
+        }, 100);
       } else {
-        const defaultId = `chat-${Date.now()}`;
-        await createChat(defaultId, 'New Chat');
-        setChatTitles({ [defaultId]: 'New Chat' });
-        setChatHistory({ [defaultId]: [] });
-        setCurrentChatId(defaultId);
+        toast.error('Failed to create new chat');
+      }
+    } catch (error) {
+      console.error('Error creating new chat:', error);
+      toast.error('Failed to create new chat');
+    }
+  }, [user, navigate]);
+
+  useEffect(() => {
+    const loadChats = async () => {
+      if (!user || !user.id) {
+        setInitialLoading(false);
+        return;
+      }
+      
+      try {
+        const result = await chatApi.getChats(user.id);
+        
+        if (result.success) {
+          const userChats = result.chats || {};
+          
+          // Convert chat data structure
+          const chatHistoryMap = {};
+          const chatTitlesMap = {};
+          
+          Object.entries(userChats).forEach(([chatId, chat]) => {
+            chatHistoryMap[chatId] = chat.messages || [];
+            chatTitlesMap[chatId] = chat.title || 'New Chat';
+          });
+          
+          setChatHistory(chatHistoryMap);
+          setChatTitles(chatTitlesMap);
+          
+          // Set current chat if we have any
+          if (Object.keys(chatHistoryMap).length > 0) {
+            const firstChatId = Object.keys(chatHistoryMap)[0];
+            setCurrentChatId(firstChatId);
+            setChats(chatHistoryMap[firstChatId] || []);
+          } else {
+            await handleNewChat();
+          }
+        } else {
+          toast.error('Failed to load chats');
+          await handleNewChat();
+        }
+      } catch (error) {
+        console.error('Error loading chats:', error);
+        toast.error('Failed to load chats');
+        await handleNewChat();
+      } finally {
+        setInitialLoading(false);
       }
     };
     
-    loadInitialChats();
-  }, []);
+    loadChats();
+  }, [handleNewChat, user]);  // Add handleNewChat and user to dependency array to fix ESLint warning
 
   const handleSend = async () => {
     if (!input.trim() || loading) return;
+    
+    if (!user || !user.id) {
+      toast.error('You need to log in first');
+      navigate('/login');
+      return;
+    }
 
     // Store chat language preference
     localStorage.setItem(`chatLang_${currentChatId}`, currentLanguage);
@@ -82,64 +152,73 @@ const Chatbot = () => {
     const userMessage = { 
       role: "user", 
       content: input,
-      language: currentLanguage 
+      language: currentLanguage,
+      timestamp: new Date().toISOString()
     };
     const updatedChat = [...chats, userMessage];
     setChats(updatedChat);
     setInput("");
 
-    const placeholder = { role: "bot", content: "..." };
+    const placeholder = { role: "bot", content: "...", language: currentLanguage };
     const newChats = [...updatedChat, placeholder];
     setChats(newChats);
 
-    if (!chatTitles[currentChatId] || chatTitles[currentChatId] === 'New Chat') {
+    // Auto-title for new empty chats
+    if (chatTitles[currentChatId] === 'New Chat' && chats.length === 0) {
       const words = input.trim().split(" ");
       const autoTitle = words.slice(0, 3).join(" ") + (words.length > 3 ? "..." : "");
       const formattedTitle = autoTitle.charAt(0).toUpperCase() + autoTitle.slice(1);
       setChatTitles(prev => ({ ...prev, [currentChatId]: formattedTitle }));
-      await renameChat(currentChatId, formattedTitle);
+      
+      try {
+        await chatApi.renameChat(user.id, currentChatId, formattedTitle);
+      } catch (error) {
+        console.error('Error renaming chat:', error);
+      }
     }
 
     try {
-      const res = await fetch("http://localhost:5000/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ 
-                  message: input,
-                  model,
-                  language: currentLanguage
-                }),
-      });
+      const response = await chatApi.sendMessage(
+        user.id,
+        currentChatId,
+        input,
+        model,
+        currentLanguage
+      );
       
-      if (!res.ok) {
-        throw new Error(`Error: ${res.status}`);
+      if (response.reply) {
+        let i = 0;
+        const responseLength = response.reply.length;
+        const chunkSize = Math.max(1, Math.floor(responseLength / 20));
+        
+        const interval = setInterval(() => {
+          if (i <= responseLength) {
+            const streamingContent = response.reply.slice(0, i);
+            setChats(chats => 
+              chats.map((msg, idx) =>
+                idx === chats.length - 1 ? { ...msg, content: streamingContent } : msg
+              )
+            );
+            i += chunkSize;
+          } else {
+            clearInterval(interval);
+            const finalChats = updatedChat.concat({
+              role: "bot",
+              content: response.reply,
+              language: currentLanguage,
+              timestamp: new Date().toISOString()
+            });
+            setChats(finalChats);
+            
+            setChatHistory(prev => ({ ...prev, [currentChatId]: finalChats }));
+            setLoading(false);
+          }
+        }, 50);
+      } else {
+        toast.error('Failed to get response');
+        setChats(updatedChat);
+        setLoading(false);
       }
-      
-      const data = await res.json();
-      
-      let i = 0;
-      const responseLength = data.reply.length;
-      const chunkSize = Math.max(1, Math.floor(responseLength / 20));
-      
-      const interval = setInterval(() => {
-        if (i <= responseLength) {
-          const streamingContent = data.reply.slice(0, i);
-          setChats(chats => 
-            chats.map((msg, idx) =>
-              idx === chats.length - 1 ? { ...msg, content: streamingContent } : msg
-            )
-          );
-          i += chunkSize;
-        } else {
-          clearInterval(interval);
-          const finalChats = updatedChat.concat({ role: "bot", content: data.reply });
-          setChats(finalChats);
-          
-          setChatHistory(prev => ({ ...prev, [currentChatId]: finalChats }));
-          saveMessage(currentChatId, finalChats);
-          setLoading(false);
-        }
-      }, 50);
     } catch (err) {
       console.error("Error:", err);
       toast.error("Failed to fetch response!");
@@ -148,24 +227,7 @@ const Chatbot = () => {
     }
   };
 
-  const handleNewChat = async () => {
-    const newId = `chat-${Date.now()}`;
-    await createChat(newId, 'New Chat');
-    setCurrentChatId(newId);
-    setChats([]);
-    setChatTitles(prev => ({
-      ...prev,
-      [newId]: 'New Chat',
-    }));
-    setChatHistory(prev => ({
-      ...prev,
-      [newId]: [],
-    }));
-    
-    setTimeout(() => {
-      inputRef.current?.focus();
-    }, 100);
-  };
+
 
   const handleSelectChat = (id) => {
     setCurrentChatId(id);
@@ -174,23 +236,41 @@ const Chatbot = () => {
 
   const handleDeleteChat = async (id, e) => {
     e.stopPropagation();
+    
+    if (!user || !user.id) {
+      toast.error('You need to log in first');
+      navigate('/login');
+      return;
+    }
+    
     if (window.confirm("Are you sure you want to delete this chat?")) {
-      await deleteChat(id);
-      
-      const { [id]: _, ...restHistory } = chatHistory;
-      const { [id]: __, ...restTitles } = chatTitles;
-      
-      setChatHistory(restHistory);
-      setChatTitles(restTitles);
-      
-      if (currentChatId === id) {
-        if (Object.keys(restHistory).length > 0) {
-          const newChatId = Object.keys(restHistory)[0];
-          setCurrentChatId(newChatId);
-          setChats(restHistory[newChatId] || []);
+      try {
+        const result = await chatApi.deleteChat(user.id, id);
+        
+        if (result.success) {
+          const { [id]: _, ...restHistory } = chatHistory;
+          const { [id]: __, ...restTitles } = chatTitles;
+          
+          setChatHistory(restHistory);
+          setChatTitles(restTitles);
+          
+          if (currentChatId === id) {
+            if (Object.keys(restHistory).length > 0) {
+              const newChatId = Object.keys(restHistory)[0];
+              setCurrentChatId(newChatId);
+              setChats(restHistory[newChatId] || []);
+            } else {
+              await handleNewChat();
+            }
+          }
+          
+          toast.success('Chat deleted successfully');
         } else {
-          handleNewChat();
+          toast.error('Failed to delete chat');
         }
+      } catch (error) {
+        console.error('Error deleting chat:', error);
+        toast.error('Failed to delete chat');
       }
     }
   };
@@ -202,10 +282,26 @@ const Chatbot = () => {
   };
 
   const handleTitleChange = async () => {
+    if (!user || !user.id) {
+      toast.error('You need to log in first');
+      navigate('/login');
+      return;
+    }
+    
     if (editingTitleId && newTitle.trim()) {
-      await renameChat(editingTitleId, newTitle);
-      setChatTitles(prev => ({ ...prev, [editingTitleId]: newTitle }));
-      setEditingTitleId(null);
+      try {
+        const result = await chatApi.renameChat(user.id, editingTitleId, newTitle);
+        
+        if (result.success) {
+          setChatTitles(prev => ({ ...prev, [editingTitleId]: newTitle }));
+          setEditingTitleId(null);
+        } else {
+          toast.error('Failed to rename chat');
+        }
+      } catch (error) {
+        console.error('Error renaming chat:', error);
+        toast.error('Failed to rename chat');
+      }
     }
   };
 
@@ -222,6 +318,17 @@ const Chatbot = () => {
     auth.logout();
     navigate('/login');
   };
+
+  if (initialLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-100 dark:bg-gray-900">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+          <p className="mt-4 text-lg font-medium text-gray-700 dark:text-gray-300">Loading chats...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`flex flex-col h-screen ${darkMode ? 'dark' : ''}`}>
@@ -246,7 +353,22 @@ const Chatbot = () => {
             </button>
           </div>
           
-          {/* Chat List with Timestamps */}
+          {/* User Info */}
+          {!sidebarCollapsed && (
+            <div className="p-4 border-b border-gray-300 dark:border-gray-700">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white">
+                  {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                </div>
+                <div className="truncate">
+                  <p className="font-medium text-gray-800 dark:text-white truncate">{user?.name || 'User'}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email || ''}</p>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Chat List */}
           <div className="flex-1 overflow-y-auto p-2">
             {Object.keys(chatHistory).length === 0 ? (
               <div className="text-center text-gray-500 dark:text-gray-400 mt-4">
@@ -410,14 +532,14 @@ const Chatbot = () => {
                       stopListening();
                     } else {
                       try {
-          const result = await startListening(currentLanguage);
-          if (result) {
-            setInput(result.text);
-            // Update language if different from current
-            if (result.language && result.language !== currentLanguage) {
-              setCurrentLanguage(result.language);
-            }
-          }
+                        const result = await startListening(currentLanguage);
+                        if (result) {
+                          setInput(result.text);
+                          // Update language if different from current
+                          if (result.language && result.language !== currentLanguage) {
+                            setCurrentLanguage(result.language);
+                          }
+                        }
                       } catch (error) {
                         alert(error.message);
                       }
