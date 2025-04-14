@@ -21,7 +21,7 @@ load_dotenv()
 
 # Initialize Flask app
 # Initialize Flask app
-app = Flask(__name__, static_folder='../frontend/build', static_url_path='')
+app = Flask(__name__, static_folder='../frontend/build', static_url_path='/')
 CORS(app)
 
 # Initialize Groq client
