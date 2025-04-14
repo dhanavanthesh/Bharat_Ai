@@ -28,7 +28,7 @@ CORS(app)
 groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 # Initialize Pygame mixer
-pygame.mixer.init()
+#pygame.mixer.init()
 
 # Supported languages
 LANGUAGES = {
@@ -671,4 +671,5 @@ def delete_chat(chat_id):
     })
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=5000)

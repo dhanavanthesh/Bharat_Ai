@@ -7,3 +7,6 @@ gTTS==2.2.4
 pygame
 groq
 langdetect
+
+uvicorn
+

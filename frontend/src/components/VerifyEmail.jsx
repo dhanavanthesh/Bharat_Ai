@@ -28,7 +28,7 @@ const VerifyEmail = ({ email, fullName, password, onSuccess, isLogin = false }) 
     if (inputRefs[0]?.current) {
       inputRefs[0].current.focus();
     }
-  }, []);
+  }, [inputRefs]);
 
   const handleInputChange = (index, value) => {
     if (/^\d?$/.test(value)) {
@@ -146,51 +146,43 @@ const VerifyEmail = ({ email, fullName, password, onSuccess, isLogin = false }) 
   };
   
   return (
-    <div className="space-y-6">
-      <div className="rounded-lg bg-blue-50 dark:bg-blue-900/30 p-5 text-center border border-blue-100 dark:border-blue-800">
-        <div className="mx-auto w-12 h-12 flex items-center justify-center rounded-full bg-blue-100 dark:bg-blue-800 mb-3">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600 dark:text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-          </svg>
-        </div>
-        <h2 className="text-lg font-semibold text-blue-800 dark:text-blue-200">
-          Email Verification
-        </h2>
-        <p className="mt-2 text-sm text-blue-700 dark:text-blue-300">
-          We've sent a verification code to <strong>{email}</strong>. 
-          Please enter the 6-digit code below.
+    <div className="verification-container">
+      <div className="auth-logo">
+        Bharat AI
+      </div>
+      
+      <div className="auth-header">
+        <h2>Email Verification</h2>
+        <p>
+          We've sent a verification code to <span className="verification-email">{email}</span>
         </p>
       </div>
       
-      <form onSubmit={handleVerify} className="space-y-6">
-        <div className="flex justify-center">
-          <div className="flex gap-2 sm:gap-3 justify-center" onPaste={handlePaste}>
-            {code.map((digit, index) => (
-              <input
-                key={index}
-                ref={inputRefs[index]}
-                type="text"
-                inputMode="numeric"
-                pattern="\d*"
-                maxLength={1}
-                value={digit}
-                onChange={(e) => handleInputChange(index, e.target.value)}
-                onKeyDown={(e) => handleKeyDown(index, e)}
-                onFocus={() => setFocusedIndex(index)}
-                className={`w-11 h-14 text-center text-lg font-bold border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white transition ${
-                  focusedIndex === index ? 'border-blue-500 dark:border-blue-400' : 'border-gray-300'
-                }`}
-              />
-            ))}
-          </div>
+      <form onSubmit={handleVerify}>
+        <div className="otp-inputs" onPaste={handlePaste}>
+          {code.map((digit, index) => (
+            <input
+              key={index}
+              ref={inputRefs[index]}
+              type="text"
+              inputMode="numeric"
+              pattern="\d*"
+              maxLength={1}
+              value={digit}
+              onChange={(e) => handleInputChange(index, e.target.value)}
+              onKeyDown={(e) => handleKeyDown(index, e)}
+              onFocus={() => setFocusedIndex(index)}
+              className={`otp-input ${focusedIndex === index ? 'focused' : ''}`}
+            />
+          ))}
         </div>
         
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="otp-actions">
           <button
             type="button"
             onClick={handleResendCode}
             disabled={resending || countdown > 0}
-            className="text-sm text-blue-600 hover:text-blue-500 dark:text-blue-400 disabled:opacity-50 order-2 sm:order-1"
+            className="resend-btn"
           >
             {countdown > 0 ? `Resend code in ${countdown}s` : 'Resend code'}
           </button>
@@ -198,15 +190,16 @@ const VerifyEmail = ({ email, fullName, password, onSuccess, isLogin = false }) 
           <button
             type="submit"
             disabled={loading || code.some(digit => !digit)}
-            className="w-full sm:w-auto px-6 py-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 order-1 sm:order-2"
+            className="submit-btn"
+            style={{ width: 'auto', padding: '10px 20px', marginTop: 0 }}
           >
-            {loading ? 'Verifying...' : 'Verify Email'}
+            {loading ? 'Verifying...' : 'Verify Code'}
           </button>
         </div>
       </form>
       
-      <div className="text-center text-sm text-gray-600 dark:text-gray-400">
-        <p>
+      <div className="auth-helper" style={{ marginTop: '20px' }}>
+        <p className="auth-footer">
           Didn't receive the code? Check your spam folder or click "Resend code".
         </p>
       </div>
