@@ -12,6 +12,10 @@ import AuthLayout from './layouts/AuthLayout';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Profile from './pages/Profile';
+import Home from './pages/Home';
+
+// CSS
+import './styles/Home.css';
 
 // Context
 import { SpeechProvider } from './context/SpeechContext';
@@ -21,18 +25,22 @@ function App() {
     <SpeechProvider>
       <Router>
         <Routes>
+          {/* Home route */}
+          <Route path="/" element={<Home />} />
+          
+          {/* Auth routes */}
           <Route path="/" element={<AuthLayout />}>
-            <Route index element={<Navigate to="/login" />} />
             <Route path="signup" element={<Signup />} />
             <Route path="login" element={<Login />} />
           </Route>
           
+          {/* Protected routes */}
           <Route element={<ProtectedRoute />}>
             <Route path="/profile" element={<Profile />} />
             <Route path="/chat" element={<Chatbot />} />
           </Route>
           
-          <Route path="*" element={<Navigate to="/login" />} />
+          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
         
         <ToastContainer position="top-right" autoClose={3000} />

@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { auth } from '../utils/auth';
 import VerifyEmail from '../components/VerifyEmail';
+import '../styles/Auth.css';
 
 const Signup = () => {
   const [email, setEmail] = useState('');
@@ -62,131 +63,164 @@ const Signup = () => {
   };
   
   if (verificationNeeded) {
-    return (
-      <VerifyEmail 
-        email={email}
-        fullName={fullName}
-        password={password}
-        onSuccess={() => navigate('/chat')}
-      />
-    );
+    return <VerifyEmail 
+      email={email}
+      fullName={fullName}
+      password={password}
+      onSuccess={() => navigate('/chat')}
+    />;
   }
   
   return (
-    <div>
-      <div className="mb-6 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-100 dark:border-blue-800">
-        <h3 className="text-sm font-medium text-blue-800 dark:text-blue-300 mb-2">Verification Method</h3>
-        <div className="flex gap-4">
+    <>
+      <div className="auth-logo">
+        Bharat AI
+      </div>
+      
+      <div className="auth-header">
+        <h2>Create Account</h2>
+        <p>Sign up to start your AI conversations</p>
+      </div>
+      
+      <div className="verification-method">
+        <div className="method-title">Verification Method</div>
+        <div className="method-buttons">
           <button
             type="button"
             onClick={() => setVerificationMethod('email')}
-            className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition ${
-              verificationMethod === 'email'
-                ? 'bg-blue-600 text-white'
-                : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
-            }`}
+            className={`method-btn ${verificationMethod === 'email' ? 'active' : ''}`}
           >
             Email Verification
           </button>
           <button
             type="button"
             onClick={() => setVerificationMethod('password')}
-            className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition ${
-              verificationMethod === 'password'
-                ? 'bg-blue-600 text-white'
-                : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
-            }`}
+            className={`method-btn ${verificationMethod === 'password' ? 'active' : ''}`}
           >
             Password Only
           </button>
         </div>
-        <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+        <p className="method-description">
           {verificationMethod === 'email' 
             ? 'Email verification provides better security by confirming your identity.' 
             : 'Password-only signup is faster but less secure.'}
         </p>
       </div>
       
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-            required
-          />
-        </div>
-        
-        {verificationMethod === 'email' && (
-          <div>
-            <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Full Name
-            </label>
+      <form onSubmit={handleSubmit} className="auth-form">
+        <div className="form-group">
+          <label htmlFor="email">Email</label>
+          <div className="input-wrapper">
+            <span className="input-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+              </svg>
+            </span>
             <input
-              id="fullName"
-              type="text"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="auth-input"
+              placeholder="you@example.com"
               required
             />
           </div>
+        </div>
+        
+        {verificationMethod === 'email' && (
+          <div className="form-group">
+            <label htmlFor="fullName">Full Name</label>
+            <div className="input-wrapper">
+              <span className="input-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                </svg>
+              </span>
+              <input
+                id="fullName"
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className="auth-input"
+                placeholder="Your full name"
+                required={verificationMethod === 'email'}
+              />
+            </div>
+          </div>
         )}
         
-        <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Password
-          </label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-            required
-          />
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            Password must be at least 6 characters
-          </p>
+        <div className="form-group">
+          <label htmlFor="password">Password</label>
+          <div className="input-wrapper">
+            <span className="input-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+              </svg>
+            </span>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="auth-input"
+              placeholder="At least 6 characters"
+              required
+            />
+          </div>
+          <p className="input-help">Password must be at least 6 characters</p>
         </div>
         
-        <div>
-          <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Confirm Password
-          </label>
-          <input
-            id="confirmPassword"
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-            required
-          />
+        <div className="form-group">
+          <label htmlFor="confirmPassword">Confirm Password</label>
+          <div className="input-wrapper">
+            <span className="input-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+              </svg>
+            </span>
+            <input
+              id="confirmPassword"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="auth-input"
+              placeholder="Confirm your password"
+              required
+            />
+          </div>
         </div>
         
-        <div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-colors duration-200"
-          >
-            {loading ? 'Creating account...' : 'Sign Up'}
-          </button>
-        </div>
+        <button
+          type="submit"
+          disabled={loading}
+          className="submit-btn"
+        >
+          {loading ? (
+            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg className="loading-spinner" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: '8px', animation: 'spin 1s linear infinite' }}>
+                <path opacity="0.25" d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2Z" stroke="white" strokeWidth="4"/>
+                <path d="M12 2C6.47715 2 2 6.47715 2 12" stroke="white" strokeWidth="4" strokeLinecap="round"/>
+              </svg>
+              Creating account...
+            </span>
+          ) : 'Sign Up'}
+        </button>
       </form>
       
-      <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-        Already have an account?{' '}
-        <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 transition-colors duration-200">
-          Login
-        </Link>
-      </p>
-    </div>
+      <div className="auth-helper">
+        <div className="divider">
+          <span className="divider-text">Already have an account?</span>
+        </div>
+        
+        <p className="auth-footer">
+          <Link to="/login" className="signup-link">
+            Login instead
+          </Link>
+        </p>
+      </div>
+    </>
   );
 };
 
