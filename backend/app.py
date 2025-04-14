@@ -28,7 +28,7 @@ CORS(app)
 groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 # Initialize Pygame mixer
-pygame.mixer.init()
+#pygame.mixer.init()
 
 # Supported languages
 LANGUAGES = {
