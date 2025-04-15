@@ -1,115 +1,26 @@
-// src/components/VerifyEmail.jsx
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
 import { toast } from 'react-toastify';
 import { auth } from '../utils/auth';
 
-const VerifyEmail = ({ email, fullName, password, onSuccess, isLogin = false }) => {
-  const [code, setCode] = useState(['', '', '', '', '', '']);
+const VerifyEmail = ({ email, fullName, password, onSuccess }) => {
+  const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
-  const [resending, setResending] = useState(false);
-  const [countdown, setCountdown] = useState(0);
-  const [focusedIndex, setFocusedIndex] = useState(0);
-  const inputRefs = Array(6).fill(0).map(() => React.createRef());
-  const navigate = useNavigate();
 
-  useEffect(() => {
-    let interval = null;
-    if (countdown > 0) {
-      interval = setInterval(() => {
-        setCountdown((prev) => prev - 1);
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [countdown]);
-
-  useEffect(() => {
-    // Focus the first input on component mount
-    if (inputRefs[0]?.current) {
-      inputRefs[0].current.focus();
-    }
-  }, [inputRefs]);
-
-  const handleInputChange = (index, value) => {
-    if (/^\d?$/.test(value)) {
-      const newCode = [...code];
-      newCode[index] = value;
-      setCode(newCode);
-      
-      // Auto-focus to next input if a digit was entered
-      if (value && index < 5) {
-        inputRefs[index + 1].current.focus();
-        setFocusedIndex(index + 1);
-      }
-    }
-  };
-
-  const handleKeyDown = (index, e) => {
-    // Handle backspace to move to previous input
-    if (e.key === 'Backspace' && !code[index] && index > 0) {
-      inputRefs[index - 1].current.focus();
-      setFocusedIndex(index - 1);
-    }
-    
-    // Handle arrow keys for navigation between inputs
-    if (e.key === 'ArrowLeft' && index > 0) {
-      inputRefs[index - 1].current.focus();
-      setFocusedIndex(index - 1);
-    }
-    if (e.key === 'ArrowRight' && index < 5) {
-      inputRefs[index + 1].current.focus();
-      setFocusedIndex(index + 1);
-    }
-  };
-
-  const handlePaste = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const pastedData = e.clipboardData.getData('text');
-    const digits = pastedData.replace(/\D/g, '').slice(0, 6).split('');
-    
-    const newCode = [...code];
-    digits.forEach((digit, index) => {
-      if (index < 6) {
-        newCode[index] = digit;
-      }
-    });
-    
-    setCode(newCode);
-    
-    // Focus the appropriate input based on how many digits were pasted
-    const focusIndex = Math.min(digits.length, 5);
-    if (inputRefs[focusIndex]?.current) {
-      inputRefs[focusIndex].current.focus();
-      setFocusedIndex(focusIndex);
-    }
-  };
-
-  const handleVerify = async (e) => {
-    e.preventDefault();
-    
-    const verificationCode = code.join('');
-    if (verificationCode.length !== 6) {
-      toast.error('Please enter a valid 6-digit code');
-      return;
-    }
-    
     setLoading(true);
-    
+
     try {
-      const result = await auth.verifyEmail(email, verificationCode);
+      const result = await auth.verifyEmail(email, code);
       
       if (result.success) {
         toast.success('Email verified successfully!');
-        if (onSuccess) {
-          onSuccess();
-        } else {
-          navigate('/chat');
-        }
+        onSuccess();
       } else {
         toast.error(result.message || 'Verification failed');
       }
     } catch (error) {
-      toast.error('An error occurred');
+      toast.error('An error occurred during verification');
       console.error(error);
     } finally {
       setLoading(false);
@@ -117,93 +28,89 @@ const VerifyEmail = ({ email, fullName, password, onSuccess, isLogin = false }) 
   };
 
   const handleResendCode = async () => {
-    if (countdown > 0) return;
-    
-    setResending(true);
-    
     try {
-      let result;
-      
-      if (isLogin) {
-        result = await auth.sendVerification(email);
-      } else {
-        // Re-register to get a new code
-        result = await auth.register(email, fullName, password);
-      }
+      const result = await auth.register(email, fullName, password);
       
       if (result.success) {
-        toast.success('A new verification code has been sent to your email');
-        setCountdown(60); // 1 minute cooldown
+        toast.success('New verification code sent to your email!');
       } else {
         toast.error(result.message || 'Failed to resend code');
       }
     } catch (error) {
       toast.error('An error occurred');
       console.error(error);
-    } finally {
-      setResending(false);
     }
   };
-  
+
   return (
-    <div className="verification-container">
+    <>
       <div className="auth-logo">
         Bharat AI
       </div>
       
       <div className="auth-header">
-        <h2>Email Verification</h2>
-        <p>
-          We've sent a verification code to <span className="verification-email">{email}</span>
-        </p>
+        <h2>Verify Your Email</h2>
+        <p>Enter the verification code sent to {email}</p>
       </div>
       
-      <form onSubmit={handleVerify}>
-        <div className="otp-inputs" onPaste={handlePaste}>
-          {code.map((digit, index) => (
+      <form onSubmit={handleSubmit} className="auth-form">
+        <div className="form-group">
+          <label htmlFor="code">Verification Code</label>
+          <div className="input-wrapper">
+            <span className="input-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M10 2C5.58172 2 2 5.58172 2 10C2 14.4183 5.58172 18 10 18C14.4183 18 18 14.4183 18 10C18 5.58172 14.4183 2 10 2ZM11 14H9V9H11V14ZM11 8H9V6H11V8Z" />
+              </svg>
+            </span>
             <input
-              key={index}
-              ref={inputRefs[index]}
+              id="code"
               type="text"
-              inputMode="numeric"
-              pattern="\d*"
-              maxLength={1}
-              value={digit}
-              onChange={(e) => handleInputChange(index, e.target.value)}
-              onKeyDown={(e) => handleKeyDown(index, e)}
-              onFocus={() => setFocusedIndex(index)}
-              className={`otp-input ${focusedIndex === index ? 'focused' : ''}`}
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              className="auth-input"
+              placeholder="Enter 6-digit code"
+              required
+              maxLength={6}
+              pattern="\d{6}"
             />
-          ))}
+          </div>
         </div>
         
-        <div className="otp-actions">
-          <button
-            type="button"
-            onClick={handleResendCode}
-            disabled={resending || countdown > 0}
-            className="resend-btn"
-          >
-            {countdown > 0 ? `Resend code in ${countdown}s` : 'Resend code'}
-          </button>
-          
-          <button
-            type="submit"
-            disabled={loading || code.some(digit => !digit)}
-            className="submit-btn"
-            style={{ width: 'auto', padding: '10px 20px', marginTop: 0 }}
-          >
-            {loading ? 'Verifying...' : 'Verify Code'}
-          </button>
-        </div>
+        <button
+          type="submit"
+          disabled={loading}
+          className="submit-btn"
+        >
+          {loading ? (
+            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg className="loading-spinner" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: '8px', animation: 'spin 1s linear infinite' }}>
+                <path opacity="0.25" d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2Z" stroke="white" strokeWidth="4"/>
+                <path d="M12 2C6.47715 2 2 6.47715 2 12" stroke="white" strokeWidth="4" strokeLinecap="round"/>
+              </svg>
+              Verifying...
+            </span>
+          ) : 'Verify Email'}
+        </button>
       </form>
       
-      <div className="auth-helper" style={{ marginTop: '20px' }}>
-        <p className="auth-footer">
-          Didn't receive the code? Check your spam folder or click "Resend code".
-        </p>
+      <div className="auth-helper">
+        <button 
+          onClick={handleResendCode}
+          className="text-link"
+          type="button"
+          style={{
+            background: 'none',
+            border: 'none',
+            color: '#3b82f6',
+            cursor: 'pointer',
+            textDecoration: 'underline',
+            padding: '8px'
+          }}
+        >
+          Didn't receive the code? Send again
+        </button>
       </div>
-    </div>
+    </>
   );
 };
 

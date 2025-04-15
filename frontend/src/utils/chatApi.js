@@ -1,11 +1,14 @@
 // src/utils/chatApi.js
 
+// Get the API base URL from environment variables
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
+
 // API for chat functionality
 export const chatApi = {
   // Get all chats for a user
   getChats: async (userId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/chats?userId=${userId}`);
+      const response = await fetch(`${API_BASE_URL}/api/chats?userId=${userId}`);
       return await response.json();
     } catch (error) {
       console.error('Get chats error:', error);
@@ -17,7 +20,7 @@ export const chatApi = {
   createChat: async (userId, title = 'New Chat') => {
     try {
       const chatId = `chat_${Date.now()}`;
-      const response = await fetch('http://localhost:5000/api/chats', {
+      const response = await fetch(`${API_BASE_URL}/api/chats`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -35,7 +38,7 @@ export const chatApi = {
   // Rename a chat
   renameChat: async (userId, chatId, title) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/chats/${chatId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/chats/${chatId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -53,7 +56,7 @@ export const chatApi = {
   // Delete a chat
   deleteChat: async (userId, chatId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/chats/${chatId}?userId=${userId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/chats/${chatId}?userId=${userId}`, {
         method: 'DELETE',
       });
       
@@ -67,7 +70,7 @@ export const chatApi = {
   // Send a message and get a response
   sendMessage: async (userId, chatId, message, model, language) => {
     try {
-      const response = await fetch('http://localhost:5000/api/chat', {
+      const response = await fetch(`${API_BASE_URL}/api/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -95,7 +98,7 @@ export const chatApi = {
       formData.append('audio', audioBlob);
       formData.append('language', language);
       
-      const response = await fetch('http://localhost:5000/api/speech-to-text', {
+      const response = await fetch(`${API_BASE_URL}/api/speech-to-text`, {
         method: 'POST',
         body: formData
       });
@@ -110,7 +113,7 @@ export const chatApi = {
   // Text to speech conversion
   textToSpeech: async (text, language) => {
     try {
-      const response = await fetch('http://localhost:5000/api/text-to-speech', {
+      const response = await fetch(`${API_BASE_URL}/api/text-to-speech`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

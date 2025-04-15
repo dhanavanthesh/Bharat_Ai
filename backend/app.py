@@ -21,8 +21,16 @@ load_dotenv()
 
 # Initialize Flask app
 # Initialize Flask app
-app = Flask(__name__, static_folder='../frontend/build', static_url_path='')
-CORS(app)
+# At the top of your app.py, update the CORS setup
+app = Flask(__name__, static_folder='../frontend/build', static_url_path='/')
+CORS(app, resources={
+    r"/*": {
+        "origins": ["https://bhaai.org.in", "http://localhost:3000"],
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "supports_credentials": True
+    }
+})
 
 # Initialize Groq client
 groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
@@ -671,5 +679,5 @@ def delete_chat(chat_id):
     })
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=5000)
+    from waitress import serve
+    serve(app, host="0.0.0.0", port=5001)
