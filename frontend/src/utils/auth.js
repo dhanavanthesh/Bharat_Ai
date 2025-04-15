@@ -31,7 +31,7 @@ export const auth = {
       const response = await fetch(`${API_BASE_URL}/api/signup`, {
         ...fetchOptions,
         method: 'POST',
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password }),  
       });
       
       if (!response.ok) {
