@@ -15,22 +15,56 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import json
 from datetime import datetime
+import logging
+from logging.handlers import RotatingFileHandler  # Add this import
 
 # Load environment variables
-load_dotenv()
 
-# Initialize Flask app
-# Initialize Flask app
-# At the top of your app.py, update the CORS setup
-app = Flask(__name__, static_folder='../frontend/build', static_url_path='/')
-CORS(app, resources={
-    r"/*": {
-        "origins": ["https://bhaai.org.in", "http://localhost:3000"],
-        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization"],
-        "supports_credentials": True
-    }
-})
+# Create logs directory if it doesn't exist
+log_dir = '/var/www/Bharat_Ai/logs'
+os.makedirs(log_dir, exist_ok=True)
+
+# Configure logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
+# Create logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+# Create handlers
+file_handler = RotatingFileHandler(
+    os.path.join(log_dir, 'app.log'),
+    maxBytes=1024 * 1024,  # 1MB
+    backupCount=5,
+    encoding='utf-8'
+)
+stream_handler = logging.StreamHandler()
+
+# Create formatters and add it to handlers
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+stream_handler.setFormatter(formatter)
+
+# Add handlers to the logger
+logger.addHandler(file_handler)
+logger.addHandler(stream_handler)
+
+# Set Flask-CORS logging level
+logging.getLogger('flask_cors').setLevel(logging.DEBUG)
+
+# Load environment variables
+# load_dotenv('/etc/bharatai.env')
+load_dotenv('.env')
+
+
+app = Flask(__name__)
+
+# Configure CORS pr
+
+CORS(app, resources={r"/api/*": {"origins": "https://bhaai.org.in", "supports_credentials": True}})
 
 # Initialize Groq client
 groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
@@ -58,7 +92,7 @@ except (ImportError, AttributeError):
     print("PyAudio not found. Speech recognition features will be disabled.")
     microphone = None
     speech_recognition_available = False
-    
+
 # Model mapping
 MODEL_MAPPING = {
     "LLaMA3-versatile": "llama-3.3-70b-versatile",
@@ -105,17 +139,17 @@ def send_verification_email(email, code):
     """Send verification email with OTP code"""
     sender_email = os.getenv("EMAIL_SENDER", "noreply@chatbotapp.com")
     sender_password = os.getenv("EMAIL_PASSWORD", "")
-    
+
     # For demonstration purposes, just print the code
     # In a real app, you would use a proper email service
     print(f"Sending verification code {code} to {email}")
-    
+
     try:
         message = MIMEMultipart()
         message["From"] = sender_email
         message["To"] = email
         message["Subject"] = "Email Verification - AI Chatbot"
-        
+
         body = f"""
         <html>
         <body>
@@ -127,9 +161,9 @@ def send_verification_email(email, code):
         </body>
         </html>
         """
-        
+
         message.attach(MIMEText(body, "html"))
-        
+
         if sender_password:
             with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
                 server.login(sender_email, sender_password)
@@ -183,7 +217,7 @@ def process_audio(audio_data, language="en"):
     if language not in SPEECH_LANGUAGES:
         print(f"Language {language} not supported for speech recognition")
         return None
-        
+
     try:
         text = recognizer.recognize_google(audio_data, language=language)
         print(f"Recognized speech: {text}")
@@ -200,7 +234,7 @@ def text_to_speech(text, lang="en"):
     if lang not in TTS_LANGUAGES:
         print(f"Language {lang} not supported for text-to-speech")
         return None
-        
+
     try:
         tts = gTTS(text=text, lang=lang)
         os.makedirs("audio_files", exist_ok=True)
@@ -220,9 +254,30 @@ def serve(path):
     else:
         return send_from_directory(app.static_folder, 'index.html')
 
+
+
 @app.route("/api/health")
-def health():
-    return jsonify({"status": "Groq AI backend working!"})
+def health_check():
+    return jsonify({
+        'status': 'healthy',
+        'timestamp': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
+        'environment': {
+            'file_path': '/etc/bharatai.env',
+            'file_exists': os.path.exists('/etc/bharatai.env'),
+            'file_readable': os.access('/etc/bharatai.env', os.R_OK),
+            'variables': {
+                var: bool(os.getenv(var)) for var in [
+                    'GROQ_API_KEY',
+                    'EMAIL_SENDER',
+                    'EMAIL_PASSWORD',
+                    'FLASK_APP'
+                ]
+            }
+        }
+    })
+
+
+
 
 from langdetect import detect
 
@@ -236,7 +291,7 @@ def chat():
     language = data.get("language", "")
     chat_id = data.get("chatId", "")
     user_id = data.get("userId", "")
-    
+
     # Auto-detect language if not specified
     if not language and user_message:
         try:
@@ -252,44 +307,44 @@ def chat():
             }.get(detected_lang, 'en')
         except:
             language = 'en'
-    
+
     model = MODEL_MAPPING.get(model_name, MODEL_MAPPING["LLaMA3"])
-    
-    
+
+
     try:
         response = get_groq_response(user_message, language, model)
-        
+
         # Save message to chat history if user is authenticated
         if user_id and chat_id:
             user_chats = CHAT_HISTORY.get(user_id, {})
             chat = user_chats.get(chat_id, {"title": "New Chat", "messages": []})
-            
+
             # Add user message
             chat["messages"].append({
-                "role": "user", 
+                "role": "user",
                 "content": user_message,
                 "language": language,
                 "timestamp": datetime.now().isoformat()
             })
-            
+
             # Add bot response
             chat["messages"].append({
-                "role": "bot", 
+                "role": "bot",
                 "content": response,
                 "language": language,
                 "timestamp": datetime.now().isoformat()
             })
-            
+
             # Auto-generate title if it's a new chat with default title
             if chat["title"] == "New Chat" and len(chat["messages"]) <= 2:
                 words = user_message.split()
                 auto_title = " ".join(words[:3]) + ("..." if len(words) > 3 else "")
                 chat["title"] = auto_title.capitalize()
-            
+
             user_chats[chat_id] = chat
             CHAT_HISTORY[user_id] = user_chats
             save_data()
-        
+
         return jsonify({"reply": response})
     except Exception as e:
         print("Groq error:", e)
@@ -300,33 +355,33 @@ def signup():
     data = request.get_json()
     email = data.get("email", "").lower()
     password = data.get("password", "")
-    
+
     if not email or not password:
         return jsonify({"success": False, "message": "Missing required fields"}), 400
-    
+
     if '@' not in email:
         return jsonify({"success": False, "message": "Invalid email format"}), 400
-    
+
     # Allow re-registration for simplicity in development
     # In production, you would check if the email already exists
-    
+
     # Create user account
     user_id = f"user_{len(USERS) + 1}"
     full_name = email.split('@')[0]  # Use email username as name
-    
+
     USERS[email] = {
         "id": user_id,
         "name": full_name,
         "email": email,
         "password": password
     }
-    
+
     # Initialize empty chat history for the user
     CHAT_HISTORY[user_id] = {}
-    
+
     # Save data to disk
     save_data()
-    
+
     return jsonify({
         "success": True,
         "user": {
@@ -340,22 +395,22 @@ def signup():
 def speech_to_text():
     if not speech_recognition_available:
         return jsonify({"error": "Speech recognition is not available on the server"}), 503
-            
+
     audio_file = request.files['audio']
     preferred_lang = request.form.get('language', '').lower()
-    
+
     print(f"Received audio file: {audio_file.filename}, size: {audio_file.content_length} bytes")
-    
+
     try:
         # Save the audio file temporarily
         temp_path = os.path.join("temp_audio.wav")
         audio_file.save(temp_path)
         print(f"Saved audio file to: {temp_path}")
-        
+
         with sr.AudioFile(temp_path) as source:
             print("Attempting to recognize speech...")
             audio_data = recognizer.record(source)
-            
+
             # If preferred language is specified, try that first
             if preferred_lang and preferred_lang in SPEECH_LANGUAGES:
                 try:
@@ -368,11 +423,11 @@ def speech_to_text():
                         })
                 except Exception as e:
                     print(f"Recognition failed for preferred language {preferred_lang}: {str(e)}")
-            
+
             # Fallback to trying all supported languages
             detected_text = None
             detected_lang = "en"  # default fallback
-            
+
             # Try Kannada first if not already tried
             if preferred_lang != "kn" and "kn" in SPEECH_LANGUAGES:
                 try:
@@ -383,7 +438,7 @@ def speech_to_text():
                         print(f"Detected language: kn, text: {text}")
                 except:
                     pass
-            
+
             if not detected_text:
                 for lang in SPEECH_LANGUAGES:
                     if lang == "kn":  # Already tried
@@ -397,13 +452,13 @@ def speech_to_text():
                             break
                     except:
                         continue
-            
+
             if detected_text:
                 return jsonify({
                     "text": detected_text,
                     "language": detected_lang
                 })
-            
+
             print("Could not recognize speech in any supported language")
             return jsonify({"error": "Could not recognize speech"}), 400
     except Exception as e:
@@ -419,10 +474,10 @@ def text_to_speech_endpoint():
     data = request.get_json()
     text = data.get("text", "")
     language = data.get("language", "en")
-    
+
     if not text:
         return jsonify({"error": "No text provided"}), 400
-    
+
     try:
         audio_path = text_to_speech(text, language)
         if audio_path:
@@ -440,22 +495,22 @@ def register():
     email = data.get("email", "").lower()
     full_name = data.get("fullName", "")
     password = data.get("password", "")
-    
+
     print(f"Registration attempt for {email} with name: {full_name}")
-    
+
     if not email or not password:
         return jsonify({"success": False, "message": "Missing required fields"}), 400
-    
+
     if '@' not in email:
         return jsonify({"success": False, "message": "Invalid email format"}), 400
-    
+
     if email in USERS:
         return jsonify({"success": False, "message": "Email already registered"}), 400
-    
+
     # Use the email username as fullName if not provided
     if not full_name:
         full_name = email.split('@')[0]
-    
+
     # Generate verification code
     code = generate_verification_code()
     VERIFICATION_CODES[email] = {
@@ -464,10 +519,10 @@ def register():
         "password": password,
         "timestamp": datetime.now().isoformat()
     }
-    
+
     print(f"Verification code for {email}: {code}")
     print(f"Verification data: {VERIFICATION_CODES[email]}")
-    
+
     # Send verification email
     if send_verification_email(email, code):
         return jsonify({
@@ -479,29 +534,29 @@ def register():
             "success": False,
             "message": "Failed to send verification email"
         }), 500
-        
-        
-        
+
+
+
 @app.route("/api/verify", methods=["POST"])
 def verify():
     data = request.get_json()
     email = data.get("email", "").lower()
     code = data.get("code", "")
-    
+
     print(f"Verification attempt for {email} with code {code}")
-    
+
     if not email or not code:
         return jsonify({"success": False, "message": "Missing required fields"}), 400
-    
+
     if email not in VERIFICATION_CODES:
         return jsonify({"success": False, "message": "No verification pending for this email"}), 400
-    
+
     verification = VERIFICATION_CODES[email]
     print(f"Verification data: {verification}")
-    
+
     if verification["code"] != code:
         return jsonify({"success": False, "message": "Invalid verification code"}), 400
-    
+
     # Fallback approach - create a user if they don't exist
     user = None
     if email in USERS:
@@ -512,7 +567,7 @@ def verify():
         user_id = f"user_{len(USERS) + 1}"
         full_name = verification.get("full_name", email.split("@")[0])
         password = verification.get("password", "default_password")
-        
+
         USERS[email] = {
             "id": user_id,
             "name": full_name,
@@ -520,16 +575,16 @@ def verify():
             "password": password
         }
         user = USERS[email]
-        
+
         # Initialize empty chat history for the user
         CHAT_HISTORY[user_id] = {}
-    
+
     # Remove verification code
     del VERIFICATION_CODES[email]
-    
+
     # Save data to disk
     save_data()
-    
+
     return jsonify({
         "success": True,
         "message": "Email verified successfully",
@@ -545,18 +600,18 @@ def login():
     data = request.get_json()
     email = data.get("email", "").lower()
     password = data.get("password", "")
-    
+
     if not email or not password:
         return jsonify({"success": False, "message": "Missing required fields"}), 400
-    
+
     if email not in USERS:
         return jsonify({"success": False, "message": "Email not registered"}), 401
-    
+
     user = USERS[email]
-    
+
     if user["password"] != password:
         return jsonify({"success": False, "message": "Incorrect password"}), 401
-    
+
     return jsonify({
         "success": True,
         "message": "Login successful",
@@ -571,20 +626,20 @@ def login():
 def send_verification():
     data = request.get_json()
     email = data.get("email", "").lower()
-    
+
     if not email:
         return jsonify({"success": False, "message": "Email is required"}), 400
-    
+
     if email not in USERS:
         return jsonify({"success": False, "message": "Email not registered"}), 404
-    
+
     # Generate verification code
     code = generate_verification_code()
     VERIFICATION_CODES[email] = {
         "code": code,
         "timestamp": datetime.now().isoformat()
     }
-    
+
     # Send verification email
     if send_verification_email(email, code):
         return jsonify({
@@ -600,13 +655,13 @@ def send_verification():
 @app.route("/api/chats", methods=["GET"])
 def get_chats():
     user_id = request.args.get("userId", "")
-    
+
     if not user_id:
         return jsonify({"success": False, "message": "User ID is required"}), 400
-    
+
     if user_id not in CHAT_HISTORY:
         return jsonify({"success": True, "chats": {}})
-    
+
     return jsonify({
         "success": True,
         "chats": CHAT_HISTORY[user_id]
@@ -618,20 +673,20 @@ def create_chat():
     user_id = data.get("userId", "")
     chat_id = data.get("chatId", f"chat_{datetime.now().timestamp()}")
     title = data.get("title", "New Chat")
-    
+
     if not user_id:
         return jsonify({"success": False, "message": "User ID is required"}), 400
-    
+
     if user_id not in CHAT_HISTORY:
         CHAT_HISTORY[user_id] = {}
-    
+
     CHAT_HISTORY[user_id][chat_id] = {
         "title": title,
         "messages": []
     }
-    
+
     save_data()
-    
+
     return jsonify({
         "success": True,
         "chatId": chat_id,
@@ -643,18 +698,18 @@ def update_chat(chat_id):
     data = request.get_json()
     user_id = data.get("userId", "")
     title = data.get("title", "")
-    
+
     if not user_id:
         return jsonify({"success": False, "message": "User ID is required"}), 400
-    
+
     if user_id not in CHAT_HISTORY or chat_id not in CHAT_HISTORY[user_id]:
         return jsonify({"success": False, "message": "Chat not found"}), 404
-    
+
     if title:
         CHAT_HISTORY[user_id][chat_id]["title"] = title
-    
+
     save_data()
-    
+
     return jsonify({
         "success": True,
         "chat": CHAT_HISTORY[user_id][chat_id]
@@ -663,21 +718,28 @@ def update_chat(chat_id):
 @app.route("/api/chats/<chat_id>", methods=["DELETE"])
 def delete_chat(chat_id):
     user_id = request.args.get("userId", "")
-    
+
     if not user_id:
         return jsonify({"success": False, "message": "User ID is required"}), 400
-    
+
     if user_id not in CHAT_HISTORY or chat_id not in CHAT_HISTORY[user_id]:
         return jsonify({"success": False, "message": "Chat not found"}), 404
-    
+
     del CHAT_HISTORY[user_id][chat_id]
     save_data()
-    
+
     return jsonify({
         "success": True,
         "message": "Chat deleted successfully"
     })
 
+
+
 if __name__ == "__main__":
-    from waitress import serve
-    serve(app, host="0.0.0.0", port=5001)
+    try:
+        from waitress import serve
+        logger.info(f"Starting server at {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC")
+        serve(app, host="0.0.0.0", port=5001)
+    except ImportError:
+        logger.warning("Waitress not found, using Flask development server")
+        app.run(host="0.0.0.0", port=5001)
