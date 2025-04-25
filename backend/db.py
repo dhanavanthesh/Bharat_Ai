@@ -13,8 +13,8 @@ def initialize_db():
     Initialize MongoDB connection using environment variables
     """
     # Load environment variables if not already loaded
-    load_dotenv()
-    
+    load_dotenv('/etc/bharatai.env')
+#   load_dotenv('.env')    
     # Get MongoDB URI from environment - try both MONGO_URL and MONGO_URI
     mongo_url = os.getenv('MONGO_URL') or os.getenv('MONGO_URI')
     
