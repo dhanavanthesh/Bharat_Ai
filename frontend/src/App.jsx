@@ -5,7 +5,6 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import 'highlight.js/styles/github-dark.css';
 
-// Components
 import ProtectedRoute from './components/ProtectedRoute';
 import Chatbot from './pages/Chatbot';
 import AuthLayout from './layouts/AuthLayout';
@@ -14,10 +13,8 @@ import Signup from './pages/Signup';
 import Profile from './pages/Profile';
 import Home from './pages/Home';
 
-// CSS
 import './styles/Home.css';
 
-// Context
 import { SpeechProvider } from './context/SpeechContext';
 
 function App() {

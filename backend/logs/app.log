@@ -1,0 +1,64 @@
+2025-04-24 21:27:30,119 - __main__ - INFO - Starting server at 2025-04-24 15:57:30 UTC
+2025-04-24 21:29:39,477 - __main__ - INFO - Starting server at 2025-04-24 15:59:39 UTC
+2025-04-24 21:31:29,594 - __main__ - ERROR - Login error: SSL handshake failed: ac-xaabuvq-shard-00-00.vutfofy.mongodb.net:27017: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1000),SSL handshake failed: ac-xaabuvq-shard-00-01.vutfofy.mongodb.net:27017: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1000),SSL handshake failed: ac-xaabuvq-shard-00-02.vutfofy.mongodb.net:27017: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1000), Timeout: 30s, Topology Description: <TopologyDescription id: 680a5feb164b2aa5fe86004a, topology_type: ReplicaSetNoPrimary, servers: [<ServerDescription ('ac-xaabuvq-shard-00-00.vutfofy.mongodb.net', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('SSL handshake failed: ac-xaabuvq-shard-00-00.vutfofy.mongodb.net:27017: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1000)')>, <ServerDescription ('ac-xaabuvq-shard-00-01.vutfofy.mongodb.net', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('SSL handshake failed: ac-xaabuvq-shard-00-01.vutfofy.mongodb.net:27017: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1000)')>, <ServerDescription ('ac-xaabuvq-shard-00-02.vutfofy.mongodb.net', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('SSL handshake failed: ac-xaabuvq-shard-00-02.vutfofy.mongodb.net:27017: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1000)')>]>
+2025-04-24 21:31:49,806 - __main__ - INFO - Registration attempt for dhanavanthesh697@gmail.com with name: DHANAVANTHESH S
+2025-04-24 21:32:19,964 - __main__ - ERROR - Registration error: SSL handshake failed: ac-xaabuvq-shard-00-00.vutfofy.mongodb.net:27017: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1000),SSL handshake failed: ac-xaabuvq-shard-00-01.vutfofy.mongodb.net:27017: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1000),SSL handshake failed: ac-xaabuvq-shard-00-02.vutfofy.mongodb.net:27017: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1000), Timeout: 30s, Topology Description: <TopologyDescription id: 680a5feb164b2aa5fe86004a, topology_type: ReplicaSetNoPrimary, servers: [<ServerDescription ('ac-xaabuvq-shard-00-00.vutfofy.mongodb.net', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('SSL handshake failed: ac-xaabuvq-shard-00-00.vutfofy.mongodb.net:27017: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1000)')>, <ServerDescription ('ac-xaabuvq-shard-00-01.vutfofy.mongodb.net', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('SSL handshake failed: ac-xaabuvq-shard-00-01.vutfofy.mongodb.net:27017: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1000)')>, <ServerDescription ('ac-xaabuvq-shard-00-02.vutfofy.mongodb.net', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('SSL handshake failed: ac-xaabuvq-shard-00-02.vutfofy.mongodb.net:27017: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1000)')>]>
+2025-04-24 21:34:16,720 - __main__ - INFO - Registration attempt for dhanavanthesh697@gmail.com with name: DHANAVANTHESH S
+2025-04-24 21:34:47,075 - __main__ - ERROR - Registration error: SSL handshake failed: ac-xaabuvq-shard-00-00.vutfofy.mongodb.net:27017: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1000),SSL handshake failed: ac-xaabuvq-shard-00-01.vutfofy.mongodb.net:27017: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1000),SSL handshake failed: ac-xaabuvq-shard-00-02.vutfofy.mongodb.net:27017: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1000), Timeout: 30s, Topology Description: <TopologyDescription id: 680a5feb164b2aa5fe86004a, topology_type: ReplicaSetNoPrimary, servers: [<ServerDescription ('ac-xaabuvq-shard-00-00.vutfofy.mongodb.net', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('SSL handshake failed: ac-xaabuvq-shard-00-00.vutfofy.mongodb.net:27017: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1000)')>, <ServerDescription ('ac-xaabuvq-shard-00-01.vutfofy.mongodb.net', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('SSL handshake failed: ac-xaabuvq-shard-00-01.vutfofy.mongodb.net:27017: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1000)')>, <ServerDescription ('ac-xaabuvq-shard-00-02.vutfofy.mongodb.net', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('SSL handshake failed: ac-xaabuvq-shard-00-02.vutfofy.mongodb.net:27017: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1000)')>]>
+2025-04-24 21:35:41,738 - __main__ - INFO - Registration attempt for dhanavanthesh697@gmail.com with name: DHANAVANTHESH S
+2025-04-24 21:36:12,038 - __main__ - ERROR - Registration error: SSL handshake failed: ac-xaabuvq-shard-00-00.vutfofy.mongodb.net:27017: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1000),SSL handshake failed: ac-xaabuvq-shard-00-01.vutfofy.mongodb.net:27017: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1000),SSL handshake failed: ac-xaabuvq-shard-00-02.vutfofy.mongodb.net:27017: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1000), Timeout: 30s, Topology Description: <TopologyDescription id: 680a5feb164b2aa5fe86004a, topology_type: ReplicaSetNoPrimary, servers: [<ServerDescription ('ac-xaabuvq-shard-00-00.vutfofy.mongodb.net', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('SSL handshake failed: ac-xaabuvq-shard-00-00.vutfofy.mongodb.net:27017: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1000)')>, <ServerDescription ('ac-xaabuvq-shard-00-01.vutfofy.mongodb.net', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('SSL handshake failed: ac-xaabuvq-shard-00-01.vutfofy.mongodb.net:27017: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1000)')>, <ServerDescription ('ac-xaabuvq-shard-00-02.vutfofy.mongodb.net', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('SSL handshake failed: ac-xaabuvq-shard-00-02.vutfofy.mongodb.net:27017: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1000)')>]>
+2025-04-25 05:40:32,244 - __main__ - INFO - Starting server at 2025-04-25 00:10:32 UTC
+2025-04-25 05:40:46,335 - __main__ - WARNING - MongoDB error during login, falling back to file storage: name 'User' is not defined
+2025-04-25 05:40:52,283 - __main__ - WARNING - MongoDB error during login, falling back to file storage: name 'User' is not defined
+2025-04-25 05:40:52,284 - __main__ - INFO - User logged in via file storage: dhanavanthesh697@gmail.com
+2025-04-25 05:40:52,297 - __main__ - ERROR - Get chats error: name 'Chat' is not defined
+2025-04-25 05:40:52,302 - __main__ - ERROR - Get chats error: name 'Chat' is not defined
+2025-04-25 05:40:52,319 - __main__ - ERROR - Create chat error: name 'Chat' is not defined
+2025-04-25 05:40:52,323 - __main__ - ERROR - Create chat error: name 'Chat' is not defined
+2025-04-25 05:45:06,436 - __main__ - WARNING - MongoDB error during login, falling back to file storage: name 'User' is not defined
+2025-04-25 05:45:12,297 - __main__ - WARNING - MongoDB error during login, falling back to file storage: name 'User' is not defined
+2025-04-25 05:45:12,299 - __main__ - INFO - User logged in via file storage: dhanavanthesh697@gmail.com
+2025-04-25 05:45:12,313 - __main__ - ERROR - Get chats error: name 'Chat' is not defined
+2025-04-25 05:45:12,321 - __main__ - ERROR - Get chats error: name 'Chat' is not defined
+2025-04-25 05:45:12,332 - __main__ - ERROR - Create chat error: name 'Chat' is not defined
+2025-04-25 05:45:12,345 - __main__ - ERROR - Create chat error: name 'Chat' is not defined
+2025-04-25 05:45:15,680 - __main__ - ERROR - Get chats error: name 'Chat' is not defined
+2025-04-25 05:45:15,686 - __main__ - ERROR - Get chats error: name 'Chat' is not defined
+2025-04-25 05:45:15,688 - __main__ - ERROR - Create chat error: name 'Chat' is not defined
+2025-04-25 05:45:15,694 - __main__ - ERROR - Create chat error: name 'Chat' is not defined
+2025-04-25 05:45:47,200 - __main__ - INFO - Starting server at 2025-04-25 00:15:47 UTC
+2025-04-25 06:03:02,154 - __main__ - ERROR - Failed to connect to MongoDB: Unknown option ssl_cert_reqs
+2025-04-25 06:03:02,228 - __main__ - INFO - Starting server at 2025-04-25 00:33:02 UTC
+2025-04-25 06:21:09,855 - __main__ - ERROR - Failed to connect to MongoDB: Unknown option ssl_cert_reqs
+2025-04-25 06:21:09,857 - __main__ - CRITICAL - Could not connect to MongoDB. Application will not function correctly.
+2025-04-25 06:21:09,883 - __main__ - WARNING - PyAudio not found. Speech recognition features will be disabled.
+2025-04-25 06:21:09,911 - __main__ - CRITICAL - MongoDB connection failed. Application may not function correctly.
+2025-04-25 06:21:09,933 - __main__ - INFO - Starting server with Waitress at 2025-04-25 00:51:09 UTC on port 5001
+2025-04-25 06:22:22,746 - __main__ - INFO - Successfully connected to MongoDB
+2025-04-25 06:22:23,006 - __main__ - INFO - Created users collection
+2025-04-25 06:22:23,375 - __main__ - INFO - Created verifications collection
+2025-04-25 06:22:23,731 - __main__ - INFO - Created chats collection
+2025-04-25 06:23:30,387 - __main__ - INFO - Successfully connected to MongoDB
+2025-04-25 06:23:30,594 - __main__ - WARNING - PyAudio not found. Speech recognition features will be disabled.
+2025-04-25 06:24:14,178 - __main__ - INFO - Successfully connected to MongoDB
+2025-04-25 06:24:14,392 - __main__ - WARNING - PyAudio not found. Speech recognition features will be disabled.
+2025-04-25 06:24:14,443 - __main__ - INFO - Starting server with Waitress at 2025-04-25 00:54:14 UTC on port 5001
+2025-04-25 06:35:35,163 - __main__ - INFO - Successfully connected to MongoDB
+2025-04-25 06:35:35,371 - __main__ - WARNING - PyAudio not found. Speech recognition features will be disabled.
+2025-04-25 06:35:35,422 - __main__ - INFO - Starting server with Waitress at 2025-04-25T06:35:35.422147 on port 5001
+2025-04-25 06:35:43,843 - __main__ - INFO - Registration attempt for dhanavanthesh697@gmail.com with name: DHANAVANTHESH S
+2025-04-25 06:35:44,078 - __main__ - INFO - Verification code for dhanavanthesh697@gmail.com: 767277
+2025-04-25 06:35:44,080 - __main__ - INFO - Sending verification code 767277 to dhanavanthesh697@gmail.com
+2025-04-25 06:35:47,900 - __main__ - INFO - Email sent successfully to dhanavanthesh697@gmail.com
+2025-04-25 06:36:12,296 - __main__ - INFO - Verification attempt for dhanavanthesh697@gmail.com with code 767277
+2025-04-25 06:36:12,565 - __main__ - INFO - Email verified successfully for dhanavanthesh697@gmail.com
+2025-04-25 06:36:12,665 - __main__ - INFO - Retrieved 0 chats for user 680ae004d7867ce122b32f58
+2025-04-25 06:36:12,750 - __main__ - INFO - Retrieved 0 chats for user 680ae004d7867ce122b32f58
+2025-04-25 06:36:12,910 - __main__ - INFO - Created new chat chat_1745543172755 for user 680ae004d7867ce122b32f58
+2025-04-25 06:36:13,332 - __main__ - INFO - Created new chat chat_1745543172670 for user 680ae004d7867ce122b32f58
+2025-04-25 06:36:17,711 - __main__ - INFO - Deleted chat chat_1745543172755 for user 680ae004d7867ce122b32f58
+2025-04-25 06:36:21,172 - __main__ - INFO - Updated title of chat chat_1745543172670 to 'Hi'
+2025-04-25 06:36:22,034 - __main__ - INFO - Saved chat messages for user 680ae004d7867ce122b32f58, chat chat_1745543172670
+2025-04-25 06:36:25,828 - __main__ - INFO - Retrieved 1 chats for user 680ae004d7867ce122b32f58
+2025-04-25 06:36:25,928 - __main__ - INFO - Retrieved 1 chats for user 680ae004d7867ce122b32f58
+2025-04-25 06:36:34,618 - __main__ - INFO - Updated title of chat chat_1745543172670 to 'Hi hlo'
