@@ -890,23 +890,7 @@ const Chatbot = () => {
                       group-hover:placeholder-blue-500 dark:group-hover:placeholder-blue-400"
                     disabled={loading}
                   />
-                  
-                  <div className="relative">
-                    <button
-                      onClick={() => speakText(input)}
-                      className={`p-2 rounded-full transition-all duration-200 transform 
-                        hover:scale-110 active:scale-95 
-                        ${input.trim() 
-                          ? 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500'
-                          : 'opacity-50 cursor-not-allowed'
-                        }`}
-                      disabled={!input.trim()}
-                      title={`Speak text in ${supportedLanguages[currentLanguage]}`}
-                    >
-                      🔊
-                    </button>
-                  
-                  </div>
+                
                   
                   <button
                     onClick={isResponding ? stopResponse : handleSend}
