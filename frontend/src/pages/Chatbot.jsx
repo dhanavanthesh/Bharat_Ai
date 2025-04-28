@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useSpeech } from '../context/SpeechContext';
 import { supportedLanguages } from '../config/languages';
-import { FaPlus, FaPencilAlt, FaTrash, FaDownload, FaUser, FaMoon, FaSun, FaSignOutAlt, FaRegCommentDots, FaCog, FaChevronDown, FaChevronUp, FaArrowUp, FaStop, FaBars } from 'react-icons/fa';
+import { FaPlus, FaPencilAlt, FaTrash, FaDownload, FaUser, FaMoon, FaSun, FaSignOutAlt, FaRegCommentDots, FaCog, FaChevronDown, FaChevronUp, FaArrowUp, FaStop, FaBars, FaMicrophoneAlt } from 'react-icons/fa';
 import { auth } from '../utils/auth';
 import { chatApi } from '../utils/chatApi';
 import { exportChatToPDF } from '../utils/exportPdf';
@@ -845,6 +845,7 @@ const Chatbot = () => {
                       } else {
                         try {
                           const result = await startListening(currentLanguage);
+                          console.log('Speech result:', result);
                           if (result) {
                             setInput(result.text);
                             if (result.language && result.language !== currentLanguage) {
@@ -865,7 +866,7 @@ const Chatbot = () => {
                     disabled={!audioAvailable}
                     title={audioAvailable ? (isListening ? "Stop recording" : "Start voice input") : "Voice input not available"}
                   >
-                    🎤
+                    <FaMicrophoneAlt />
                   </button>
                   
                   <textarea
