@@ -18,8 +18,7 @@ const Chatbot = () => {
     currentLanguage,
     setCurrentLanguage,
     startListening,
-    stopListening,
-    speakText
+    stopListening
   } = useSpeech();
   const [chats, setChats] = useState([]);
   const [currentChatId, setCurrentChatId] = useState(null);
