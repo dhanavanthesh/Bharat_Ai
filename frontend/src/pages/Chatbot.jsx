@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useSpeech } from '../context/SpeechContext';
 import { supportedLanguages } from '../config/languages';
-import { FaPlus, FaPencilAlt, FaTrash, FaDownload, FaUser, FaMoon, FaSun, FaSignOutAlt, FaRegCommentDots, FaCog, FaChevronDown, FaChevronUp, FaArrowUp, FaStop } from 'react-icons/fa';
+import { FaPlus, FaPencilAlt, FaTrash, FaDownload, FaUser, FaMoon, FaSun, FaSignOutAlt, FaRegCommentDots, FaCog, FaChevronDown, FaChevronUp, FaArrowUp, FaStop, FaBars } from 'react-icons/fa';
 import { auth } from '../utils/auth';
 import { chatApi } from '../utils/chatApi';
 import { exportChatToPDF } from '../utils/exportPdf';
@@ -47,6 +47,7 @@ const Chatbot = () => {
   const user = auth.getCurrentUser();
   const [isResponding, setIsResponding] = useState(false);
   const abortController = useRef(null);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", darkMode);
@@ -399,9 +400,20 @@ const Chatbot = () => {
     <div className={`flex flex-col h-screen ${darkMode ? 'dark' : ''}`}>
       <div className="flex flex-1 overflow-hidden bg-gray-100 dark:bg-gray-900">
         {/* Collapsible Sidebar */}
-        <div className={`bg-gray-200 dark:bg-gray-800 flex flex-col transition-all duration-300 
-          ${sidebarCollapsed ? 'w-0 md:w-16' : 'w-64'} 
-          fixed md:relative z-10 h-full`}>
+        <div
+          className={`
+            bg-gray-200 dark:bg-gray-800 flex flex-col transition-all duration-300
+            ${sidebarCollapsed ? 'w-0 md:w-12' : 'w-64'}
+            md:relative md:z-10 md:h-full
+            fixed top-0 left-0 h-full z-50
+            transition-transform duration-300
+            ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+            w-4/5 max-w-xs
+            md:translate-x-0 md:w-64 md:max-w-none
+            ${window.innerWidth > 768 ? '' : 'md:hidden'}
+          `}
+          style={window.innerWidth > 768 ? {} : {}}
+        >
           {/* Sidebar Header */}
           <div className="p-4 border-b border-gray-300 dark:border-gray-700 flex items-center justify-between">
             {!sidebarCollapsed && (
@@ -414,7 +426,7 @@ const Chatbot = () => {
             )}
             <button
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="p-2 rounded hover:bg-gray-300 dark:hover:bg-gray-700"
+              className="p-2 rounded hover:bg-gray-300 dark:hover:bg-gray-700 hidden md:inline-flex"
             >
               {sidebarCollapsed ? '→' : '←'}
             </button>
@@ -699,7 +711,16 @@ const Chatbot = () => {
         <div className="flex-1 flex flex-col w-full md:w-auto">
           {/* Chat Header */}
           <div className="animated-gradient-header p-4 shadow flex justify-between items-center">
-            <div className="w-20"></div> {/* Spacer to help with centering */}
+            {/* Mobile menu button */}
+            <button
+              className="md:hidden mr-2 text-purple-700 hover:text-purple-900 focus:outline-none"
+              onClick={() => setMobileSidebarOpen(true)}
+              aria-label="Open sidebar"
+              style={{ fontSize: 24 }}
+            >
+              <FaBars />
+            </button>
+            <div className="w-20 hidden md:block"></div> {/* Spacer for desktop */}
             <h1 className="text-2xl font-bold text-purple-500 dark:text-purple-400 flex-1 text-center">
               BHARAT AI
             </h1>
@@ -847,34 +868,27 @@ const Chatbot = () => {
                     🎤
                   </button>
                   
-                  <input
+                  <textarea
                     ref={inputRef}
-                    type="text"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSend();
+                      }
+                    }}
                     placeholder={input.trim() ? "Press ↵ to send" : (loading ? "AI is thinking..." : "Type your message...")}
-                    className="flex-1 p-2 bg-transparent border-none outline-none 
-                      dark:text-white text-sm md:text-base 
-                      placeholder-gray-500 dark:placeholder-gray-400 
-                      transition-all duration-300 ease-in-out 
-                      focus:placeholder-blue-500 dark:focus:placeholder-blue-400
+                    rows={1}
+                    style={{ resize: "none", overflow: "auto" }}
+                    className="flex-1 p-2 bg-transparent border-none outline-none \
+                      dark:text-white text-sm md:text-base \
+                      placeholder-gray-500 dark:placeholder-gray-400 \
+                      transition-all duration-300 ease-in-out \
+                      focus:placeholder-blue-500 dark:focus:placeholder-blue-400\
                       group-hover:placeholder-blue-500 dark:group-hover:placeholder-blue-400"
                     disabled={loading}
                   />
-                  
-                  {/* {input.trim() && !loading && (
-                    <button
-                      onClick={handleSend}
-                      className="p-2 rounded-full transition-all duration-200 transform 
-                        hover:scale-110 active:scale-95 
-                        bg-blue-500 hover:bg-blue-600 text-white
-                        flex items-center justify-center"
-                      title="Press Enter to send"
-                    >
-                      ↵
-                    </button>
-                  )} */}
                   
                   <div className="relative">
                     <button
@@ -923,6 +937,14 @@ const Chatbot = () => {
           </div>
         </div>
       </div>
+      {/* Overlay for mobile */}
+      {mobileSidebarOpen && window.innerWidth <= 768 && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          onClick={() => setMobileSidebarOpen(false)}
+          aria-label="Close sidebar"
+        />
+      )}
     </div>
   );
 };
