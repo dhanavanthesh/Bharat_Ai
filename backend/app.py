@@ -51,8 +51,8 @@ stream_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 logger.addHandler(stream_handler)
 
-# load_dotenv('/etc/bharatai.env')
-load_dotenv('.env')
+load_dotenv('/etc/bharatai.env')
+#load_dotenv('.env')
 
 def get_database():
     """
