@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useSpeech } from '../context/SpeechContext';
 import { supportedLanguages } from '../config/languages';
-import { FaPlus, FaPencilAlt, FaTrash, FaDownload, FaUser, FaMoon, FaSun, FaSignOutAlt, FaRegCommentDots, FaCog, FaChevronDown, FaChevronUp, FaArrowUp, FaStop } from 'react-icons/fa';
+import { FaPlus, FaPencilAlt, FaTrash, FaDownload, FaUser, FaMoon, FaSun, FaSignOutAlt, FaRegCommentDots, FaCog, FaChevronDown, FaChevronUp, FaArrowUp, FaStop, FaBars, FaMicrophoneAlt } from 'react-icons/fa';
 import { auth } from '../utils/auth';
 import { chatApi } from '../utils/chatApi';
 import { exportChatToPDF } from '../utils/exportPdf';
@@ -36,15 +36,18 @@ const Chatbot = () => {
   const [audioAvailable, setAudioAvailable] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [profileOpen, setProfileOpen] = useState(false);
+  const [headerProfileOpen, setHeaderProfileOpen] = useState(false);
+  const headerProfileRef = useRef(null);
+  const [sidebarProfileOpen, setSidebarProfileOpen] = useState(false);
+  const sidebarProfileRef = useRef(null);
   const settingsRef = useRef(null);
-  const profileRef = useRef(null);
   
   const chatEndRef = useRef(null);
   const inputRef = useRef(null);
   const user = auth.getCurrentUser();
   const [isResponding, setIsResponding] = useState(false);
   const abortController = useRef(null);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", darkMode);
@@ -64,8 +67,11 @@ const Chatbot = () => {
       if (settingsRef.current && !settingsRef.current.contains(event.target)) {
         setSettingsOpen(false);
       }
-      if (profileRef.current && !profileRef.current.contains(event.target)) {
-        setProfileOpen(false);
+      if (headerProfileRef.current && !headerProfileRef.current.contains(event.target)) {
+        setHeaderProfileOpen(false);
+      }
+      if (sidebarProfileRef.current && !sidebarProfileRef.current.contains(event.target)) {
+        setSidebarProfileOpen(false);
       }
     }
 
@@ -267,13 +273,15 @@ const Chatbot = () => {
     } catch (err) {
       if (err.name === 'AbortError') {
         toast.info('Response stopped');
+        setChats(updatedChat);
       } else {
         console.error("Error:", err);
         toast.error("Failed to fetch response!");
+        setChats(updatedChat);
       }
-      setChats(updatedChat);
       setLoading(false);
       setIsResponding(false);
+      abortController.current = null;
     }
   };
 
@@ -392,9 +400,20 @@ const Chatbot = () => {
     <div className={`flex flex-col h-screen ${darkMode ? 'dark' : ''}`}>
       <div className="flex flex-1 overflow-hidden bg-gray-100 dark:bg-gray-900">
         {/* Collapsible Sidebar */}
-        <div className={`bg-gray-200 dark:bg-gray-800 flex flex-col transition-all duration-300 
-          ${sidebarCollapsed ? 'w-0 md:w-16' : 'w-64'} 
-          fixed md:relative z-10 h-full`}>
+        <div
+          className={`
+            bg-gray-200 dark:bg-gray-800 flex flex-col transition-all duration-300
+            ${sidebarCollapsed ? 'w-0 md:w-12' : 'w-64'}
+            md:relative md:z-10 md:h-full
+            fixed top-0 left-0 h-full z-50
+            transition-transform duration-300
+            ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+            w-4/5 max-w-xs
+            md:translate-x-0 md:w-64 md:max-w-none
+            ${window.innerWidth > 768 ? '' : 'md:hidden'}
+          `}
+          style={window.innerWidth > 768 ? {} : {}}
+        >
           {/* Sidebar Header */}
           <div className="p-4 border-b border-gray-300 dark:border-gray-700 flex items-center justify-between">
             {!sidebarCollapsed && (
@@ -407,7 +426,7 @@ const Chatbot = () => {
             )}
             <button
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="p-2 rounded hover:bg-gray-300 dark:hover:bg-gray-700"
+              className="p-2 rounded hover:bg-gray-300 dark:hover:bg-gray-700 hidden md:inline-flex"
             >
               {sidebarCollapsed ? '→' : '←'}
             </button>
@@ -427,9 +446,9 @@ const Chatbot = () => {
               </div>
             </div>
           ) : (
-            <div className="p-2 border-b border-gray-300 dark:border-gray-700 flex justify-center relative" ref={profileRef}>
+            <div className="p-2 border-b border-gray-300 dark:border-gray-700 flex justify-center relative" ref={sidebarProfileRef}>
               <button
-                onClick={() => setProfileOpen(!profileOpen)}
+                onClick={() => setSidebarProfileOpen(!sidebarProfileOpen)}
                 className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white hover:bg-blue-600 transition-colors duration-200"
                 title={user?.name || 'User'}
               >
@@ -437,7 +456,7 @@ const Chatbot = () => {
               </button>
 
               {/* Profile Popup for Collapsed Mode */}
-              {profileOpen && (
+              {sidebarProfileOpen && (
                 <div className="absolute top-12 left-16 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3 min-w-[220px] border border-gray-200 dark:border-gray-700 transform transition-all duration-200 ease-in-out z-50">
                   <div className="space-y-3">
                     {/* Profile Header */}
@@ -467,7 +486,7 @@ const Chatbot = () => {
 
                       <button
                         onClick={() => {
-                          setProfileOpen(false);
+                          setSidebarProfileOpen(false);
                           handleLogout();
                         }}
                         className="w-full flex items-center p-2 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors duration-200"
@@ -691,27 +710,86 @@ const Chatbot = () => {
         {/* Main Chat Area */}
         <div className="flex-1 flex flex-col w-full md:w-auto">
           {/* Chat Header */}
-          <div className="bg-white dark:bg-gray-800 p-4 shadow flex justify-between items-center">
-            <div className="flex items-center gap-2 md:gap-4">
-              <h2 className="text-base md:text-lg font-semibold dark:text-white truncate max-w-[150px] md:max-w-none">
-                {chatTitles[currentChatId] || 'New Chat'}
-              </h2>
-              <div className="text-xs md:text-sm px-2 py-1 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center gap-1">
-                {supportedLanguages[currentLanguage] || currentLanguage}
+          <div className="animated-gradient-header p-4 shadow flex justify-between items-center">
+            {/* Mobile menu button */}
+            <button
+              className="md:hidden mr-2 text-purple-700 hover:text-purple-900 focus:outline-none"
+              onClick={() => setMobileSidebarOpen(true)}
+              aria-label="Open sidebar"
+              style={{ fontSize: 24 }}
+            >
+              <FaBars />
+            </button>
+            <div className="w-20 hidden md:block"></div> {/* Spacer for desktop */}
+            <h1 className="text-2xl font-bold text-purple-500 dark:text-purple-400 flex-1 text-center">
+              BHARAT AI
+            </h1>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleExportChat}
+                className={`flex items-center justify-end text-blue-600 hover:text-blue-800 dark:text-blue-400 px-3 py-1 rounded transition-colors duration-200 ${
+                  chats.length === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-50 dark:hover:bg-blue-900'
+                }`}
+                disabled={chats.length === 0}
+                title={chats.length === 0 ? 'Start a conversation to enable export' : 'Export chat as PDF'}
+              >
+                <FaDownload className="mr-1" />
+                <span className="hidden md:inline">Export</span>
+              </button>
+              {/* User Info Dropdown */}
+              <div className="relative" ref={headerProfileRef}>
+                <button
+                  onClick={() => setHeaderProfileOpen(!headerProfileOpen)}
+                  className="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center text-white hover:bg-blue-600 transition-colors duration-200 ml-2 focus:outline-none"
+                  title={user?.name || 'User'}
+                >
+                  {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                </button>
+                {headerProfileOpen && (
+                  <div className="absolute right-0 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3 min-w-[220px] border border-gray-200 dark:border-gray-700 z-50">
+                    <div className="space-y-3">
+                      {/* Profile Header */}
+                      <div className="flex items-center space-x-3 pb-3 border-b border-gray-200 dark:border-gray-700">
+                        <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white text-lg">
+                          {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-900 dark:text-white truncate">
+                            {user?.name || 'User'}
+                          </p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                            {user?.email || ''}
+                          </p>
+                        </div>
+                      </div>
+                      {/* Quick Actions */}
+                      <div className="space-y-2">
+                        <button
+                          onClick={() => { setHeaderProfileOpen(false); navigate('/profile'); }}
+                          className="w-full flex items-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 text-gray-700 dark:text-gray-300"
+                        >
+                          <FaUser className="mr-2" />
+                          View Profile
+                        </button>
+                        <button
+                          onClick={() => { setHeaderProfileOpen(false); handleLogout(); }}
+                          className="w-full flex items-center p-2 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors duration-200"
+                        >
+                          <FaSignOutAlt className="mr-2" />
+                          Sign Out
+                        </button>
+                      </div>
+                      {/* Account Status */}
+                      <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          Signed in as {user?.email}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
-            
-            <button
-              onClick={handleExportChat}
-              className={`flex items-center text-blue-600 hover:text-blue-800 dark:text-blue-400 px-3 py-1 rounded transition-colors duration-200 ${
-                chats.length === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-50 dark:hover:bg-blue-900'
-              }`}
-              disabled={chats.length === 0}
-              title={chats.length === 0 ? 'Start a conversation to enable export' : 'Export chat as PDF'}
-            >
-              <FaDownload className="mr-1" />
-              <span className="hidden md:inline">Export</span>
-            </button>
           </div>
           
           {/* Messages */}
@@ -767,6 +845,7 @@ const Chatbot = () => {
                       } else {
                         try {
                           const result = await startListening(currentLanguage);
+                          console.log('Speech result:', result);
                           if (result) {
                             setInput(result.text);
                             if (result.language && result.language !== currentLanguage) {
@@ -787,78 +866,70 @@ const Chatbot = () => {
                     disabled={!audioAvailable}
                     title={audioAvailable ? (isListening ? "Stop recording" : "Start voice input") : "Voice input not available"}
                   >
-                    🎤
+                    <FaMicrophoneAlt />
                   </button>
                   
-                  <input
+                  <textarea
                     ref={inputRef}
-                    type="text"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
-                    placeholder={loading ? "AI is thinking..." : "Type your message..."}
-                    className="flex-1 p-2 bg-transparent border-none outline-none 
-                      dark:text-white text-sm md:text-base 
-                      placeholder-gray-500 dark:placeholder-gray-400 
-                      transition-all duration-300 ease-in-out 
-                      focus:placeholder-blue-500 dark:focus:placeholder-blue-400
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSend();
+                      }
+                    }}
+                    placeholder={input.trim() ? "Press ↵ to send" : (loading ? "AI is thinking..." : "Type your message...")}
+                    rows={1}
+                    style={{ resize: "none", overflow: "auto" }}
+                    className="flex-1 p-2 bg-transparent border-none outline-none \
+                      dark:text-white text-sm md:text-base \
+                      placeholder-gray-500 dark:placeholder-gray-400 \
+                      transition-all duration-300 ease-in-out \
+                      focus:placeholder-blue-500 dark:focus:placeholder-blue-400\
                       group-hover:placeholder-blue-500 dark:group-hover:placeholder-blue-400"
                     disabled={loading}
                   />
+                
                   
                   <button
-                    onClick={() => speakText(input)}
-                    className={`p-2 rounded-full transition-all duration-200 transform 
-                      hover:scale-110 active:scale-95 
-                      ${input.trim() 
-                        ? 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500'
-                        : 'opacity-50 cursor-not-allowed'
-                      }`}
-                    disabled={!input.trim()}
-                    title={`Speak text in ${supportedLanguages[currentLanguage]}`}
+                    onClick={isResponding ? stopResponse : handleSend}
+                    className={`p-3 rounded-full transition-all duration-300 transform hover:scale-110 active:scale-95 ${
+                      isResponding 
+                        ? 'bg-red-500 hover:bg-red-600 text-white'
+                        : loading 
+                          ? 'bg-red-500 hover:bg-red-600'
+                          : input.trim()
+                            ? 'bg-blue-600 hover:bg-blue-700 text-white hover:shadow-lg'
+                            : 'bg-gray-300 cursor-not-allowed'
+                    }`}
+                    disabled={!input.trim() && !isResponding}
+                    title={isResponding ? "Stop response" : "Send message"}
                   >
-                    🔊
+                    {isResponding ? (
+                      <FaStop className="w-5 h-5 text-white" />
+                    ) : loading ? (
+                      <FaStop className="w-5 h-5 text-white" />
+                    ) : (
+                      <FaArrowUp className={`w-5 h-5 ${input.trim() ? 'text-white' : 'text-gray-500'}`} />
+                    )}
                   </button>
-                  
-                  <select
-                    value={currentLanguage}
-                    onChange={(e) => setCurrentLanguage(e.target.value)}
-                    className="p-2 rounded border-none bg-gray-200 dark:bg-gray-600 
-                      dark:text-white text-sm md:text-base 
-                      focus:ring-2 focus:ring-blue-500 
-                      transition-all duration-200 
-                      hover:bg-gray-300 dark:hover:bg-gray-500
-                      transform hover:scale-105"
-                  >
-                    {Object.entries(supportedLanguages).map(([code, name]) => (
-                      <option key={code} value={code}>{name}</option>
-                    ))}
-                  </select>
                 </div>
                 
-                <button
-                  onClick={handleSend}
-                  className={`p-3 rounded-full transition-all duration-300 transform hover:scale-110 active:scale-95 ${
-                    loading 
-                      ? 'bg-red-500 hover:bg-red-600'
-                      : input.trim()
-                        ? 'bg-blue-600 hover:bg-blue-700 text-white hover:shadow-lg'
-                        : 'bg-gray-300 cursor-not-allowed'
-                  }`}
-                  disabled={!input.trim() && !isResponding}
-                  title={isResponding ? "Stop response" : "Send message"}
-                >
-                  {loading ? (
-                    <FaStop className="w-5 h-5 text-white" />
-                  ) : (
-                    <FaArrowUp className={`w-5 h-5 ${input.trim() ? 'text-white' : 'text-gray-500'}`} />
-                  )}
-                </button>
+                
               </div>
             </div>
           </div>
         </div>
       </div>
+      {/* Overlay for mobile */}
+      {mobileSidebarOpen && window.innerWidth <= 768 && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          onClick={() => setMobileSidebarOpen(false)}
+          aria-label="Close sidebar"
+        />
+      )}
     </div>
   );
 };
