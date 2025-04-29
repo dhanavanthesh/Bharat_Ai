@@ -402,7 +402,7 @@ const Chatbot = () => {
         <div
           className={`
             bg-gray-200 dark:bg-gray-800 flex flex-col transition-all duration-300
-            ${sidebarCollapsed ? 'w-0 md:w-12' : 'w-64'}
+            ${sidebarCollapsed ? 'w-0 md:w-9' : 'w-64'}
             md:relative md:z-10 md:h-full
             fixed top-0 left-0 h-full z-50
             transition-transform duration-300
@@ -799,7 +799,7 @@ const Chatbot = () => {
                   <div className="text-blue-500 dark:text-blue-400 mb-4">
                     <FaRegCommentDots size={48} className="mx-auto" />
                   </div>
-                  <h3 className="text-xl md:text-2xl font-semibold mb-4 dark:text-white">Welcome to AI Chat!</h3>
+                  <h3 className="text-xl md:text-2xl font-semibold mb-4 dark:text-white">Welcome to BHARATH AI(BHAAI)!</h3>
                   <p className="text-gray-600 dark:text-gray-300 mb-6">Start a conversation by typing a message below. You can:</p>
                   <ul className="text-left text-gray-600 dark:text-gray-300 space-y-2 mb-6">
                     <li className="flex items-center">
