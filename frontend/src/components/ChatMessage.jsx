@@ -1,6 +1,6 @@
 // src/components/ChatMessage.jsx
-import React from 'react';
-import { FaMicrophone, FaCircleNotch, FaExclamationCircle } from 'react-icons/fa';
+import React, { useState } from 'react';
+import { FaVolumeUp, FaCircleNotch, FaExclamationCircle, FaCopy, FaCheck } from 'react-icons/fa';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
@@ -10,25 +10,19 @@ const ChatMessage = ({ message, darkMode }) => {
   const { role, content, language = 'en' } = message;
   const { speakText, isSpeaking, isProcessing, error } = useSpeech();
   const isUser = role === 'user';
+  const [isCopied, setIsCopied] = useState(false);
   
   const speakMessage = () => {
     speakText(content, language);
   };
 
-  const getLanguageFlag = () => {
-    const flags = {
-      en: '🇺🇸',
-      hi: '🇮🇳',
-      kn: '🇮🇳',
-      ta: '🇮🇳',
-      te: '🇮🇳',
-      mr: '🇮🇳',
-      bn: '🇮🇳',
-      gu: '🇮🇳',
-      pa: '🇮🇳',
-      or: '🇮🇳'
-    };
-    return flags[language] || '🌐';
+  const copyMessage = () => {
+    navigator.clipboard.writeText(content);
+    setIsCopied(true);
+    // Reset the copied state after 2 seconds
+    setTimeout(() => {
+      setIsCopied(false);
+    }, 2000);
   };
   
   return (
@@ -40,32 +34,48 @@ const ChatMessage = ({ message, darkMode }) => {
             : `bg-gray-200 ${darkMode ? 'dark:bg-gray-700 dark:text-white' : ''}`
         }`}
       >
-        <div className="flex justify-between items-start mb-1">
+        <div className="flex justify-end items-start mb-1">
           <div className="flex items-center gap-2">
-            <span className="font-semibold">{isUser ? 'You' : 'AI'}</span>
-            <span className="text-xs opacity-75">{getLanguageFlag()} {language.toUpperCase()}</span>
+            <button
+              onClick={copyMessage}
+              className={`p-1 rounded-full transition-all duration-200 flex items-center gap-1 ${
+                isUser 
+                  ? 'text-blue-200 hover:text-blue-100 focus:text-blue-100' 
+                  : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100 focus:text-gray-700 dark:focus:text-gray-100'
+              }`}
+              title={isCopied ? "Copied!" : "Copy message"}
+            >
+              {isCopied ? (
+                <>
+                  <FaCheck size={16} className="text-green-500" />
+                  <span className="text-xs">Copied!</span>
+                </>
+              ) : (
+                <FaCopy size={16} />
+              )}
+            </button>
+            <button 
+              onClick={speakMessage}
+              disabled={isProcessing}
+              aria-label={isSpeaking ? "Stop speaking" : "Speak message"}
+              className={`p-1 rounded-full transition-all duration-200 ${
+                isUser 
+                  ? 'text-blue-200 hover:text-blue-100 focus:text-blue-100' 
+                  : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100 focus:text-gray-700 dark:focus:text-gray-100'
+              } ${
+                isSpeaking ? 'animate-pulse text-red-500 dark:text-red-400' : ''
+              }`}
+              title={isSpeaking ? "Speaking..." : "Speak message"}
+            >
+              {error ? (
+                <FaExclamationCircle size={18} className="text-red-500" />
+              ) : isProcessing ? (
+                <FaCircleNotch size={18} className="animate-spin" />
+              ) : (
+                <FaVolumeUp size={18} />
+              )}
+            </button>
           </div>
-          <button 
-            onClick={speakMessage}
-            disabled={isProcessing}
-            aria-label={isSpeaking ? "Stop speaking" : "Speak message"}
-            className={`p-1 rounded-full transition-all duration-200 ${
-              isUser 
-                ? 'text-blue-200 hover:text-blue-100 focus:text-blue-100' 
-                : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100 focus:text-gray-700 dark:focus:text-gray-100'
-            } ${
-              isSpeaking ? 'animate-pulse text-red-500 dark:text-red-400' : ''
-            }`}
-            title={isSpeaking ? "Speaking..." : "Speak this message"}
-          >
-            {error ? (
-              <FaExclamationCircle size={18} className="text-red-500" />
-            ) : isProcessing ? (
-              <FaCircleNotch size={18} className="animate-spin" />
-            ) : (
-              <FaMicrophone size={18} />
-            )}
-          </button>
         </div>
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
