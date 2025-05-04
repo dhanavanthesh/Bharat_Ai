@@ -120,3 +120,7 @@
 2025-05-04 21:00:06,878 - __main__ - INFO - Retrieved 2 chats for user 680ae004d7867ce122b32f58
 2025-05-04 21:00:07,083 - __main__ - INFO - Retrieved 2 chats for user 680ae004d7867ce122b32f58
 2025-05-04 21:00:11,734 - __main__ - INFO - Deleted chat chat_1745548055446 for user 680ae004d7867ce122b32f58
+2025-05-04 23:02:27,618 - __main__ - ERROR - MongoDB URI not found in environment variables
+2025-05-04 23:02:27,619 - __main__ - CRITICAL - Could not connect to MongoDB. Application will not function correctly.
+2025-05-04 23:05:35,394 - __main__ - ERROR - MongoDB URI not found in environment variables
+2025-05-04 23:05:35,395 - __main__ - CRITICAL - Could not connect to MongoDB. Application will not function correctly.
