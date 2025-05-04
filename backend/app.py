@@ -164,13 +164,13 @@ def send_verification_email(email, code):
         message = MIMEMultipart()
         message["From"] = sender_email
         message["To"] = email
-        message["Subject"] = "Email Verification - AI Chatbot"
+        message["Subject"] = "Email Verification - Bharat AI"
 
         body = f"""
         <html>
         <body>
             <h2>Verify Your Email Address</h2>
-            <p>Thank you for registering with AI Chatbot. Use the verification code below to complete your registration:</p>
+            <p>Thank you for registering with Bharat AI. Use the verification code below to complete your registration:</p>
             <h1 style="color: #3b82f6;">{code}</h1>
             <p>This code will expire in 10 minutes.</p>
             <p>If you didn't request this verification, please ignore this email.</p>
