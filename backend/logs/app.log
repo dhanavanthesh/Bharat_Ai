@@ -124,3 +124,22 @@
 2025-05-04 23:02:27,619 - __main__ - CRITICAL - Could not connect to MongoDB. Application will not function correctly.
 2025-05-04 23:05:35,394 - __main__ - ERROR - MongoDB URI not found in environment variables
 2025-05-04 23:05:35,395 - __main__ - CRITICAL - Could not connect to MongoDB. Application will not function correctly.
+2025-05-13 11:20:17,107 - __main__ - ERROR - MongoDB URI not found in environment variables
+2025-05-13 11:20:17,108 - __main__ - CRITICAL - Could not connect to MongoDB. Application will not function correctly.
+2025-05-13 11:21:35,817 - __main__ - ERROR - MongoDB URI not found in environment variables
+2025-05-13 11:21:35,817 - __main__ - CRITICAL - Could not connect to MongoDB. Application will not function correctly.
+2025-05-13 11:22:04,857 - __main__ - INFO - Successfully connected to MongoDB
+2025-05-13 11:22:05,596 - __main__ - INFO - Starting server with Waitress at 2025-05-13T11:22:05.596846 on port 5001
+2025-05-13 11:25:11,035 - __main__ - INFO - Retrieved 6 chats for user 680b12e4c9ef187db0837169
+2025-05-13 11:25:12,895 - __main__ - INFO - Retrieved 6 chats for user 680b12e4c9ef187db0837169
+2025-05-13 11:50:09,506 - __main__ - INFO - Retrieved 6 chats for user 680b12e4c9ef187db0837169
+2025-05-13 15:16:12,244 - __main__ - INFO - Successfully connected to MongoDB
+2025-05-13 15:16:13,356 - __main__ - INFO - Starting server with Waitress at 2025-05-13T15:16:13.356473 on port 5001
+2025-05-13 15:19:46,484 - __main__ - INFO - Retrieved 6 chats for user 680b12e4c9ef187db0837169
+2025-05-13 15:19:46,566 - __main__ - INFO - Retrieved 6 chats for user 680b12e4c9ef187db0837169
+2025-05-13 15:20:00,565 - __main__ - INFO - Retrieved 6 chats for user 680b12e4c9ef187db0837169
+2025-05-13 15:20:00,726 - __main__ - INFO - Retrieved 6 chats for user 680b12e4c9ef187db0837169
+2025-05-13 15:21:45,697 - __main__ - INFO - Retrieved 6 chats for user 680b12e4c9ef187db0837169
+2025-05-13 15:21:45,880 - __main__ - INFO - Retrieved 6 chats for user 680b12e4c9ef187db0837169
+2025-05-13 15:21:55,325 - __main__ - INFO - Retrieved 6 chats for user 680b12e4c9ef187db0837169
+2025-05-13 15:21:55,448 - __main__ - INFO - Retrieved 6 chats for user 680b12e4c9ef187db0837169
