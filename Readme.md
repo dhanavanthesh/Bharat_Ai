@@ -1,5 +1,7 @@
 # Chatbot Application
 
+
+
 A modern web-based chatbot application with AI capabilities powered by GROQ API. This project combines a Flask backend with a React frontend to create a feature-rich chat experience.
 
 ## Features

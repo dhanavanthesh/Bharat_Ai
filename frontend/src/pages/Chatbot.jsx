@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useSpeech } from '../context/SpeechContext';
 import { supportedLanguages } from '../config/languages';
-import { FaPlus, FaPencilAlt, FaTrash, FaDownload, FaUser, FaMoon, FaSun, FaSignOutAlt, FaRegCommentDots, FaCog, FaChevronDown, FaChevronUp, FaArrowUp, FaStop, FaBars, FaMicrophoneAlt } from 'react-icons/fa';
+import { FaPlus, FaPencilAlt, FaTrash, FaDownload, FaUser, FaMoon, FaSun, FaSignOutAlt, FaRegCommentDots, FaCog, FaChevronDown, FaChevronUp, FaArrowUp, FaStop, FaBars, FaMicrophoneAlt, FaFileUpload } from 'react-icons/fa';
 import { auth } from '../utils/auth';
 import { chatApi } from '../utils/chatApi';
 import { exportChatToPDF } from '../utils/exportPdf';
@@ -725,15 +725,12 @@ const Chatbot = () => {
             </h1>
             <div className="flex items-center gap-2">
               <button
-                onClick={handleExportChat}
-                className={`flex items-center justify-end text-blue-600 hover:text-blue-800 dark:text-blue-400 px-3 py-1 rounded transition-colors duration-200 ${
-                  chats.length === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-50 dark:hover:bg-blue-900'
-                }`}
-                disabled={chats.length === 0}
-                title={chats.length === 0 ? 'Start a conversation to enable export' : 'Export chat as PDF'}
+                onClick={() => navigate('/summarize')}
+                className="flex items-center justify-end text-blue-600 hover:text-blue-800 dark:text-blue-400 px-3 py-1 rounded transition-colors duration-200 hover:bg-blue-50 dark:hover:bg-blue-900"
+                title="Summarize PDF"
               >
-                <FaDownload className="mr-1" />
-                <span className="hidden md:inline">Export</span>
+                <FaFileUpload className="mr-1" />
+                <span className="hidden md:inline">Summarize PDF</span>
               </button>
               {/* User Info Dropdown */}
               <div className="relative" ref={headerProfileRef}>

@@ -12,6 +12,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Profile from './pages/Profile';
 import Home from './pages/Home';
+import PdfSummarizer from './pages/PdfSummarizer';
 
 import './styles/Home.css';
 
@@ -35,6 +36,7 @@ function App() {
           <Route element={<ProtectedRoute />}>
             <Route path="/profile" element={<Profile />} />
             <Route path="/chat" element={<Chatbot />} />
+            <Route path="/summarize" element={<PdfSummarizer />} />
           </Route>
           
           <Route path="*" element={<Navigate to="/" />} />

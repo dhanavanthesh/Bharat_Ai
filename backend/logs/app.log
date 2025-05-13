@@ -124,3 +124,142 @@
 2025-05-04 23:02:27,619 - __main__ - CRITICAL - Could not connect to MongoDB. Application will not function correctly.
 2025-05-04 23:05:35,394 - __main__ - ERROR - MongoDB URI not found in environment variables
 2025-05-04 23:05:35,395 - __main__ - CRITICAL - Could not connect to MongoDB. Application will not function correctly.
+2025-05-13 11:20:17,107 - __main__ - ERROR - MongoDB URI not found in environment variables
+2025-05-13 11:20:17,108 - __main__ - CRITICAL - Could not connect to MongoDB. Application will not function correctly.
+2025-05-13 11:21:35,817 - __main__ - ERROR - MongoDB URI not found in environment variables
+2025-05-13 11:21:35,817 - __main__ - CRITICAL - Could not connect to MongoDB. Application will not function correctly.
+2025-05-13 11:22:04,857 - __main__ - INFO - Successfully connected to MongoDB
+2025-05-13 11:22:05,596 - __main__ - INFO - Starting server with Waitress at 2025-05-13T11:22:05.596846 on port 5001
+2025-05-13 11:25:11,035 - __main__ - INFO - Retrieved 6 chats for user 680b12e4c9ef187db0837169
+2025-05-13 11:25:12,895 - __main__ - INFO - Retrieved 6 chats for user 680b12e4c9ef187db0837169
+2025-05-13 11:50:09,506 - __main__ - INFO - Retrieved 6 chats for user 680b12e4c9ef187db0837169
+2025-05-13 15:16:12,244 - __main__ - INFO - Successfully connected to MongoDB
+2025-05-13 15:16:13,356 - __main__ - INFO - Starting server with Waitress at 2025-05-13T15:16:13.356473 on port 5001
+2025-05-13 15:19:46,484 - __main__ - INFO - Retrieved 6 chats for user 680b12e4c9ef187db0837169
+2025-05-13 15:19:46,566 - __main__ - INFO - Retrieved 6 chats for user 680b12e4c9ef187db0837169
+2025-05-13 15:20:00,565 - __main__ - INFO - Retrieved 6 chats for user 680b12e4c9ef187db0837169
+2025-05-13 15:20:00,726 - __main__ - INFO - Retrieved 6 chats for user 680b12e4c9ef187db0837169
+2025-05-13 15:21:45,697 - __main__ - INFO - Retrieved 6 chats for user 680b12e4c9ef187db0837169
+2025-05-13 15:21:45,880 - __main__ - INFO - Retrieved 6 chats for user 680b12e4c9ef187db0837169
+2025-05-13 15:21:55,325 - __main__ - INFO - Retrieved 6 chats for user 680b12e4c9ef187db0837169
+2025-05-13 15:21:55,448 - __main__ - INFO - Retrieved 6 chats for user 680b12e4c9ef187db0837169
+2025-05-13 15:31:41,436 - __main__ - INFO - Retrieved 0 chats for user user123
+2025-05-13 15:31:41,509 - __main__ - INFO - Retrieved 0 chats for user user123
+2025-05-13 15:31:41,702 - __main__ - INFO - Created new chat chat_1747130501513 for user user123
+2025-05-13 15:31:42,171 - __main__ - INFO - Created new chat chat_1747130501439 for user user123
+2025-05-13 15:34:28,268 - __main__ - INFO - Successfully connected to MongoDB
+2025-05-13 15:34:29,088 - __main__ - INFO - Starting server with Waitress at 2025-05-13T15:34:29.088538 on port 5001
+2025-05-13 15:35:46,824 - __main__ - INFO - Successfully connected to MongoDB
+2025-05-13 15:35:47,534 - __main__ - INFO - Starting server with Waitress at 2025-05-13T15:35:47.534625 on port 5001
+2025-05-13 15:35:57,476 - __main__ - INFO - Retrieved 6 chats for user 680b12e4c9ef187db0837169
+2025-05-13 15:35:57,583 - __main__ - INFO - Retrieved 6 chats for user 680b12e4c9ef187db0837169
+2025-05-13 15:39:27,187 - __main__ - INFO - Successfully connected to MongoDB
+2025-05-13 15:39:28,105 - __main__ - INFO - Starting server with Waitress at 2025-05-13T15:39:28.105106 on port 5001
+2025-05-13 15:39:48,062 - __main__ - INFO - Retrieved 6 chats for user 680b12e4c9ef187db0837169
+2025-05-13 15:39:48,130 - __main__ - INFO - Retrieved 6 chats for user 680b12e4c9ef187db0837169
+2025-05-13 15:42:07,717 - __main__ - INFO - Retrieved 6 chats for user 680b12e4c9ef187db0837169
+2025-05-13 15:42:07,857 - __main__ - INFO - Retrieved 6 chats for user 680b12e4c9ef187db0837169
+2025-05-13 15:42:58,166 - __main__ - INFO - Successfully connected to MongoDB
+2025-05-13 15:42:59,116 - __main__ - INFO - Starting server with Waitress at 2025-05-13T15:42:59.116502 on port 5001
+2025-05-13 15:43:20,168 - __main__ - INFO - Retrieved 6 chats for user 680b12e4c9ef187db0837169
+2025-05-13 15:43:20,482 - __main__ - INFO - Retrieved 6 chats for user 680b12e4c9ef187db0837169
+2025-05-13 15:45:18,519 - __main__ - INFO - Successfully connected to MongoDB
+2025-05-13 15:45:19,646 - __main__ - INFO - Starting server with Waitress at 2025-05-13T15:45:19.646766 on port 5001
+2025-05-13 15:45:36,788 - __main__ - INFO - Retrieved 6 chats for user 680b12e4c9ef187db0837169
+2025-05-13 15:45:36,889 - __main__ - INFO - Retrieved 6 chats for user 680b12e4c9ef187db0837169
+2025-05-13 15:47:00,035 - __main__ - INFO - Retrieved 6 chats for user 680b12e4c9ef187db0837169
+2025-05-13 15:47:00,636 - __main__ - INFO - Retrieved 6 chats for user 680b12e4c9ef187db0837169
+2025-05-13 15:53:00,969 - __main__ - INFO - Successfully connected to MongoDB
+2025-05-13 15:53:01,847 - __main__ - INFO - Starting server with Waitress at 2025-05-13T15:53:01.847599 on port 5001
+2025-05-13 20:32:13,925 - __main__ - INFO - Successfully connected to MongoDB
+2025-05-13 20:32:14,818 - __main__ - INFO - Starting server with Waitress at 2025-05-13T20:32:14.818233 on port 5001
+2025-05-13 20:33:24,837 - __main__ - INFO - Retrieved 6 chats for user 680b12e4c9ef187db0837169
+2025-05-13 20:33:24,933 - __main__ - INFO - Retrieved 6 chats for user 680b12e4c9ef187db0837169
+2025-05-13 20:34:53,059 - __main__ - INFO - Successfully connected to MongoDB
+2025-05-13 20:34:53,723 - __main__ - INFO - Starting server with Waitress at 2025-05-13T20:34:53.723674 on port 5001
+2025-05-13 20:35:01,375 - __main__ - INFO - Retrieved 6 chats for user 680b12e4c9ef187db0837169
+2025-05-13 20:35:01,503 - __main__ - INFO - Retrieved 6 chats for user 680b12e4c9ef187db0837169
+2025-05-13 21:20:55,747 - __main__ - INFO - Successfully connected to MongoDB
+2025-05-13 21:20:56,201 - __main__ - WARNING - PyAudio not found. Speech recognition features will be disabled.
+2025-05-13 21:25:36,440 - __main__ - INFO - Successfully connected to MongoDB
+2025-05-13 21:25:36,782 - __main__ - WARNING - PyAudio not found. Speech recognition features will be disabled.
+2025-05-13 21:26:09,508 - __main__ - INFO - Successfully connected to MongoDB
+2025-05-13 21:26:09,871 - __main__ - WARNING - PyAudio not found. Speech recognition features will be disabled.
+2025-05-13 21:35:59,042 - __main__ - INFO - Successfully connected to MongoDB
+2025-05-13 21:35:59,390 - __main__ - WARNING - PyAudio not found. Speech recognition features will be disabled.
+2025-05-13 21:35:59,620 - __main__ - WARNING - PyMuPDF (fitz) module not available. PDF functionality will be disabled.
+2025-05-13 21:35:59,798 - __main__ - INFO - Starting server with Waitress at 2025-05-13T21:35:59.798151 on port 5001
+2025-05-13 21:36:38,448 - __main__ - INFO - User logged in: dhanavanthesh697@gmail.com
+2025-05-13 21:36:38,621 - __main__ - INFO - Retrieved 1 chats for user 680ae004d7867ce122b32f58
+2025-05-13 21:36:38,741 - __main__ - INFO - Retrieved 1 chats for user 680ae004d7867ce122b32f58
+2025-05-13 21:37:11,543 - __main__ - INFO - Created new chat chat_1747152431298 for user 680ae004d7867ce122b32f58
+2025-05-13 21:37:16,252 - __main__ - INFO - Deleted chat chat_1747152431298 for user 680ae004d7867ce122b32f58
+2025-05-13 21:48:51,903 - __main__ - INFO - Successfully connected to MongoDB
+2025-05-13 21:48:52,190 - __main__ - WARNING - PyAudio not found. Speech recognition features will be disabled.
+2025-05-13 21:48:52,498 - __main__ - WARNING - PyMuPDF (fitz) module not available. PDF functionality will be disabled.
+2025-05-13 21:48:52,675 - __main__ - INFO - Starting server with Waitress at 2025-05-13T21:48:52.675056 on port 5001
+2025-05-13 21:49:31,791 - __main__ - INFO - Retrieved 1 chats for user 680ae004d7867ce122b32f58
+2025-05-13 21:49:31,865 - __main__ - INFO - Retrieved 1 chats for user 680ae004d7867ce122b32f58
+2025-05-13 21:55:45,604 - __main__ - INFO - Successfully connected to MongoDB
+2025-05-13 21:55:45,909 - __main__ - WARNING - PyAudio not found. Speech recognition features will be disabled.
+2025-05-13 21:56:15,546 - __main__ - INFO - Successfully connected to MongoDB
+2025-05-13 21:56:15,815 - __main__ - WARNING - PyAudio not found. Speech recognition features will be disabled.
+2025-05-13 21:56:16,177 - __main__ - INFO - Starting server with Waitress at 2025-05-13T21:56:16.176065 on port 5001
+2025-05-13 21:56:53,270 - __main__ - INFO - Retrieved 1 chats for user 680ae004d7867ce122b32f58
+2025-05-13 21:56:53,352 - __main__ - INFO - Retrieved 1 chats for user 680ae004d7867ce122b32f58
+2025-05-13 21:57:04,904 - __main__ - ERROR - Error summarizing PDF: module 'fitz' has no attribute 'open'
+2025-05-13 21:57:04,917 - __main__ - ERROR - Error summarizing PDF: module 'fitz' has no attribute 'open'
+2025-05-13 21:57:41,944 - __main__ - INFO - Successfully connected to MongoDB
+2025-05-13 21:57:42,207 - __main__ - WARNING - PyAudio not found. Speech recognition features will be disabled.
+2025-05-13 21:57:42,558 - __main__ - INFO - Starting server with Waitress at 2025-05-13T21:57:42.558537 on port 5001
+2025-05-13 21:57:46,342 - __main__ - ERROR - Error summarizing PDF: module 'fitz' has no attribute 'open'
+2025-05-13 21:57:46,361 - __main__ - ERROR - Error summarizing PDF: module 'fitz' has no attribute 'open'
+2025-05-13 21:58:09,942 - __main__ - INFO - Successfully connected to MongoDB
+2025-05-13 21:58:10,196 - __main__ - WARNING - PyAudio not found. Speech recognition features will be disabled.
+2025-05-13 21:58:10,524 - __main__ - INFO - Starting server with Waitress at 2025-05-13T21:58:10.524169 on port 5001
+2025-05-13 21:58:10,814 - __main__ - ERROR - Error summarizing PDF: module 'fitz' has no attribute 'open'
+2025-05-13 21:58:10,834 - __main__ - ERROR - Error summarizing PDF: module 'fitz' has no attribute 'open'
+2025-05-13 22:04:41,507 - __main__ - ERROR - Error summarizing PDF: module 'fitz' has no attribute 'open'
+2025-05-13 22:04:41,585 - __main__ - ERROR - Error summarizing PDF: module 'fitz' has no attribute 'open'
+2025-05-13 22:08:00,505 - __main__ - INFO - Successfully connected to MongoDB
+2025-05-13 22:08:00,746 - __main__ - WARNING - PyAudio not found. Speech recognition features will be disabled.
+2025-05-13 22:08:00,992 - __main__ - WARNING - PyMuPDF module not available. PDF functionality will be disabled.
+2025-05-13 22:08:01,134 - __main__ - INFO - Starting server with Waitress at 2025-05-13T22:08:01.134294 on port 5001
+2025-05-13 22:18:00,786 - __main__ - INFO - Retrieved 1 chats for user 680ae004d7867ce122b32f58
+2025-05-13 22:18:00,869 - __main__ - INFO - Retrieved 1 chats for user 680ae004d7867ce122b32f58
+2025-05-13 22:47:51,135 - __main__ - INFO - Successfully connected to MongoDB
+2025-05-13 22:47:51,381 - __main__ - WARNING - PyAudio not found. Speech recognition features will be disabled.
+2025-05-13 22:47:52,013 - __main__ - INFO - Starting server with Waitress at 2025-05-13T22:47:52.013850 on port 5001
+2025-05-13 22:48:12,745 - __main__ - INFO - Retrieved 1 chats for user 680ae004d7867ce122b32f58
+2025-05-13 22:48:12,808 - __main__ - INFO - Retrieved 1 chats for user 680ae004d7867ce122b32f58
+2025-05-13 22:48:21,749 - __main__ - ERROR - Error summarizing PDF: module 'fitz' has no attribute 'open'
+2025-05-13 22:48:21,760 - __main__ - ERROR - Error summarizing PDF: module 'fitz' has no attribute 'open'
+2025-05-13 22:55:38,166 - __main__ - INFO - Successfully connected to MongoDB
+2025-05-13 22:55:38,386 - __main__ - WARNING - PyAudio not found. Speech recognition features will be disabled.
+2025-05-13 22:55:38,571 - __main__ - INFO - Starting server with Waitress at 2025-05-13T22:55:38.571619 on port 5001
+2025-05-13 22:55:58,044 - __main__ - INFO - Retrieved 1 chats for user 680ae004d7867ce122b32f58
+2025-05-13 22:55:58,107 - __main__ - INFO - Retrieved 1 chats for user 680ae004d7867ce122b32f58
+2025-05-13 22:56:05,804 - __main__ - ERROR - Error summarizing PDF: module 'fitz' has no attribute 'open'
+2025-05-13 22:56:05,815 - __main__ - ERROR - Error summarizing PDF: module 'fitz' has no attribute 'open'
+2025-05-13 23:12:20,095 - __main__ - INFO - Successfully connected to MongoDB
+2025-05-13 23:12:20,853 - __main__ - WARNING - PyAudio not found. Speech recognition features will be disabled.
+2025-05-13 23:12:21,101 - __main__ - INFO - Successfully imported fitz module
+2025-05-13 23:12:21,102 - __main__ - WARNING - Imported fitz module doesn't have expected methods
+2025-05-13 23:12:21,104 - __main__ - INFO - Creating wrapper functions for PDF processing
+2025-05-13 23:12:21,168 - __main__ - INFO - Starting server with Waitress at 2025-05-13T23:12:21.168487 on port 5001
+2025-05-13 23:13:08,061 - __main__ - INFO - Saved temporary PDF file to temp\temp_pdf_1747158188.059703_2202.pdf
+2025-05-13 23:13:08,064 - __main__ - ERROR - Error extracting text from PDF: No PDF extraction method available
+2025-05-13 23:13:08,067 - __main__ - INFO - Removed temporary file: temp\temp_pdf_1747158188.059703_2202.pdf
+2025-05-13 23:13:24,290 - __main__ - INFO - Saved temporary PDF file to temp\temp_pdf_1747158204.285111_1725.pdf
+2025-05-13 23:13:24,293 - __main__ - ERROR - Error extracting text from PDF: No PDF extraction method available
+2025-05-13 23:13:24,297 - __main__ - INFO - Removed temporary file: temp\temp_pdf_1747158204.285111_1725.pdf
+2025-05-13 23:19:32,740 - __main__ - INFO - Successfully connected to MongoDB
+2025-05-13 23:19:34,333 - __main__ - WARNING - PyAudio not found. Speech recognition features will be disabled.
+2025-05-13 23:19:37,681 - __main__ - INFO - Successfully imported fitz module
+2025-05-13 23:19:37,769 - __main__ - INFO - Starting server with Waitress at 2025-05-13T23:19:37.769432 on port 5001
+2025-05-13 23:19:39,986 - __main__ - INFO - Saved temporary PDF file to temp\temp_pdf_1747158579.983298_5440.pdf
+2025-05-13 23:19:39,988 - __main__ - INFO - Trying PDF extraction with PyMuPDF
+2025-05-13 23:19:40,086 - __main__ - INFO - Successfully extracted text with PyMuPDF
+2025-05-13 23:19:40,087 - __main__ - INFO - Extracted 16057 characters from PDF
+2025-05-13 23:19:40,089 - __main__ - INFO - Removed temporary file: temp\temp_pdf_1747158579.983298_5440.pdf
+2025-05-13 23:19:42,154 - __main__ - INFO - Generated summary of length 1206
