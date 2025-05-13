@@ -51,8 +51,8 @@ stream_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 logger.addHandler(stream_handler)
 
-# load_dotenv('/etc/bharatai.env')
-load_dotenv('.env')
+load_dotenv('/etc/bharatai.env')
+#load_dotenv('.env')
 
 def get_database():
     """
@@ -263,6 +263,110 @@ def text_to_speech(text, lang="en"):
         return None
 
 from langdetect import detect
+
+# Create directories needed by the application
+os.makedirs("static", exist_ok=True)
+os.makedirs("temp", exist_ok=True)
+os.makedirs("pdf_files", exist_ok=True)
+os.makedirs("audio_files", exist_ok=True)
+
+# Define PDF extraction functions at the module level (not inside a try/except block)
+def extract_text_with_pdfminer(pdf_path):
+    """Extract text from PDF using pdfminer"""
+    try:
+        from pdfminer.high_level import extract_text
+        return extract_text(pdf_path)
+    except ImportError:
+        logger.warning("pdfminer.six not installed")
+        return None
+
+def extract_text_with_pdftotext(pdf_path):
+    """Extract text from PDF using pdftotext command line tool"""
+    try:
+        import subprocess
+        result = subprocess.run(["pdftotext", pdf_path, "-"], capture_output=True, text=True)
+        if result.returncode == 0:
+            return result.stdout
+        else:
+            logger.warning(f"pdftotext command failed: {result.stderr}")
+            return None
+    except (subprocess.SubprocessError, FileNotFoundError):
+        logger.warning("pdftotext command not available")
+        return None
+
+def extract_text_with_pypdf2(pdf_path):
+    """Extract text from PDF using PyPDF2"""
+    try:
+        import PyPDF2
+        text = ""
+        with open(pdf_path, 'rb') as file:
+            reader = PyPDF2.PdfReader(file)
+            for page in reader.pages:
+                text += page.extract_text() + "\n"
+        return text
+    except ImportError:
+        logger.warning("PyPDF2 not installed")
+        return None
+    except Exception as e:
+        logger.warning(f"PyPDF2 extraction error: {str(e)}")
+        return None
+
+# Attempt to correctly import and configure PyMuPDF
+pdf_support = False
+
+# Try PyMuPDF first
+try:
+    import PyMuPDF
+    fitz = PyMuPDF
+    def extract_text_with_pymupdf(pdf_path):
+        doc = fitz.open(pdf_path)
+        text = ""
+        for page in doc:
+            text += page.get_text()
+        doc.close()
+        return text
+    logger.info("Successfully imported PyMuPDF directly")
+    pdf_support = True
+except ImportError:
+    try:
+        import fitz
+        def extract_text_with_pymupdf(pdf_path):
+            doc = fitz.open(pdf_path)
+            text = ""
+            for page in doc:
+                text += page.get_text()
+            doc.close()
+            return text
+        logger.info("Successfully imported fitz module")
+        pdf_support = True
+    except (ImportError, AttributeError):
+        logger.warning("PyMuPDF/fitz not available")
+        extract_text_with_pymupdf = lambda path: None
+
+# Set up the main extraction function that will try all available methods
+def extract_text_from_pdf(pdf_path):
+    """Extract text from PDF using all available methods"""
+    # Try each method in order
+    extractors = [
+        ("PyMuPDF", extract_text_with_pymupdf),
+        ("pdfminer", extract_text_with_pdfminer),
+        ("PyPDF2", extract_text_with_pypdf2),
+        ("pdftotext", extract_text_with_pdftotext),
+    ]
+    
+    for name, extractor in extractors:
+        try:
+            logger.info(f"Trying PDF extraction with {name}")
+            text = extractor(pdf_path)
+            if text and text.strip():
+                logger.info(f"Successfully extracted text with {name}")
+                return text
+        except Exception as e:
+            logger.warning(f"{name} extraction failed: {str(e)}")
+    
+    # If we get here, all methods failed
+    logger.error("All PDF extraction methods failed")
+    return "Could not extract text from the PDF. The file may be encrypted, scanned, or damaged."
 
 # API Routes
 @app.route('/', defaults={'path': ''})
@@ -980,13 +1084,14 @@ def text_to_speech_endpoint():
         logger.error(f"Text-to-speech error: {str(e)}")
         return jsonify({"error": f"An error occurred during speech synthesis: {str(e)}"}), 500
 
-import fitz  # PyMuPDF
-
 @app.route("/api/summarize-pdf", methods=["POST"])
 def summarize_pdf():
     """Endpoint to summarize uploaded PDF file and store content"""
     if db is None:
         return jsonify({"success": False, "message": "Database connection is not available"}), 500
+
+    # PDF functionality is always available now with our fallbacks
+    # so we don't check pdf_support anymore
 
     if 'pdf' not in request.files:
         return jsonify({"success": False, "message": "No PDF file provided"}), 400
@@ -997,49 +1102,88 @@ def summarize_pdf():
         return jsonify({"success": False, "message": "Empty PDF file"}), 400
 
     try:
-        # Read PDF file bytes
-        pdf_bytes = pdf_file.read()
+        # Create temp directory if it doesn't exist
+        os.makedirs("temp", exist_ok=True)
+        
+        # Save the PDF to a temporary file
+        temp_pdf_name = f"temp_pdf_{datetime.now().timestamp()}_{random.randint(1000, 9999)}.pdf"
+        temp_pdf_path = os.path.join("temp", temp_pdf_name)
+        pdf_file.save(temp_pdf_path)
+        
+        logger.info(f"Saved temporary PDF file to {temp_pdf_path}")
+        
+        # Extract text from PDF using our multi-method function
+        try:
+            full_text = extract_text_from_pdf(temp_pdf_path)
+            if not full_text or not full_text.strip():
+                return jsonify({"success": False, "message": "Could not extract any text from the PDF. The file might be empty, encrypted, or contains only images."}), 400
+                
+            logger.info(f"Extracted {len(full_text)} characters from PDF")
+        except Exception as pdf_error:
+            logger.error(f"Error extracting text from PDF: {str(pdf_error)}")
+            return jsonify({"success": False, "message": f"Failed to extract text from PDF: {str(pdf_error)}"}), 500
+        finally:
+            # Clean up temporary file
+            try:
+                if os.path.exists(temp_pdf_path):
+                    os.remove(temp_pdf_path)
+                    logger.info(f"Removed temporary file: {temp_pdf_path}")
+            except Exception as cleanup_error:
+                logger.warning(f"Failed to remove temporary file: {str(cleanup_error)}")
 
-        # Open PDF with PyMuPDF
-        doc = fitz.open(stream=pdf_bytes, filetype="pdf")
-
-        # Extract text from all pages
-        full_text = ""
-        for page in doc:
-            full_text += page.get_text()
-
-        doc.close()
-
-        if not full_text.strip():
-            return jsonify({"success": False, "message": "PDF contains no extractable text"}), 400
-
+        # Initialize pdf_contents collection if it doesn't exist
+        if "pdf_contents" not in db.list_collection_names():
+            db.create_collection("pdf_contents")
+            logger.info("Created pdf_contents collection")
+        
         # Store extracted text in MongoDB collection 'pdf_contents'
+        # Limit text length to avoid MongoDB document size limits
+        max_text_length = 500000  # MongoDB documents have a 16MB limit
+        truncated_text = full_text[:max_text_length] if len(full_text) > max_text_length else full_text
+        
         pdf_content_doc = {
-            "content": full_text,
+            "content": truncated_text,
             "uploaded_at": datetime.utcnow()
         }
         result = db.pdf_contents.insert_one(pdf_content_doc)
         pdf_content_id = str(result.inserted_id)
 
         # Use Groq API to summarize the extracted text
-        prompt = f"Summarize the following text:\n\n{full_text}"
+        # Limit prompt size to avoid token limits
+        max_prompt_size = 4000
+        text_to_summarize = truncated_text[:max_prompt_size] if len(truncated_text) > max_prompt_size else truncated_text
+        
+        try:
+            prompt = f"Summarize the following text in a clear and concise way:\n\n{text_to_summarize}"
+            
+            summary = groq_client.chat.completions.create(
+                model="llama3-8b-8192",
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.5,
+                max_tokens=512,
+                top_p=1,
+                frequency_penalty=0,
+                presence_penalty=0,
+                stop=None,
+            ).choices[0].message.content
+            
+            logger.info(f"Generated summary of length {len(summary)}")
+        except Exception as api_error:
+            logger.error(f"Error calling Groq API: {str(api_error)}")
+            summary = "Failed to generate summary. You can still ask questions about the document below."
 
-        summary = groq_client.chat.completions.create(
-            model="llama3-8b-8192",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.5,
-            max_tokens=512,
-            top_p=1,
-            frequency_penalty=0,
-            presence_penalty=0,
-            stop=None,
-        ).choices[0].message.content
-
-        return jsonify({"success": True, "summary": summary, "pdfContentId": pdf_content_id})
+        return jsonify({
+            "success": True, 
+            "summary": summary, 
+            "pdfContentId": pdf_content_id
+        })
 
     except Exception as e:
         logger.error(f"Error summarizing PDF: {str(e)}")
-        return jsonify({"success": False, "message": f"Failed to summarize PDF: {str(e)}"}), 500
+        return jsonify({
+            "success": False, 
+            "message": f"Failed to process PDF: {str(e)}"
+        }), 500
 
 @app.route("/api/ask-pdf-question", methods=["POST"])
 def ask_pdf_question():
@@ -1056,7 +1200,11 @@ def ask_pdf_question():
 
     try:
         # Retrieve PDF content from MongoDB
-        pdf_doc = db.pdf_contents.find_one({"_id": ObjectId(pdf_content_id)})
+        try:
+            pdf_doc = db.pdf_contents.find_one({"_id": ObjectId(pdf_content_id)})
+        except Exception as db_error:
+            logger.error(f"Error retrieving PDF content: {str(db_error)}")
+            return jsonify({"success": False, "message": "Invalid PDF content ID"}), 400
 
         if not pdf_doc:
             return jsonify({"success": False, "message": "PDF content not found"}), 404
@@ -1067,18 +1215,26 @@ def ask_pdf_question():
             return jsonify({"success": False, "message": "Stored PDF content is empty"}), 400
 
         # Use Groq API to answer the question based on PDF content
-        prompt = f"Based on the following document text, answer the question:\n\nDocument:\n{pdf_text}\n\nQuestion:\n{question}"
+        # Limit context size to avoid token limits
+        max_context_size = 4000
+        truncated_text = pdf_text[:max_context_size] if len(pdf_text) > max_context_size else pdf_text
+        
+        try:
+            prompt = f"Based on the following document text, answer the question. If the answer cannot be found in the text, say so clearly:\n\nDocument:\n{truncated_text}\n\nQuestion:\n{question}"
 
-        answer = groq_client.chat.completions.create(
-            model="llama3-8b-8192",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.5,
-            max_tokens=512,
-            top_p=1,
-            frequency_penalty=0,
-            presence_penalty=0,
-            stop=None,
-        ).choices[0].message.content
+            answer = groq_client.chat.completions.create(
+                model="llama3-8b-8192",
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.5,
+                max_tokens=512,
+                top_p=1,
+                frequency_penalty=0,
+                presence_penalty=0,
+                stop=None,
+            ).choices[0].message.content
+        except Exception as api_error:
+            logger.error(f"Error calling Groq API: {str(api_error)}")
+            answer = "I'm sorry, I encountered an error processing your question. Please try again later."
 
         return jsonify({"success": True, "answer": answer})
 
