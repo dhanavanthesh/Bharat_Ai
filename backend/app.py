@@ -980,6 +980,112 @@ def text_to_speech_endpoint():
         logger.error(f"Text-to-speech error: {str(e)}")
         return jsonify({"error": f"An error occurred during speech synthesis: {str(e)}"}), 500
 
+import fitz  # PyMuPDF
+
+@app.route("/api/summarize-pdf", methods=["POST"])
+def summarize_pdf():
+    """Endpoint to summarize uploaded PDF file and store content"""
+    if db is None:
+        return jsonify({"success": False, "message": "Database connection is not available"}), 500
+
+    if 'pdf' not in request.files:
+        return jsonify({"success": False, "message": "No PDF file provided"}), 400
+
+    pdf_file = request.files['pdf']
+
+    if pdf_file.filename == '':
+        return jsonify({"success": False, "message": "Empty PDF file"}), 400
+
+    try:
+        # Read PDF file bytes
+        pdf_bytes = pdf_file.read()
+
+        # Open PDF with PyMuPDF
+        doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+
+        # Extract text from all pages
+        full_text = ""
+        for page in doc:
+            full_text += page.get_text()
+
+        doc.close()
+
+        if not full_text.strip():
+            return jsonify({"success": False, "message": "PDF contains no extractable text"}), 400
+
+        # Store extracted text in MongoDB collection 'pdf_contents'
+        pdf_content_doc = {
+            "content": full_text,
+            "uploaded_at": datetime.utcnow()
+        }
+        result = db.pdf_contents.insert_one(pdf_content_doc)
+        pdf_content_id = str(result.inserted_id)
+
+        # Use Groq API to summarize the extracted text
+        prompt = f"Summarize the following text:\n\n{full_text}"
+
+        summary = groq_client.chat.completions.create(
+            model="llama3-8b-8192",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.5,
+            max_tokens=512,
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0,
+            stop=None,
+        ).choices[0].message.content
+
+        return jsonify({"success": True, "summary": summary, "pdfContentId": pdf_content_id})
+
+    except Exception as e:
+        logger.error(f"Error summarizing PDF: {str(e)}")
+        return jsonify({"success": False, "message": f"Failed to summarize PDF: {str(e)}"}), 500
+
+@app.route("/api/ask-pdf-question", methods=["POST"])
+def ask_pdf_question():
+    """Endpoint to ask questions based on uploaded PDF content"""
+    if db is None:
+        return jsonify({"success": False, "message": "Database connection is not available"}), 500
+
+    data = request.get_json()
+    pdf_content_id = data.get("pdfContentId", "")
+    question = data.get("question", "")
+
+    if not pdf_content_id or not question:
+        return jsonify({"success": False, "message": "Missing pdfContentId or question"}), 400
+
+    try:
+        # Retrieve PDF content from MongoDB
+        pdf_doc = db.pdf_contents.find_one({"_id": ObjectId(pdf_content_id)})
+
+        if not pdf_doc:
+            return jsonify({"success": False, "message": "PDF content not found"}), 404
+
+        pdf_text = pdf_doc.get("content", "")
+
+        if not pdf_text.strip():
+            return jsonify({"success": False, "message": "Stored PDF content is empty"}), 400
+
+        # Use Groq API to answer the question based on PDF content
+        prompt = f"Based on the following document text, answer the question:\n\nDocument:\n{pdf_text}\n\nQuestion:\n{question}"
+
+        answer = groq_client.chat.completions.create(
+            model="llama3-8b-8192",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.5,
+            max_tokens=512,
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0,
+            stop=None,
+        ).choices[0].message.content
+
+        return jsonify({"success": True, "answer": answer})
+
+    except Exception as e:
+        logger.error(f"Error answering PDF question: {str(e)}")
+        return jsonify({"success": False, "message": f"Failed to answer question: {str(e)}"}), 500
+
 @app.errorhandler(404)
 def not_found(error):
     return jsonify({"error": "Endpoint not found"}), 404

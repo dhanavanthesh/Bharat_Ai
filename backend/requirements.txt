@@ -13,3 +13,4 @@ mongoengine==0.27.0
 waitress==2.1.2
 
 uvicorn
+PyMuPDF==1.22.5

@@ -30,6 +30,7 @@ export const summarizePdf = async (file) => {
       return {
         success: true,
         summary: response.summary,
+        pdfContentId: response.pdfContentId,  // Added to return pdfContentId
       };
     } else {
       throw new Error(response.message || 'Failed to summarize PDF');
@@ -41,4 +42,4 @@ export const summarizePdf = async (file) => {
       message: error.message || 'Failed to summarize PDF',
     };
   }
-}; 
+};
