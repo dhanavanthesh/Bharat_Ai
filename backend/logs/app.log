@@ -263,3 +263,71 @@
 2025-05-13 23:19:40,087 - __main__ - INFO - Extracted 16057 characters from PDF
 2025-05-13 23:19:40,089 - __main__ - INFO - Removed temporary file: temp\temp_pdf_1747158579.983298_5440.pdf
 2025-05-13 23:19:42,154 - __main__ - INFO - Generated summary of length 1206
+2025-05-13 23:34:58,316 - __main__ - ERROR - MongoDB URI not found in environment variables
+2025-05-13 23:34:58,317 - __main__ - CRITICAL - Could not connect to MongoDB. Application will not function correctly.
+2025-05-13 23:35:26,072 - __main__ - INFO - Successfully connected to MongoDB
+2025-05-13 23:35:26,349 - __main__ - WARNING - PyAudio not found. Speech recognition features will be disabled.
+2025-05-13 23:35:30,739 - __main__ - INFO - Successfully imported fitz module
+2025-05-13 23:35:31,257 - __main__ - INFO - Starting server with Waitress at 2025-05-13T23:35:31.257623 on port 5001
+2025-05-13 23:35:58,564 - __main__ - INFO - Retrieved 1 chats for user 680ae004d7867ce122b32f58
+2025-05-13 23:35:58,768 - __main__ - INFO - Retrieved 1 chats for user 680ae004d7867ce122b32f58
+2025-05-13 23:36:06,244 - __main__ - INFO - Updated title of chat chat_1746970079375 to 'New Chat jo'
+2025-05-13 23:36:10,135 - __main__ - INFO - Retrieved 1 chats for user 680ae004d7867ce122b32f58
+2025-05-13 23:36:10,568 - __main__ - INFO - Retrieved 1 chats for user 680ae004d7867ce122b32f58
+2025-05-13 23:36:18,288 - __main__ - INFO - Saved temporary PDF file to temp\temp_pdf_1747159578.286357_4503.pdf
+2025-05-13 23:36:18,289 - __main__ - INFO - Trying PDF extraction with PyMuPDF
+2025-05-13 23:36:18,326 - __main__ - INFO - Successfully extracted text with PyMuPDF
+2025-05-13 23:36:18,327 - __main__ - INFO - Extracted 3357 characters from PDF
+2025-05-13 23:36:18,332 - __main__ - INFO - Removed temporary file: temp\temp_pdf_1747159578.286357_4503.pdf
+2025-05-13 23:36:21,213 - __main__ - INFO - Generated summary of length 1286
+2025-05-13 23:54:01,878 - __main__ - INFO - Saved temporary PDF file to temp\temp_pdf_1747160641.8758_6176.pdf
+2025-05-13 23:54:01,880 - __main__ - INFO - Trying PDF extraction with PyMuPDF
+2025-05-13 23:54:01,926 - __main__ - INFO - Successfully extracted text with PyMuPDF
+2025-05-13 23:54:01,928 - __main__ - INFO - Extracted 16057 characters from PDF
+2025-05-13 23:54:01,930 - __main__ - INFO - Removed temporary file: temp\temp_pdf_1747160641.8758_6176.pdf
+2025-05-13 23:54:03,259 - __main__ - INFO - Generated summary of length 1541
+2025-05-13 23:58:06,445 - __main__ - INFO - Saved temporary PDF file to temp\temp_pdf_1747160886.444593_2416.pdf
+2025-05-13 23:58:06,446 - __main__ - INFO - Trying PDF extraction with PyMuPDF
+2025-05-13 23:58:06,482 - __main__ - INFO - Successfully extracted text with PyMuPDF
+2025-05-13 23:58:06,483 - __main__ - INFO - Extracted 16057 characters from PDF
+2025-05-13 23:58:06,484 - __main__ - INFO - Removed temporary file: temp\temp_pdf_1747160886.444593_2416.pdf
+2025-05-13 23:58:08,202 - __main__ - INFO - Generated summary of length 1246
+2025-05-14 00:01:05,431 - __main__ - INFO - Saved temporary PDF file to temp\temp_pdf_1747161065.430459_1629.pdf
+2025-05-14 00:01:05,433 - __main__ - INFO - Trying PDF extraction with PyMuPDF
+2025-05-14 00:01:05,446 - __main__ - INFO - Successfully extracted text with PyMuPDF
+2025-05-14 00:01:05,447 - __main__ - INFO - Extracted 4781 characters from PDF
+2025-05-14 00:01:05,448 - __main__ - INFO - Removed temporary file: temp\temp_pdf_1747161065.430459_1629.pdf
+2025-05-14 00:01:07,997 - __main__ - INFO - Generated summary of length 1300
+2025-05-14 00:02:24,028 - __main__ - INFO - Saved temporary PDF file to temp\temp_pdf_1747161144.026925_7766.pdf
+2025-05-14 00:02:24,031 - __main__ - INFO - Trying PDF extraction with PyMuPDF
+2025-05-14 00:02:24,091 - __main__ - INFO - Successfully extracted text with PyMuPDF
+2025-05-14 00:02:24,092 - __main__ - INFO - Extracted 16057 characters from PDF
+2025-05-14 00:02:24,094 - __main__ - INFO - Removed temporary file: temp\temp_pdf_1747161144.026925_7766.pdf
+2025-05-14 00:02:25,699 - __main__ - INFO - Generated summary of length 1117
+2025-05-14 00:20:28,508 - __main__ - INFO - Saved temporary PDF file to temp\temp_pdf_1747162228.507142_5430.pdf
+2025-05-14 00:20:28,509 - __main__ - INFO - Trying PDF extraction with PyMuPDF
+2025-05-14 00:20:28,556 - __main__ - INFO - Successfully extracted text with PyMuPDF
+2025-05-14 00:20:28,557 - __main__ - INFO - Extracted 16057 characters from PDF
+2025-05-14 00:20:28,559 - __main__ - INFO - Removed temporary file: temp\temp_pdf_1747162228.507142_5430.pdf
+2025-05-14 00:20:30,132 - __main__ - INFO - Generated summary of length 1333
+2025-05-14 00:38:22,888 - __main__ - INFO - Saved temporary PDF file to temp\temp_pdf_1747163302.887514_7878.pdf
+2025-05-14 00:38:22,889 - __main__ - INFO - Trying PDF extraction with PyMuPDF
+2025-05-14 00:38:22,924 - __main__ - INFO - Successfully extracted text with PyMuPDF
+2025-05-14 00:38:22,925 - __main__ - INFO - Extracted 16057 characters from PDF
+2025-05-14 00:38:22,927 - __main__ - INFO - Removed temporary file: temp\temp_pdf_1747163302.887514_7878.pdf
+2025-05-14 00:38:24,192 - __main__ - INFO - Generated summary of length 993
+2025-05-14 13:59:13,487 - __main__ - INFO - Successfully connected to MongoDB
+2025-05-14 13:59:14,047 - __main__ - WARNING - PyAudio not found. Speech recognition features will be disabled.
+2025-05-14 13:59:16,796 - __main__ - INFO - Successfully imported fitz module
+2025-05-14 13:59:16,958 - __main__ - INFO - Starting server with Waitress at 2025-05-14T13:59:16.958645 on port 5001
+2025-05-14 14:00:20,362 - __main__ - INFO - Retrieved 1 chats for user 680ae004d7867ce122b32f58
+2025-05-14 14:00:20,464 - __main__ - INFO - Retrieved 1 chats for user 680ae004d7867ce122b32f58
+2025-05-14 14:00:31,211 - __main__ - INFO - Saved chat messages for user 680ae004d7867ce122b32f58, chat chat_1746970079375
+2025-05-14 14:00:41,501 - __main__ - INFO - Saved temporary PDF file to temp\temp_pdf_1747211441.49999_3173.pdf
+2025-05-14 14:00:41,503 - __main__ - INFO - Trying PDF extraction with PyMuPDF
+2025-05-14 14:00:41,630 - __main__ - INFO - Successfully extracted text with PyMuPDF
+2025-05-14 14:00:41,632 - __main__ - INFO - Extracted 16057 characters from PDF
+2025-05-14 14:00:41,634 - __main__ - INFO - Removed temporary file: temp\temp_pdf_1747211441.49999_3173.pdf
+2025-05-14 14:00:43,172 - __main__ - INFO - Generated summary of length 1309
+2025-05-14 14:00:47,492 - __main__ - INFO - Retrieved 1 chats for user 680ae004d7867ce122b32f58
+2025-05-14 14:00:47,697 - __main__ - INFO - Retrieved 1 chats for user 680ae004d7867ce122b32f58
