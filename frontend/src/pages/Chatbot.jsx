@@ -910,6 +910,13 @@ const Chatbot = () => {
                       <FaArrowUp className={`w-5 h-5 ${input.trim() ? 'text-white' : 'text-gray-500'}`} />
                     )}
                   </button>
+                  <button
+                    onClick={handleExportChat}
+                    className="p-3 rounded-full transition-all duration-300 transform hover:scale-110 active:scale-95 bg-green-600 hover:bg-green-700 text-white ml-2"
+                    title="Export Chat"
+                  >
+                    <FaDownload className="w-5 h-5" />
+                  </button>
                 </div>
                 
                 
