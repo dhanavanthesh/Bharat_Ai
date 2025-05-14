@@ -20,11 +20,7 @@ import pymongo
 from bson.objectid import ObjectId
 import ssl
 
-# Create logs directory if it doesn't exist
-log_dir = 'logs'
-os.makedirs(log_dir, exist_ok=True)
-
-# Configure logging
+# Configure logging to console only (removing file logging)
 logging.basicConfig(
     level=logging.DEBUG,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -33,26 +29,36 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-# Create handlers
-file_handler = RotatingFileHandler(
-    os.path.join(log_dir, 'app.log'),
-    maxBytes=1024 * 1024,  # 1MB
-    backupCount=5,
-    encoding='utf-8'
-)
+# Create console handler only (removing file handler)
 stream_handler = logging.StreamHandler()
 
-# Create formatters and add it to handlers
+# Create formatter and add it to handler - fix the typo here
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-file_handler.setFormatter(formatter)
 stream_handler.setFormatter(formatter)
 
-# Add handlers to the logger
-logger.addHandler(file_handler)
+# Add handler to the logger
 logger.addHandler(stream_handler)
 
-load_dotenv('/etc/bharatai.env')
-#load_dotenv('.env')
+# load_dotenv('/etc/bharatai.env')
+load_dotenv('.env')
+
+# Function to create directory with proper permissions for VPS
+def create_directory_with_permissions(dir_path):
+    """Create directory if it doesn't exist and set proper permissions for VPS"""
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path, exist_ok=True)
+        try:
+            # Set directory permissions to 755 for VPS environments
+            os.chmod(dir_path, 0o755)
+            logger.info(f"Created directory with proper permissions: {dir_path}")
+        except Exception as e:
+            logger.warning(f"Could not set permissions for {dir_path}: {str(e)}")
+
+# Create required directories with proper permissions
+create_directory_with_permissions("static")
+create_directory_with_permissions("temp")
+create_directory_with_permissions("pdf_files")
+create_directory_with_permissions("audio_files")
 
 def get_database():
     """
@@ -254,7 +260,7 @@ def text_to_speech(text, lang="en"):
 
     try:
         tts = gTTS(text=text, lang=lang)
-        os.makedirs("audio_files", exist_ok=True)
+        create_directory_with_permissions("audio_files")
         filename = os.path.join("audio_files", f"response_{random.randint(1000, 9999)}.mp3")
         tts.save(filename)
         return filename
@@ -265,10 +271,11 @@ def text_to_speech(text, lang="en"):
 from langdetect import detect
 
 # Create directories needed by the application
-os.makedirs("static", exist_ok=True)
-os.makedirs("temp", exist_ok=True)
-os.makedirs("pdf_files", exist_ok=True)
-os.makedirs("audio_files", exist_ok=True)
+# Replace the existing directory creation with the new function
+create_directory_with_permissions("static")
+create_directory_with_permissions("temp")
+create_directory_with_permissions("pdf_files")
+create_directory_with_permissions("audio_files")
 
 # Define PDF extraction functions at the module level (not inside a try/except block)
 def extract_text_with_pdfminer(pdf_path):
@@ -971,8 +978,8 @@ def speech_to_text():
     logger.info(f"Received audio file: {audio_file.filename}, size: {audio_file.content_length} bytes")
 
     try:
-        # Create temp directory if it doesn't exist
-        os.makedirs("temp", exist_ok=True)
+        # Create temp directory if it doesn't exist with proper permissions
+        create_directory_with_permissions("temp")
         
         # Save the audio file temporarily with a unique name
         temp_filename = f"temp_audio_{datetime.now().timestamp()}_{random.randint(1000, 9999)}.wav"
@@ -1102,8 +1109,8 @@ def summarize_pdf():
         return jsonify({"success": False, "message": "Empty PDF file"}), 400
 
     try:
-        # Create temp directory if it doesn't exist
-        os.makedirs("temp", exist_ok=True)
+        # Create temp directory if it doesn't exist with proper permissions
+        create_directory_with_permissions("temp")
         
         # Save the PDF to a temporary file
         temp_pdf_name = f"temp_pdf_{datetime.now().timestamp()}_{random.randint(1000, 9999)}.pdf"
@@ -1256,22 +1263,19 @@ def internal_server_error(error):
     return jsonify({"error": f"Internal server error: {str(error)}"}), 500
 
 if __name__ == "__main__":
-    if db is None:  # Fixed comparison
-        logger.critical("MongoDB connection failed. Application may not function correctly.")
-        print("MongoDB connection failed. Check your connection string and try again.")
+    # Define the port for the server
+    port = int(os.environ.get("PORT", 5000))
     
-    try:
-        # Get port from environment or use default
-        port = int(os.getenv("PORT", 5001))
+    if db is None:
+        logger.critical("MongoDB connection failed. Application may not function correctly.")
         
-        # Try to use waitress for production deployment
-        try:
-            from waitress import serve
-            logger.info(f"Starting server with Waitress at {datetime.now().isoformat()} on port {port}")  # Using now() with isoformat() instead of utcnow()
-            serve(app, host="0.0.0.0", port=port)
-        except ImportError:
-            logger.warning("Waitress not found, using Flask development server instead")
-            app.run(host="0.0.0.0", port=port, debug=False)
+    try:
+        from waitress import serve
+        logger.info(f"Starting server with Waitress at {datetime.now().isoformat()} on port {port}")
+        serve(app, host="0.0.0.0", port=port)
+    except ImportError:
+        logger.warning("Waitress not found, using Flask development server instead")
+        app.run(host="0.0.0.0", port=port, debug=False)
     except Exception as e:
         logger.critical(f"Failed to start server: {str(e)}")
         print(f"Fatal error: {str(e)}")
