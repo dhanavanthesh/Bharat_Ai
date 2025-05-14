@@ -263,3 +263,24 @@
 2025-05-13 23:19:40,087 - __main__ - INFO - Extracted 16057 characters from PDF
 2025-05-13 23:19:40,089 - __main__ - INFO - Removed temporary file: temp\temp_pdf_1747158579.983298_5440.pdf
 2025-05-13 23:19:42,154 - __main__ - INFO - Generated summary of length 1206
+2025-05-14 11:14:18,881 - __main__ - ERROR - MongoDB URI not found in environment variables
+2025-05-14 11:14:18,882 - __main__ - CRITICAL - Could not connect to MongoDB. Application will not function correctly.
+2025-05-14 11:15:42,707 - __main__ - ERROR - MongoDB URI not found in environment variables
+2025-05-14 11:15:42,708 - __main__ - CRITICAL - Could not connect to MongoDB. Application will not function correctly.
+2025-05-14 11:15:55,581 - __main__ - ERROR - MongoDB URI not found in environment variables
+2025-05-14 11:15:55,582 - __main__ - CRITICAL - Could not connect to MongoDB. Application will not function correctly.
+2025-05-14 11:16:16,193 - __main__ - ERROR - MongoDB URI not found in environment variables
+2025-05-14 11:16:16,194 - __main__ - CRITICAL - Could not connect to MongoDB. Application will not function correctly.
+2025-05-14 11:17:08,377 - __main__ - INFO - Successfully connected to MongoDB
+2025-05-14 11:17:09,436 - __main__ - INFO - Successfully imported fitz module
+2025-05-14 11:17:09,474 - __main__ - INFO - Starting server with Waitress at 2025-05-14T11:17:09.474848 on port 5001
+2025-05-14 11:17:39,213 - __main__ - INFO - Saved temporary PDF file to temp\temp_pdf_1747201659.205147_8769.pdf
+2025-05-14 11:17:39,254 - __main__ - INFO - Trying PDF extraction with PyMuPDF
+2025-05-14 11:17:39,599 - __main__ - INFO - Successfully extracted text with PyMuPDF
+2025-05-14 11:17:39,619 - __main__ - INFO - Extracted 16833 characters from PDF
+2025-05-14 11:17:39,636 - __main__ - INFO - Removed temporary file: temp\temp_pdf_1747201659.205147_8769.pdf
+2025-05-14 11:17:43,831 - __main__ - INFO - Generated summary of length 1027
+2025-05-14 11:20:04,755 - __main__ - INFO - Retrieved 7 chats for user 680b12e4c9ef187db0837169
+2025-05-14 11:20:04,817 - __main__ - INFO - Retrieved 7 chats for user 680b12e4c9ef187db0837169
+2025-05-14 11:24:23,232 - __main__ - INFO - Retrieved 7 chats for user 680b12e4c9ef187db0837169
+2025-05-14 11:24:23,297 - __main__ - INFO - Retrieved 7 chats for user 680b12e4c9ef187db0837169
