@@ -88,7 +88,12 @@
   line-height: 1.6;
   overflow-wrap: break-word;
   word-break: break-word;
-  color: #f3f4f6; /* Improve text contrast in dark mode */
+  color: #f3f4f6; /* Default for dark mode */
+}
+
+/* Add better light mode text visibility */
+body:not(.dark) .message-body {
+  color: #1e293b; /* Dark text for light mode */
 }
 
 /* Markdown styling */
@@ -230,6 +235,49 @@
   line-height: 1.5;
   white-space: pre;
   color: #e5e7eb;
+}
+
+/* Fix message container styling for light mode */
+body:not(.dark) .message-container {
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+body:not(.dark) .message-container.bot {
+  background-color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(140, 0, 255, 0.1);
+}
+
+body:not(.dark) .message-container.user {
+  background: linear-gradient(135deg, rgba(255, 107, 157, 0.08), rgba(140, 0, 255, 0.08));
+  border: 1px solid rgba(255, 107, 157, 0.1);
+}
+
+/* Fix code and code blocks in light mode */
+body:not(.dark) .code-block-container {
+  background-color: rgba(249, 250, 251, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+body:not(.dark) .code-language {
+  background-color: rgba(255, 107, 157, 0.1);
+  border-color: rgba(0, 0, 0, 0.05);
+  color: #4b5563;
+}
+
+body:not(.dark) .code-block {
+  color: #1e293b;
+}
+
+/* Improve text contrast for message metadata in light mode */
+body:not(.dark) .message-time {
+  color: #64748b;
+}
+
+body:not(.dark) .message-language {
+  color: #ff6b9d;
+  background: rgba(255, 107, 157, 0.1);
 }
 
 /* Responsive adjustments */

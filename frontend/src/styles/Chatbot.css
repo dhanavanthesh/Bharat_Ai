@@ -3,13 +3,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-  --primary-color: #ff6b9d;
-  --primary-hover: #ff4d8c;
-  --secondary-color: #f08bc3;
+  --primary-color: #ff00cc;
+  --primary-hover: #e600b8;
+  --secondary-color: #8c00ff;
   --text-primary: #f9fafb;
   --text-secondary: #e5e7eb;
-  --bg-primary: #130625;
-  --bg-secondary: #1b0936;
+  --bg-primary: #10001f;
+  --bg-secondary: #270042;
   --bg-tertiary: #290f4e;
   --border-color: #3d195f;
   --sidebar-width: 280px;
@@ -21,17 +21,18 @@
   --transition-speed: 0.3s;
 }
 
-/* Light mode variables */
+/* Light mode variables with improved color scheme */
 body:not(.dark) {
   --primary-color: #ff6b9d;
-  --primary-hover: #ff4d8c;
-  --secondary-color: #f08bc3;
-  --text-primary: #1f2937;
-  --text-secondary: #4b5563;
-  --bg-primary: #ffffff;
-  --bg-secondary: #f9fafb;
-  --bg-tertiary: #f3f4f6;
-  --border-color: #e5e7eb;
+  --primary-hover: #ff4d8c; 
+  --secondary-color: #8c00ff;
+  --text-primary: #1e293b;
+  --text-secondary: #475569;
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f1f5f9;
+  --border-color: #e2e8f0;
+  --shadow-accent: 0 4px 12px rgba(255, 107, 157, 0.15);
 }
 
 body, html {
@@ -52,7 +53,7 @@ body, html {
   overflow: hidden;
 }
 
-/* Background - matching Home.jsx style */
+/* Background - updated to have only star pattern */
 .chat-bg {
   position: fixed;
   top: 0;
@@ -61,28 +62,81 @@ body, html {
   height: 100vh;
   z-index: -1;
   pointer-events: none;
-  background: var(--bg-primary);
+  background: #130625; /* Deep purple background */
   background-image: 
-    radial-gradient(circle at 10% 20%, rgba(255, 107, 157, 0.03) 0%, transparent 50%),
-    radial-gradient(circle at 90% 80%, rgba(255, 107, 157, 0.03) 0%, transparent 50%);
+    radial-gradient(white, rgba(255, 255, 255, 0.2) 2px, transparent 3px);
+  background-size: 50px 50px;
+  background-position: 0 0;
 }
 
+/* Remove any additional patterns in dark mode */
 .dark .chat-bg {
-  background: #130625; /* Deep purple from image */
+  background: #130625;
   background-image: 
-    radial-gradient(white, rgba(255, 255, 255, 0.2) 2px, transparent 2px),
-    radial-gradient(white, rgba(255, 255, 255, 0.15) 1px, transparent 1px);
-  background-size: 50px 50px, 30px 30px;
-  background-position: 0 0, 25px 25px;
+    radial-gradient(white, rgba(255, 255, 255, 0.2) 2px, transparent 3px);
+  background-size: 50px 50px;
+  background-position: 0 0;
 }
 
-body:not(.dark) .chat-bg {
-  background: #ffffff;
-  background-image: 
-    radial-gradient(#ff6b9d, rgba(255, 107, 157, 0.15) 2px, transparent 2px),
-    radial-gradient(#ff6b9d, rgba(255, 107, 157, 0.1) 1px, transparent 1px);
-  background-size: 50px 50px, 30px 30px;
-  background-position: 0 0, 25px 25px;
+/* Additional particles for more star density */
+.particles {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(white, rgba(255, 255, 255, 0.15) 1px, transparent 1px);
+  background-size: 25px 25px;
+  background-position: 12px 12px;
+}
+
+/* Make sure these styles are applied regardless of light/dark mode */
+body:not(.dark) .chat-bg, 
+.dark .chat-bg {
+  background: 
+    linear-gradient(125deg, #10001f 0%, #270042 100%),
+    radial-gradient(2px 2px at 40px 60px, rgba(255, 0, 204, 0.8), rgba(255, 0, 204, 0)),
+    radial-gradient(2px 2px at 20px 50px, rgba(140, 0, 255, 0.8), rgba(140, 0, 255, 0)),
+    radial-gradient(2px 2px at 30px 100px, rgba(255, 0, 204, 0.8), rgba(255, 0, 204, 0)),
+    radial-gradient(2px 2px at 40px 60px, rgba(140, 0, 255, 0.8), rgba(140, 0, 255, 0)),
+    radial-gradient(2px 2px at 110px 90px, rgba(255, 0, 204, 0.8), rgba(255, 0, 204, 0)),
+    radial-gradient(2px 2px at 160px 20px, rgba(140, 0, 255, 0.8), rgba(140, 0, 255, 0));
+  background-size: 200px 200px;
+  background-repeat: repeat;
+  animation: particlesAnimation 4s linear infinite;
+}
+
+/* Remove these rules as they are now redundant */
+.chat-bg::before,
+body:not(.dark) .chat-bg::before, 
+.dark .chat-bg::before {
+  display: none;
+}
+
+/* Added light-theme specific styles */
+.light-theme .chat-bg {
+  background: 
+    linear-gradient(125deg, #ffffff 0%, #f8fafc 100%),
+    radial-gradient(2px 2px at 40px 60px, rgba(255, 107, 157, 0.15), rgba(255, 107, 157, 0)),
+    radial-gradient(2px 2px at 20px 50px, rgba(140, 0, 255, 0.15), rgba(140, 0, 255, 0)),
+    radial-gradient(2px 2px at 30px 100px, rgba(255, 107, 157, 0.15), rgba(255, 107, 157, 0)),
+    radial-gradient(2px 2px at 40px 60px, rgba(140, 0, 255, 0.15), rgba(140, 0, 255, 0)),
+    radial-gradient(2px 2px at 110px 90px, rgba(255, 107, 157, 0.15), rgba(255, 107, 157, 0)),
+    radial-gradient(2px 2px at 160px 20px, rgba(140, 0, 255, 0.15), rgba(140, 0, 255, 0));
+  background-size: 200px 200px;
+  background-repeat: repeat;
+  animation: particlesAnimation 4s linear infinite;
+}
+
+/* Light-themed particles */
+.light-theme .particles {
+  background-image:
+    radial-gradient(rgba(255, 107, 157, 0.2), rgba(255, 107, 157, 0) 1px, transparent 1px);
+  background-size: 25px 25px;
+  background-position: 12px 12px;
 }
 
 /* ===== SIDEBAR STYLES ===== */
@@ -93,14 +147,17 @@ body:not(.dark) .chat-bg {
   border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
-  transition: width var(--transition-speed) ease;
-  position: relative;
+  transition: width var(--transition-speed) ease, transform var(--transition-speed) ease;
+  position: fixed; /* Change to fixed positioning */
+  top: 0;
+  left: 0;
   z-index: 30;
-  flex-shrink: 0;
+  overflow-x: hidden; /* Prevent content from spilling out */
 }
 
 body:not(.dark) .sidebar {
-  background-color: rgba(255, 255, 255, 0.9);
+  background-color: rgba(255, 255, 255, 0.95);
+  box-shadow: var(--shadow-accent);
   backdrop-filter: blur(10px);
 }
 
@@ -476,7 +533,6 @@ body:not(.dark) .settings-panel {
 
 body:not(.dark) .settings-select {
   background: rgba(255, 255, 255, 0.9);
-  color: var(--text-primary);
 }
 
 .actions-group {
@@ -626,6 +682,42 @@ body:not(.dark) .settings-select {
   display: block;
 }
 
+/* Fix mobile sidebar close button placement */
+.mobile-sidebar-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 107, 157, 0.1);
+  border: 1px solid rgba(255, 107, 157, 0.2);
+  color: var(--primary-color);
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.2s;
+  visibility: hidden;
+  opacity: 0;
+}
+
+.sidebar.open .mobile-sidebar-close {
+  visibility: visible;
+  opacity: 1;
+}
+
+.mobile-sidebar-close:hover {
+  background: rgba(255, 107, 157, 0.2);
+  transform: rotate(90deg);
+}
+
+body:not(.dark) .mobile-sidebar-close {
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
 /* ===== CHAT AREA STYLES ===== */
 .chat-area {
   flex: 1;
@@ -633,12 +725,14 @@ body:not(.dark) .settings-select {
   flex-direction: column;
   height: 100vh;
   position: relative;
+  margin-left: var(--sidebar-width);
   width: calc(100% - var(--sidebar-width));
-  transition: width var(--transition-speed) ease;
+  transition: margin-left var(--transition-speed) ease, width var(--transition-speed) ease;
 }
 
 /* Fix the gap issue when sidebar is collapsed */
 .sidebar-collapsed + .chat-area {
+  margin-left: var(--sidebar-collapsed-width);
   width: calc(100% - var(--sidebar-collapsed-width));
 }
 
@@ -659,8 +753,8 @@ body:not(.dark) .settings-select {
 }
 
 body:not(.dark) .chat-header {
-  background-color: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(10px);
+  background-color: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .chat-header-left {
@@ -900,14 +994,15 @@ body:not(.dark) .messages-container::-webkit-scrollbar-thumb {
 }
 
 body:not(.dark) .chat-input-area {
-  background-color: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(10px);
+  background-color: rgba(248, 250, 252, 0.95);
+  border-top: 1px solid #e2e8f0;
 }
 
+/* Modify the input wrapper to accommodate the new button */
 .input-wrapper {
   display: flex;
   align-items: flex-end;
-  gap: 12px;
+  gap: 10px;
   max-width: 900px;
   margin: 0 auto;
 }
@@ -972,11 +1067,13 @@ body:not(.dark) .chat-input-area {
   box-shadow: var(--shadow-sm);
   font-family: 'Poppins', sans-serif;
   overflow: hidden; /* Hide scrollbar */
+  padding-right: 70px; /* Allow space for both attachment and emoji buttons */
 }
 
 body:not(.dark) .chat-input {
-  background: rgba(255, 255, 255, 0.8);
-  color: var(--text-primary);
+  background: white;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
 .chat-input:focus {
@@ -984,9 +1081,19 @@ body:not(.dark) .chat-input {
   box-shadow: 0 0 0 2px rgba(255, 107, 157, 0.2);
 }
 
+body:not(.dark) .chat-input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(255, 107, 157, 0.15);
+}
+
 .chat-input::placeholder {
   color: var(--text-secondary);
   font-family: 'Poppins', sans-serif;
+}
+
+.chat-input.focused {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(255, 107, 157, 0.2);
 }
 
 .emoji-container {
@@ -1096,6 +1203,16 @@ body:not(.dark) .chat-input {
   color: var(--text-primary);
 }
 
+body:not(.dark) .language-select {
+  background: white;
+  border: 1px solid #e2e8f0;
+  color: var(--text-primary);
+}
+
+.language-select:hover {
+  border-color: var(--primary-color);
+}
+
 .input-info {
   display: flex;
   align-items: center;
@@ -1117,6 +1234,41 @@ body:not(.dark) .chat-input {
 
 .company-link:hover {
   text-decoration: underline;
+}
+
+/* Add styling for upload button */
+.upload-btn {
+  padding: 10px;
+  border-radius: 50%;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  margin-bottom: 4px;
+}
+
+.upload-btn:hover {
+  background: rgba(255, 0, 204, 0.1);
+  color: var(--primary-color);
+  transform: translateY(-2px);
+}
+
+.upload-btn:hover:not(:disabled) {
+  background: rgba(255, 107, 157, 0.1);
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+/* Updated footer styling */
+.reduced-footer {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
 }
 
 /* Loading container */
@@ -1244,21 +1396,41 @@ body:not(.dark) .code-block-container {
 
 @media (max-width: 768px) {
   .sidebar {
+    transform: translateX(-100%);
     position: fixed;
-    left: -100%;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    left: 0;
+    z-index: 40;
+    box-shadow: none;
+    width: 280px;
+    transition: transform 0.3s ease;
   }
 
   .sidebar.open {
-    left: 0;
+    transform: translateX(0);
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+  }
+
+  .chat-area {
+    margin-left: 0 !important;
+    width: 100% !important;
   }
 
   .sidebar-overlay {
-    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 35;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
   }
 
   .sidebar-overlay.active {
-    display: block;
+    opacity: 1;
+    visibility: visible;
   }
 
   .mobile-menu-btn {
@@ -1295,6 +1467,11 @@ body:not(.dark) .code-block-container {
   .chat-input {
     font-size: 14px;
     padding: 10px 40px 10px 14px;
+  }
+
+  .mobile-sidebar-close {
+    visibility: visible; /* Always visible on mobile when sidebar is open */
+    opacity: 1;
   }
 }
 
@@ -1395,6 +1572,12 @@ body:not(.dark) .code-block-container {
   font-size: 14px;
 }
 
+body:not(.dark) .feature-item {
+  background: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(255, 107, 157, 0.2);
+}
+
 /* Enhanced loading screen */
 .loading-container {
   display: flex;
@@ -1462,4 +1645,67 @@ body:not(.dark) .code-block-container {
 .language-select option {
   background: var(--bg-secondary);
   color: var(--text-primary);
+}
+
+body:not(.dark) .language-select {
+  background: white;
+  border: 1px solid #e2e8f0;
+  color: var (--text-primary);
+}
+
+/* Enhanced styling for light mode message boxes */
+body:not(.dark) .message-container.user {
+  background-color: rgba(255, 107, 157, 0.06);
+  border: 1px solid rgba(255, 107, 157, 0.1);
+}
+
+body:not(.dark) .message-container.bot {
+  background-color: white;
+  border: 1px solid rgba(140, 0, 255, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Animation for theme transition */
+.chat-container, .sidebar, .chat-area, .chat-header, .chat-input-area,
+.message-container, .feature-item, .avatar, .chat-input {
+  transition: all 0.3s ease;
+}
+
+/* Attachment button styling */
+.attachment-container {
+  position: absolute;
+  right: 42px; /* Position to the left of emoji button */
+  bottom: 12px;
+  z-index: 5;
+}
+
+.attachment-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  font-size: 18px;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.attachment-btn:hover {
+  color: var(--primary-color);
+  background: rgba(255, 107, 157, 0.1);
+  transform: scale(1.1);
+}
+
+/* Add a subtle animation to attachment button on hover */
+@keyframes pulse-attachment {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.attachment-btn:hover {
+  animation: pulse-attachment 0.5s ease-in-out;
 }

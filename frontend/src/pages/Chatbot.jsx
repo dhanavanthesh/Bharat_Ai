@@ -9,7 +9,7 @@ import {
   FaSignOutAlt, FaRegCommentDots, FaCog, FaChevronDown, FaChevronUp, 
   FaStop, FaBars, FaMicrophoneAlt, FaFileUpload, 
   FaChevronLeft, FaChevronRight, FaPaperPlane,
-  FaHome, FaSmile, FaExternalLinkAlt
+  FaHome, FaSmile, FaExternalLinkAlt, FaPaperclip
 } from 'react-icons/fa';
 import EmojiPicker from 'emoji-picker-react';
 import { auth } from '../utils/auth';
@@ -29,6 +29,7 @@ const useAutosizeTextArea = (textAreaRef, value) => {
   }, [textAreaRef, value]);
 };
 
+// Ensure we use the correct background style that matches Home.jsx
 const Chatbot = () => {
   const navigate = useNavigate();
   const [input, setInput] = useState("");
@@ -71,9 +72,25 @@ const Chatbot = () => {
   // Add auto-resize for textarea
   useAutosizeTextArea(inputRef, input);
 
+  // Ensure dark mode is always applied
   useEffect(() => {
+    // Force add dark class and remove light class
+    document.documentElement.classList.add("dark");
+    document.documentElement.classList.remove("light");
+    // Also apply to body for good measure
+    document.body.classList.add("dark");
+    document.body.classList.remove("light");
+  }, []); // Only run once on mount
+
+  // Allow theme toggle between dark and light mode
+  useEffect(() => {
+    // Apply theme based on state
     document.documentElement.classList.toggle("dark", darkMode);
-    // Remove the forced dark mode
+    document.documentElement.classList.toggle("light", !darkMode);
+    
+    // Also apply to body
+    document.body.classList.toggle("dark", darkMode);
+    document.body.classList.toggle("light", !darkMode);
   }, [darkMode]);
 
   // Add this function to make sure scrolling works properly after new messages
@@ -481,10 +498,30 @@ const Chatbot = () => {
     toast.info(`Language changed to ${supportedLanguages[newLang]}`);
   };
 
+  // Enhanced theme toggle handler with visual feedback
+  const toggleTheme = () => {
+    const newMode = !darkMode;
+    setDarkMode(newMode);
+    toast.info(`Switched to ${newMode ? 'Dark' : 'Light'} mode`, {
+      position: "bottom-right",
+      autoClose: 2000,
+      hideProgressBar: true,
+      icon: newMode ? '🌙' : '☀️'
+    });
+  };
+
+  // Enhanced handling for mobile sidebar
+  const handleToggleMobileSidebar = (isOpen) => {
+    setMobileSidebarOpen(isOpen);
+    // Prevent body scrolling when sidebar is open
+    document.body.style.overflow = isOpen ? 'hidden' : '';
+  };
+
   return (
-    <div className="chat-container">
-      {/* Background particles effect */}
+    <div className={`chat-container ${darkMode ? 'dark-theme' : 'light-theme'}`}>
+      {/* Background with particles animation matching Home.css */}
       <div className="chat-bg"></div>
+      <div className="particles"></div>
       
       {initialLoading ? (
         renderLoadingState()
@@ -494,12 +531,21 @@ const Chatbot = () => {
           {mobileSidebarOpen && (
             <div 
               className={`sidebar-overlay ${mobileSidebarOpen ? 'active' : ''}`} 
-              onClick={() => setMobileSidebarOpen(false)}
+              onClick={() => handleToggleMobileSidebar(false)}
             ></div>
           )}
           
-          {/* Enhanced Sidebar - Keep compact and focused */}
+          {/* Enhanced Sidebar with Close Button for Mobile */}
           <aside className={`sidebar ${sidebarCollapsed ? 'sidebar-collapsed' : ''} ${mobileSidebarOpen ? 'open' : ''}`}>
+            {/* Add mobile-specific close button */}
+            <button 
+              className="mobile-sidebar-close"
+              onClick={() => handleToggleMobileSidebar(false)}
+              aria-label="Close sidebar"
+            >
+              <FaChevronLeft />
+            </button>
+            
             <div className="sidebar-header">
               {!sidebarCollapsed && (
                 <div className="sidebar-brand">
@@ -587,7 +633,7 @@ const Chatbot = () => {
                 onClick={() => navigate('/summarize')}
               >
                 <FaFileUpload className="nav-icon" />
-                {!sidebarCollapsed && <span>Summarize PDF</span>}
+                {!sidebarCollapsed && <span>Upload PDF</span>}
               </button>
             </nav>
             
@@ -698,7 +744,7 @@ const Chatbot = () => {
                         </button>
                         
                         <button
-                          onClick={() => setDarkMode(!darkMode)}
+                          onClick={toggleTheme}
                           className="action-btn theme-btn"
                         >
                           {darkMode ? <><FaSun className="action-icon" /> Light Mode</> : <><FaMoon className="action-icon" /> Dark Mode</>}
@@ -744,7 +790,7 @@ const Chatbot = () => {
                         <button onClick={() => navigate('/profile')}>
                           <FaUser /> Profile
                         </button>
-                        <button onClick={() => setDarkMode(!darkMode)}>
+                        <button onClick={toggleTheme}>
                           {darkMode ? <><FaSun /> Light Mode</> : <><FaMoon /> Dark Mode</>}
                         </button>
                         <button 
@@ -768,7 +814,7 @@ const Chatbot = () => {
               <div className="chat-header-left">
                 <button
                   className="mobile-menu-btn"
-                  onClick={() => setMobileSidebarOpen(true)}
+                  onClick={() => handleToggleMobileSidebar(true)}
                   aria-label="Open menu"
                 >
                   <FaBars />
@@ -790,10 +836,10 @@ const Chatbot = () => {
                 <button
                   onClick={() => navigate('/summarize')}
                   className="header-btn"
-                  title="Summarize PDF"
+                  title="Upload PDF"
                 >
                   <FaFileUpload />
-                  <span className="header-btn-text">Summarize</span>
+                  <span className="header-btn-text">Upload</span>
                 </button>
                 
                 <button
@@ -853,9 +899,6 @@ const Chatbot = () => {
                   <h3>Welcome to BHARAT AI</h3>
                   <p>India's first LMLM <span>(Large Multi-Language Model)</span></p>
                   <p className="subtitle">World's First Humanized AI Model (H.A.I)</p>
-                  <p className="description">
-                    Start a conversation by typing a message below. Your AI assistant is ready to help with information, ideas, and answers.
-                  </p>
                   
                   <div className="feature-list">
                     <div className="feature-item">
@@ -916,6 +959,15 @@ const Chatbot = () => {
                   <FaMicrophoneAlt />
                 </button>
                 
+                {/* Keep only this one attachment button */}
+                <button
+                  onClick={() => navigate('/summarize')}
+                  className="upload-btn"
+                  title="Upload PDF"
+                >
+                  <FaPaperclip />
+                </button>
+                
                 <div className="textarea-container">
                   <textarea
                     ref={inputRef}
@@ -934,6 +986,8 @@ const Chatbot = () => {
                     disabled={loading && isResponding}
                     rows={1}
                   ></textarea>
+                  
+                  {/* Remove the attachment-container div that contained the second paperclip icon */}
                   
                   <div className="emoji-container" ref={emojiPickerRef}>
                     <button
@@ -965,26 +1019,8 @@ const Chatbot = () => {
                 </button>
               </div>
               
-              <div className="input-footer">
-                <div className="language-selector">
-                  <select
-                    value={currentLanguage}
-                    onChange={handleLanguageChange}
-                    className="language-select"
-                  >
-                    {Object.entries(supportedLanguages).map(([code, name]) => (
-                      <option key={code} value={code}>{name}</option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div className="input-info">
-                  <span>Bharat AI powered by LMLM technology</span>
-                  <a href="https://dasvinci.co.in" target="_blank" rel="noopener noreferrer" className="company-link">
-                    <span>Das Vinci Labs</span> <FaExternalLinkAlt size={12} />
-                  </a>
-                </div>
-              </div>
+              {/* Remove the language selector footer completely */}
+              {/* No need for any footer here */}
             </div>
           </main>
         </>
