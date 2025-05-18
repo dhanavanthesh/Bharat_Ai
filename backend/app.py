@@ -39,8 +39,8 @@ stream_handler.setFormatter(formatter)
 # Add handler to the logger
 logger.addHandler(stream_handler)
 
-load_dotenv('/etc/bharatai.env')
-#load_dotenv('.env')
+#load_dotenv('/etc/bharatai.env')
+load_dotenv('.env')
 
 # Function to create directory with proper permissions for VPS
 def create_directory_with_permissions(dir_path):
