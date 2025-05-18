@@ -550,9 +550,15 @@ const Chatbot = () => {
               {!sidebarCollapsed && (
                 <div className="sidebar-brand">
                   <div className="sidebar-logo">
-                    <img src="/image.png" alt="Bharat AI Logo" />
+                   <button 
+                className={`nav-item ${window.location.pathname === '/' ? 'active' : ''}`}
+                onClick={() => navigate('/')}
+              >
+                <FaHome className="nav-icon" />
+                {!sidebarCollapsed && <span>Home</span>}
+              </button>
                   </div>
-                  <span className="sidebar-title">Bharat AI</span>
+                  {/* <span className="sidebar-title">Bharat AI</span> */}
                 </div>
               )}
               <button
@@ -612,13 +618,7 @@ const Chatbot = () => {
             
             {/* Main Navigation - Simplified and organized */}
             <nav className="sidebar-nav">
-              <button 
-                className={`nav-item ${window.location.pathname === '/' ? 'active' : ''}`}
-                onClick={() => navigate('/')}
-              >
-                <FaHome className="nav-icon" />
-                {!sidebarCollapsed && <span>Home</span>}
-              </button>
+              
               
               <button
                 onClick={handleNewChat}

@@ -12,7 +12,20 @@ dnspython==2.4.0
 mongoengine==0.27.0
 waitress==2.1.2
 
-uvicorn
-PyMuPDF==1.22.5
-pdfminer.six>=20221105
+# Core PDF dependency - this should work without build issues
 PyPDF2>=3.0.0
+pdfminer.six>=20221105
+
+# Optional PDF library - commented out because it requires Visual Studio to build
+# PyMuPDF==1.22.5
+
+# File type support dependencies
+pandas>=1.5.0
+openpyxl>=3.0.10
+python-docx>=0.8.11
+python-pptx>=0.6.21
+pillow>=9.3.0
+pytesseract>=0.3.10
+
+# Web server
+uvicorn
