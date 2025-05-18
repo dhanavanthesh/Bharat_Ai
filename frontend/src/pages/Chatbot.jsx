@@ -613,8 +613,8 @@ const Chatbot = () => {
             {/* Main Navigation - Simplified and organized */}
             <nav className="sidebar-nav">
               <button 
-                className={`nav-item ${window.location.pathname === '/chat' ? 'active' : ''}`}
-                onClick={() => navigate('/chat')}
+                className={`nav-item ${window.location.pathname === '/' ? 'active' : ''}`}
+                onClick={() => navigate('/')}
               >
                 <FaHome className="nav-icon" />
                 {!sidebarCollapsed && <span>Home</span>}
