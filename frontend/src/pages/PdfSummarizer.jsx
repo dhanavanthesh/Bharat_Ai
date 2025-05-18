@@ -3,7 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { 
   FaArrowLeft, FaFileUpload, FaSpinner, FaPaperPlane, 
   FaStop, FaExclamationTriangle, FaPaperclip, FaFilePdf,
-  FaFileExcel, FaFileWord, FaFilePowerpoint, FaFileImage
+  FaFileExcel, FaFileWord, FaFilePowerpoint, FaFileImage,
+  FaCommentDots, FaInfoCircle, FaChevronDown, FaChevronUp,
+  FaRegLightbulb, FaEye, FaTimes, FaListAlt,
+  FaFileAlt, FaQuestionCircle
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { API_BASE_URL } from '../config/constants';
@@ -54,29 +57,139 @@ const PdfSummarizer = () => {
   const [isResponding, setIsResponding] = useState(false);
   const [error, setError] = useState('');
   const [darkMode, setDarkMode] = useState(true); // Default to dark mode
+  const [activeTab, setActiveTab] = useState('upload');
+  const [summaryExpanded, setSummaryExpanded] = useState(true);
+  const [sidebarVisible, setSidebarVisible] = useState(true);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const [sidebarOverlayVisible, setSidebarOverlayVisible] = useState(false);
+  const [inputProgress, setInputProgress] = useState(0);
+  const [isFocused, setIsFocused] = useState(false);
+  const [touchStartY, setTouchStartY] = useState(0);
+  const [initialScrollDone, setInitialScrollDone] = useState(false);
+  const [currentTab, setCurrentTab] = useState('upload');
+  
   const abortController = useRef(null);
   const chatEndRef = useRef(null);
   const fileInputRef = useRef(null);
+  const inputRef = useRef(null);
+  const messagesContainerRef = useRef(null);
+  
+  // Get user info for avatar
+  const getUserInfo = () => {
+    try {
+      const userString = localStorage.getItem('user');
+      if (userString) {
+        return JSON.parse(userString);
+      }
+    } catch (e) {
+      console.error('Error getting user data', e);
+    }
+    return { name: 'User' };
+  };
+  
+  const user = getUserInfo();
+  const userInitial = user?.name?.charAt(0)?.toUpperCase() || 'U';
+  
+  // Auto-resize textarea as content grows
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.style.height = "48px";
+      inputRef.current.style.height = `${Math.min(inputRef.current.scrollHeight, 120)}px`;
+    }
+    
+    // Set progress indicator based on input length
+    if (input.trim().length > 0) {
+      const maxLength = 2000; // Approximate max length
+      const progress = Math.min(100, (input.length / maxLength) * 100);
+      setInputProgress(progress);
+    } else {
+      setInputProgress(0);
+    }
+  }, [input]);
   
   // Ensure dark mode is always applied on component mount
   useEffect(() => {
-    // Force add dark class and remove light class
     document.documentElement.classList.add("dark");
     document.documentElement.classList.remove("light");
-    // Also apply to body for good measure
     document.body.classList.add("dark");
     document.body.classList.remove("light");
-  }, []); // Only run once on mount
+  }, []);
 
   // Apply theme based on darkMode state whenever it changes
   useEffect(() => {
     document.documentElement.classList.toggle("dark", darkMode);
     document.documentElement.classList.toggle("light", !darkMode);
-    
-    // Also apply to body
     document.body.classList.toggle("dark", darkMode);
     document.body.classList.toggle("light", !darkMode);
   }, [darkMode]);
+
+  // Auto switch to chat tab when summary is received
+  useEffect(() => {
+    if (summary && fileContentId && activeTab === 'upload') {
+      setActiveTab('chat');
+      // When switching to chat after summary, make sure sidebar is visible
+      setTimeout(() => toggleSidebar(true), 100);
+    }
+  }, [summary, fileContentId]);
+
+  // Improved scroll handling for chat messages
+  useEffect(() => {
+    if (chats.length > 0 && messagesContainerRef.current) {
+      const scrollContainer = messagesContainerRef.current;
+      
+      // Always scroll to bottom when a new message is added
+      setTimeout(() => {
+        scrollContainer.scrollTo({
+          top: scrollContainer.scrollHeight,
+          behavior: 'smooth'
+        });
+      }, 100);
+    }
+  }, [chats.length]);
+
+  // Special handling for empty chat state - position it properly
+  useEffect(() => {
+    if (chats.length === 0 && activeTab === 'chat' && fileContentId && !initialScrollDone) {
+      if (messagesContainerRef.current) {
+        // Reset scroll position to top for empty chat state
+        messagesContainerRef.current.scrollTop = 0;
+        setInitialScrollDone(true);
+      }
+    }
+  }, [chats.length, activeTab, fileContentId, initialScrollDone]);
+
+  // Handle sidebar and overlay visibility together
+  const toggleSidebar = (visible) => {
+    setSidebarVisible(visible);
+    setSidebarOverlayVisible(visible);
+    
+    // Prevent body scrolling when sidebar is open on mobile
+    if (visible && window.innerWidth < 768) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+  };
+
+  // Add window resize listener with better mobile handling
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+      // Auto-hide sidebar on small screens
+      if (window.innerWidth < 768 && sidebarVisible) {
+        toggleSidebar(false);
+      } else if (window.innerWidth >= 768) {
+        // Ensure body scroll is enabled on larger screens
+        document.body.style.overflow = '';
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      document.body.style.overflow = '';
+    };
+  }, [sidebarVisible]);
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -115,6 +228,9 @@ const PdfSummarizer = () => {
     setFileContentId('');
     setChats([]);
     setError('');
+    
+    // Return to upload tab when a new file is selected
+    setActiveTab('upload');
   };
 
   const summarizeFile = async (file) => {
@@ -191,6 +307,10 @@ const PdfSummarizer = () => {
         setFileContentId(result.fileContentId || result.pdfContentId || '');
         toast.success(`${getFileTypeDisplayName(fileType)} analyzed successfully!`);
         setChats([]);
+        setSummaryExpanded(true);
+        
+        // Switch to chat tab automatically
+        setTimeout(() => setActiveTab('chat'), 500);
       } else {
         throw new Error(result.message || 'Failed to analyze file');
       }
@@ -205,19 +325,27 @@ const PdfSummarizer = () => {
     }
   };
 
+  // Enhanced chat sending with proper text resetting
   const handleSend = async () => {
     if (!input.trim() || isResponding || !fileContentId) return;
 
     setIsResponding(true);
     const userMessage = {
       role: 'user',
-      content: input,
+      content: input.trim(),
       timestamp: new Date().toISOString(),
     };
     const updatedChats = [...chats, userMessage];
     setChats(updatedChats);
     setInput('');
+    setInputProgress(0);
+    
+    // Reset textarea height
+    if (inputRef.current) {
+      inputRef.current.style.height = "48px";
+    }
 
+    // Show loading placeholder with typing animation
     const placeholder = { role: 'bot', content: '...', timestamp: new Date().toISOString() };
     setChats([...updatedChats, placeholder]);
 
@@ -282,18 +410,311 @@ const PdfSummarizer = () => {
     fileInputRef.current?.click();
   };
 
+  // Handle touch gestures for sidebar on mobile
+  const handleTouchStart = (e) => {
+    setTouchStartY(e.touches[0].clientY);
+  };
+
+  const handleTouchMove = (e) => {
+    const currentY = e.touches[0].clientY;
+    const diff = touchStartY - currentY;
+    
+    // Prevent default to avoid page scrolling when swiping sidebar
+    if (Math.abs(diff) > 10) {
+      e.preventDefault();
+    }
+  };
+
+  const handleTouchEnd = (e) => {
+    // Implementation for swipe gestures if needed
+  };
+
+  // Improved tab navigation with clear UI separation
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [chats]);
+    if (activeTab === 'chat') {
+      setCurrentTab('chat');
+    } else {
+      setCurrentTab('upload');
+    }
+  }, [activeTab]);
+
+  // Handle tab switching with clearer separation of concerns
+  const switchTab = (tab) => {
+    setActiveTab(tab);
+    
+    // Reset scroll position when switching to chat tab
+    if (tab === 'chat' && messagesContainerRef.current) {
+      setTimeout(() => {
+        messagesContainerRef.current.scrollTop = 0;
+      }, 100);
+    }
+  };
+
+  // Enhanced render function with better UI organization
+  const renderTabContent = () => {
+    if (error) {
+      return (
+        <div className="pdf-error">
+          <div className="pdf-error-header">
+            <FaExclamationTriangle className="pdf-error-icon" />
+            <h2 className="pdf-error-title">Error Processing File</h2>
+          </div>
+          <p className="pdf-error-message">{error}</p>
+          <button 
+            onClick={handleRetry}
+            className="pdf-error-retry-btn"
+          >
+            Try Another File
+          </button>
+        </div>
+      );
+    }
+    
+    // Enhanced upload tab with clearer separation
+    if (activeTab === 'upload') {
+      return (
+        <div className="pdf-upload-tab">
+          <div className="pdf-upload-container">
+            <div className="pdf-upload-area">
+              <input
+                type="file"
+                accept=".pdf,.xlsx,.xls,.csv,.doc,.docx,.ppt,.pptx,.png,.jpg,.jpeg"
+                onChange={handleFileChange}
+                className="pdf-hidden-input"
+                id="pdf-upload"
+                ref={fileInputRef}
+              />
+              <label
+                htmlFor="pdf-upload"
+                className="pdf-upload-label"
+              >
+                <FaFileUpload className="pdf-upload-icon" />
+                <span className="pdf-upload-text">
+                  {fileName || 'Click to Upload Document'}
+                </span>
+                <span className="pdf-upload-hint">
+                  PDF, Excel, Word, PowerPoint, JPEG, PNG (Max 10MB)
+                </span>
+              </label>
+            </div>
+            
+            {file && (
+              <div className="pdf-file-info">
+                <div className="pdf-file-icon">
+                  {fileTypeIcons[fileType] || <FaFileUpload />}
+                </div>
+                <div className="pdf-file-details">
+                  <div className="pdf-file-name">{fileName}</div>
+                  <div className="pdf-file-type">{getFileTypeDisplayName(fileType)}</div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <button
+            onClick={handleSummarize}
+            disabled={!file || loading}
+            className={`pdf-summarize-btn ${(!file || loading) ? 'pdf-disabled' : ''}`}
+          >
+            {loading ? (
+              <>
+                <FaSpinner className="pdf-spinner-icon" />
+                <span>Analyzing...</span>
+              </>
+            ) : (
+              `Analyze ${fileType ? getFileTypeDisplayName(fileType) : 'File'}`
+            )}
+          </button>
+          
+          {!file && (
+            <div className="pdf-help-text">
+              <FaRegLightbulb className="pdf-help-icon" />
+              <p>Upload a document to get started. The AI will analyze your document and allow you to ask questions about it.</p>
+            </div>
+          )}
+        </div>
+      );
+    }
+    
+    // More clearly separated chat tab content
+    return (
+      <div className={`pdf-chat-layout ${sidebarVisible ? 'with-sidebar' : 'no-sidebar'}`}>
+        {/* Sidebar overlay for mobile */}
+        {sidebarOverlayVisible && (
+          <div 
+            className={`pdf-sidebar-overlay ${sidebarVisible ? 'active' : ''}`}
+            onClick={() => toggleSidebar(false)}
+          />
+        )}
+        
+        {/* Enhanced mobile-friendly toggle with text label */}
+        {!sidebarVisible && (
+          <button 
+            className="pdf-mobile-toggle" 
+            onClick={() => toggleSidebar(true)}
+          >
+            <FaFileAlt className="pdf-mobile-toggle-icon" />
+            <span>View Summary</span>
+          </button>
+        )}
+        
+        {/* Summary Sidebar */}
+        <aside 
+          className={`pdf-summary-sidebar ${sidebarVisible ? 'visible' : 'hidden'}`}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          <div className="pdf-sidebar-header">
+            <h3>
+              <div className="pdf-file-icon-small">
+                {fileTypeIcons[fileType] || <FaFileUpload />}
+              </div>
+              <span>Document Summary</span>
+            </h3>
+            
+            <button 
+              className="pdf-sidebar-close"
+              onClick={() => toggleSidebar(false)}
+              title="Hide summary"
+            >
+              <FaTimes />
+            </button>
+          </div>
+          
+          <div className="pdf-sidebar-content">
+            <div className="pdf-summary-wrapper">
+              <div className="pdf-summary-avatar">
+                <img src="/image.png" alt="BHAAI" className="pdf-bot-logo" />
+              </div>
+              <div className="pdf-summary-text-container">
+                <p className="pdf-summary-text">{summary || "No summary available"}</p>
+              </div>
+            </div>
+            
+            {/* Document info section - improved layout */}
+            <div className="pdf-document-info">
+              <h4 className="pdf-info-heading">
+                <FaListAlt className="pdf-info-icon" />
+                <span>Document Information</span>
+              </h4>
+              <div className="pdf-info-item">
+                <strong>File:</strong> {fileName || "Unknown"}
+              </div>
+              <div className="pdf-info-item">
+                <strong>Type:</strong> {fileType ? getFileTypeDisplayName(fileType) : "Document"}
+              </div>
+            </div>
+          </div>
+          
+          <div className="pdf-sidebar-footer">
+            <div className="pdf-file-badge">
+              <div className="pdf-file-icon-badge">
+                {fileTypeIcons[fileType] || <FaFileUpload />}
+              </div>
+              <span>{fileName || "Document"}</span>
+            </div>
+          </div>
+        </aside>
+        
+        {/* Main Chat Area */}
+        <div className="pdf-chat-main">
+          <div className="pdf-chat-header">
+            <h2>
+              <FaCommentDots className="pdf-chat-icon" />
+              <span>Ask questions about this document</span>
+            </h2>
+          </div>
+          
+          <div className="pdf-messages-container" ref={messagesContainerRef}>
+            {chats.length === 0 ? (
+              <div className="pdf-empty-chat">
+                <div className="pdf-empty-chat-logo">
+                  <img src="/image.png" alt="Bharat AI Logo" className="pdf-empty-logo" />
+                </div>
+                
+                <h3 className="pdf-empty-title">Document Q&A Assistant</h3>
+                <p className="pdf-empty-subtitle">
+                  I've analyzed <strong>{fileName || 'your document'}</strong>. Please ask any questions about the content.
+                </p>
+                
+                <div className="pdf-example-questions">
+                  <p>Try asking:</p>
+                  <ul>
+                    <li onClick={() => {
+                      setInput("What is the main topic of this document?");
+                      inputRef.current?.focus();
+                    }}>
+                      What is the main topic of this document?
+                    </li>
+                    <li onClick={() => {
+                      setInput("Summarize the key points in bullet points");
+                      inputRef.current?.focus();
+                    }}>
+                      Summarize the key points in bullet points
+                    </li>
+                    <li onClick={() => {
+                      setInput("What are the conclusions presented in this document?");
+                      inputRef.current?.focus();
+                    }}>
+                      What are the conclusions presented in this document?
+                    </li>
+                    <li onClick={() => {
+                      setInput("Extract important dates and events mentioned");
+                      inputRef.current?.focus();
+                    }}>
+                      Extract important dates and events mentioned
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            ) : (
+              <div className="pdf-messages-list">
+                {chats.map((msg, idx) => (
+                  <div key={idx} className={`pdf-message ${msg.role === 'user' ? 'pdf-user' : ''}`}>
+                    <div className="pdf-message-avatar">
+                      {msg.role === 'user' ? (
+                        <div className="pdf-user-avatar">
+                          <span>{userInitial}</span>
+                        </div>
+                      ) : (
+                        <div className="pdf-bot-avatar">
+                          <img src="/image.png" alt="BHAAI" className="pdf-bot-logo" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="pdf-message-content">
+                      <div className="pdf-message-bubble">
+                        <p className="pdf-message-text">{msg.content}</p>
+                        {idx === chats.length - 1 && msg.role === 'bot' && msg.content === '...' && (
+                          <div className="pdf-typing-animation">
+                            <div className="pdf-typing-dot"></div>
+                            <div className="pdf-typing-dot"></div>
+                            <div className="pdf-typing-dot"></div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <div ref={chatEndRef} className="pdf-scroll-anchor"></div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className={`pdf-container ${darkMode ? 'dark-theme' : 'light-theme'}`}>
-      {/* Background with particles animation matching Chatbot */}
+      {/* Background with particles animation */}
       <div className="chat-bg"></div>
       <div className="particles"></div>
 
-      <main className="pdf-area">
-        {/* Header - styled like Chatbot */}
+      {/* Main layout */}
+      <div className="pdf-layout">
+        {/* Header */}
         <header className="pdf-header">
           <div className="pdf-header-left">
             <button
@@ -308,186 +729,94 @@ const PdfSummarizer = () => {
               <div className="pdf-logo">
                 <img src="/image.png" alt="Bharat AI Logo" />
               </div>
-              <h1 className="pdf-title">FILE ANALYZER</h1>
+              <h1 className="pdf-title">
+                {fileContentId ? 'DOCUMENT ASSISTANT' : 'FILE ANALYZER'}
+              </h1>
             </div>
           </div>
+          
+          {fileName && (
+            <div className="pdf-current-file">
+              <div className="pdf-file-icon-header">
+                {fileTypeIcons[fileType] || <FaFileUpload />}
+              </div>
+              <span className="pdf-file-name-header">{fileName}</span>
+            </div>
+          )}
         </header>
 
-        {/* Content Area */}
-        <div className="pdf-content">
-          {error ? (
-            <div className="pdf-error">
-              <div className="pdf-error-header">
-                <FaExclamationTriangle className="pdf-error-icon" />
-                <h2 className="pdf-error-title">Error Processing File</h2>
-              </div>
-              <p className="pdf-error-message">{error}</p>
-              <button 
-                onClick={handleRetry}
-                className="pdf-error-retry-btn"
-              >
-                Try Another File
-              </button>
-            </div>
-          ) : (
-            <>
-              {/* File Upload Section - styled like Chatbot */}
-              <div className="pdf-upload-container">
-                <div className="pdf-upload-area">
-                  <input
-                    type="file"
-                    accept=".pdf,.xlsx,.xls,.csv,.doc,.docx,.ppt,.pptx,.png,.jpg,.jpeg"
-                    onChange={handleFileChange}
-                    className="pdf-hidden-input"
-                    id="pdf-upload"
-                    ref={fileInputRef}
-                  />
-                  <label
-                    htmlFor="pdf-upload"
-                    className="pdf-upload-label"
-                  >
-                    <FaFileUpload className="pdf-upload-icon" />
-                    <span className="pdf-upload-text">
-                      {fileName || 'Click to Upload (PDF, Excel, Word, PPT, Google Sheets, JPEG, PNG)'}
-                    </span>
-                    <span className="pdf-upload-hint">
-                      Maximum file size: 10MB
-                    </span>
-                  </label>
-                </div>
-              </div>
+        {/* Enhanced tab navigation with better visual cues */}
+        {fileContentId && (
+          <div className="pdf-tabs">
+            <button 
+              className={`pdf-tab ${currentTab === 'upload' ? 'active' : ''}`}
+              onClick={() => switchTab('upload')}
+            >
+              <FaFileUpload className="tab-icon" />
+              <span className="tab-label">Upload Document</span>
+            </button>
+            <button 
+              className={`pdf-tab ${currentTab === 'chat' ? 'active' : ''}`}
+              onClick={() => switchTab('chat')}
+            >
+              <FaQuestionCircle className="tab-icon" />
+              <span className="tab-label">Ask Questions</span>
+            </button>
+          </div>
+        )}
 
-              {/* Summarize Button - styled like Chatbot buttons */}
+        {/* Main content area with complete separation between tabs */}
+        <main className="pdf-content">
+          {renderTabContent()}
+        </main>
+
+        {/* Fixed input area */}
+        {activeTab === 'chat' && fileContentId && (
+          <div className="pdf-input-area">
+            <div className="pdf-input-wrapper">
               <button
-                onClick={handleSummarize}
-                disabled={!file || loading}
-                className={`pdf-summarize-btn ${(!file || loading) ? 'pdf-disabled' : ''}`}
+                className="pdf-upload-btn"
+                title="Upload new file"
+                onClick={() => fileInputRef.current?.click()}
               >
-                {loading ? (
-                  <>
-                    <FaSpinner className="pdf-spinner-icon" />
-                    <span>Analyzing...</span>
-                  </>
-                ) : (
-                  `Analyze ${fileType ? getFileTypeDisplayName(fileType) : 'File'}`
-                )}
+                <FaPaperclip />
               </button>
-            </>
-          )}
-
-          {/* Summary Section - styled like Chatbot messages */}
-          {summary && (
-            <div className="pdf-summary-container">
-              <h2 className="pdf-section-title">
-                {fileType && (
-                  <span className="file-type-icon">
-                    {fileTypeIcons[fileType] || <FaFileUpload />}
-                  </span>
-                )}
-                {fileName} Analysis
-              </h2>
-              <div className="pdf-summary-content">
-                <div className="pdf-message">
-                  <div className="pdf-message-avatar">
-                    <div className="pdf-bot-avatar">
-                      <img src="/image.png" alt="BHAAI" className="pdf-bot-logo" />
-                    </div>
-                  </div>
-                  <div className="pdf-message-content">
-                    <div className="pdf-message-bubble">
-                      <p className="pdf-summary-text">{summary}</p>
-                    </div>
-                  </div>
-                </div>
+              
+              <div className="pdf-textarea-container">
+                <textarea
+                  ref={inputRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend();
+                    }
+                  }}
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => setIsFocused(false)}
+                  placeholder={input.trim() ? "Press Enter to send" : (isResponding ? "AI is thinking..." : `Ask about this document...`)}
+                  className={`pdf-input ${isFocused ? 'focused' : ''}`}
+                  disabled={isResponding}
+                  rows={1}
+                ></textarea>
+                
+                {/* Visual input progress indicator */}
+                {inputProgress > 0 && <div className="pdf-input-progress" style={{ width: `${inputProgress}%` }}></div>}
               </div>
+              
+              <button
+                onClick={isResponding ? () => abortController.current?.abort() : handleSend}
+                disabled={!input.trim() || !fileContentId}
+                className={`pdf-send-btn ${(!input.trim() || !fileContentId) ? 'pdf-disabled' : ''}`}
+                title={isResponding ? "Stop response" : "Send message"}
+              >
+                {isResponding ? <FaStop /> : <FaPaperPlane />}
+              </button>
             </div>
-          )}
-
-          {/* Chat Section - styled like Chatbot */}
-          {summary && (
-            <div className="pdf-chat-container">
-              <h2 className="pdf-section-title">Ask questions about this {fileType ? getFileTypeDisplayName(fileType) : 'file'}</h2>
-              <div className="pdf-messages-container">
-                {chats.length === 0 ? (
-                  <div className="pdf-empty-chat">
-                    <p className="pdf-empty-message">No questions asked yet. Type a question below to get started.</p>
-                  </div>
-                ) : (
-                  <div className="pdf-messages-list">
-                    {chats.map((msg, idx) => (
-                      <div key={idx} className={`pdf-message ${msg.role === 'user' ? 'pdf-user' : ''}`}>
-                        <div className="pdf-message-avatar">
-                          {msg.role === 'user' ? (
-                            <div className="pdf-user-avatar">
-                              <span>U</span>
-                            </div>
-                          ) : (
-                            <div className="pdf-bot-avatar">
-                              <img src="/image.png" alt="BHAAI" className="pdf-bot-logo" />
-                            </div>
-                          )}
-                        </div>
-                        <div className="pdf-message-content">
-                          <div className="pdf-message-bubble">
-                            <p className="pdf-message-text">{msg.content}</p>
-                            {idx === chats.length - 1 && msg.role === 'bot' && msg.content === '...' && (
-                              <div className="pdf-typing-animation">
-                                <div className="pdf-typing-dot"></div>
-                                <div className="pdf-typing-dot"></div>
-                                <div className="pdf-typing-dot"></div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                    <div ref={chatEndRef} />
-                  </div>
-                )}
-              </div>
-
-              {/* Chat Input Area - styled like Chatbot input */}
-              <div className="pdf-input-area">
-                <div className="pdf-input-wrapper">
-                  <button
-                    className="pdf-upload-btn"
-                    title="Upload File"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <FaPaperclip />
-                  </button>
-                  
-                  <div className="pdf-textarea-container">
-                    <textarea
-                      value={input}
-                      onChange={(e) => setInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                          e.preventDefault();
-                          handleSend();
-                        }
-                      }}
-                      placeholder={input.trim() ? "Press Enter to send" : (isResponding ? "AI is thinking..." : `Ask a question about this ${fileType ? getFileTypeDisplayName(fileType) : 'file'}...`)}
-                      className="pdf-input"
-                      disabled={isResponding}
-                      rows={1}
-                    ></textarea>
-                  </div>
-                  
-                  <button
-                    onClick={isResponding ? () => abortController.current?.abort() : handleSend}
-                    disabled={!input.trim() || !fileContentId}
-                    className={`pdf-send-btn ${(!input.trim() || !fileContentId) ? 'pdf-disabled' : ''}`}
-                    title={isResponding ? "Stop response" : "Send message"}
-                  >
-                    {isResponding ? <FaStop /> : <FaPaperPlane />}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </main>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
