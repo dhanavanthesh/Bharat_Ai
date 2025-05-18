@@ -9,7 +9,7 @@ import {
   FaSignOutAlt, FaRegCommentDots, FaCog, FaChevronDown, FaChevronUp, 
   FaStop, FaBars, FaMicrophoneAlt, FaFileUpload, 
   FaChevronLeft, FaChevronRight, FaPaperPlane,
-  FaHome, FaSmile, FaExternalLinkAlt, FaPaperclip
+  FaHome, FaSmile, FaPaperclip
 } from 'react-icons/fa';
 import EmojiPicker from 'emoji-picker-react';
 import { auth } from '../utils/auth';

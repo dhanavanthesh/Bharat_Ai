@@ -1709,3 +1709,22 @@ body:not(.dark) .message-container.bot {
 .attachment-btn:hover {
   animation: pulse-attachment 0.5s ease-in-out;
 }
+
+/* Add styling for BHAAI logo in chat messages */
+.bot-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+
+.bot-logo {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
