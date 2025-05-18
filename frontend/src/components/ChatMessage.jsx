@@ -1,89 +1,94 @@
-// src/components/ChatMessage.jsx
-import React, { useState } from 'react';
-import { FaVolumeUp, FaCircleNotch, FaExclamationCircle, FaCopy, FaCheck } from 'react-icons/fa';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeHighlight from 'rehype-highlight';
-import { useSpeech } from '../context/SpeechContext';
+import React from 'react';
+import { FaRobot, FaUser } from 'react-icons/fa';
+import '../styles/ChatMessage.css';
 
-const ChatMessage = ({ message, darkMode }) => {
-  const { role, content, language = 'en' } = message;
-  const { speakText, isSpeaking, isProcessing, error } = useSpeech();
-  const isUser = role === 'user';
-  const [isCopied, setIsCopied] = useState(false);
+const ChatMessage = ({ message, darkMode, isLast, typingIndicator }) => {
+  const { role, content, language } = message;
   
-  const speakMessage = () => {
-    speakText(content, language);
+  const formatTimestamp = (timestamp) => {
+    if (!timestamp) return '';
+    
+    try {
+      const date = new Date(timestamp);
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch (e) {
+      return '';
+    }
   };
 
-  const copyMessage = () => {
-    navigator.clipboard.writeText(content);
-    setIsCopied(true);
-    // Reset the copied state after 2 seconds
-    setTimeout(() => {
-      setIsCopied(false);
-    }, 2000);
-  };
-  
-  return (
-    <div className={`flex items-start gap-2 mb-4 ${isUser ? 'justify-end' : 'justify-start'}`}>
-      <div
-        className={`rounded-xl px-4 py-2 max-w-2xl ${
-          isUser 
-            ? 'bg-blue-500 text-white' 
-            : `bg-gray-200 ${darkMode ? 'dark:bg-gray-700 dark:text-white' : ''}`
-        }`}
-      >
-        <div className="flex justify-end items-start mb-1">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={copyMessage}
-              className={`p-1 rounded-full transition-all duration-200 flex items-center gap-1 ${
-                isUser 
-                  ? 'text-blue-200 hover:text-blue-100 focus:text-blue-100' 
-                  : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100 focus:text-gray-700 dark:focus:text-gray-100'
-              }`}
-              title={isCopied ? "Copied!" : "Copy message"}
-            >
-              {isCopied ? (
-                <>
-                  <FaCheck size={16} className="text-green-500" />
-                  <span className="text-xs">Copied!</span>
-                </>
-              ) : (
-                <FaCopy size={16} />
-              )}
-            </button>
-            <button 
-              onClick={speakMessage}
-              disabled={isProcessing}
-              aria-label={isSpeaking ? "Stop speaking" : "Speak message"}
-              className={`p-1 rounded-full transition-all duration-200 ${
-                isUser 
-                  ? 'text-blue-200 hover:text-blue-100 focus:text-blue-100' 
-                  : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100 focus:text-gray-700 dark:focus:text-gray-100'
-              } ${
-                isSpeaking ? 'animate-pulse text-red-500 dark:text-red-400' : ''
-              }`}
-              title={isSpeaking ? "Speaking..." : "Speak message"}
-            >
-              {error ? (
-                <FaExclamationCircle size={18} className="text-red-500" />
-              ) : isProcessing ? (
-                <FaCircleNotch size={18} className="animate-spin" />
-              ) : (
-                <FaVolumeUp size={18} />
-              )}
-            </button>
+  // Simple function to format code blocks in message content
+  const formatContent = (text) => {
+    if (!text) return '';
+
+    // Split by code block markers
+    const parts = text.split('```');
+    
+    if (parts.length === 1) {
+      // No code blocks, return plain text with newlines converted to <br/>
+      return <p>{text.split('\n').map((line, i) => (
+        <React.Fragment key={i}>
+          {line}
+          {i < text.split('\n').length - 1 && <br />}
+        </React.Fragment>
+      ))}</p>;
+    }
+
+    return parts.map((part, index) => {
+      // Even indices are normal text, odd indices are code blocks
+      if (index % 2 === 0) {
+        return part ? (
+          <p key={index}>
+            {part.split('\n').map((line, i) => (
+              <React.Fragment key={i}>
+                {line}
+                {i < part.split('\n').length - 1 && <br />}
+              </React.Fragment>
+            ))}
+          </p>
+        ) : null;
+      } else {
+        // This is a code block
+        // Check if there's a language specified on the first line
+        const lines = part.split('\n');
+        const language = lines[0].trim();
+        const code = lines.slice(1).join('\n');
+
+        return (
+          <div key={index} className="code-block-container">
+            {language && <div className="code-language">{language}</div>}
+            <pre className="code-block">
+              <code>{code}</code>
+            </pre>
           </div>
+        );
+      }
+    });
+  };
+
+  return (
+    <div className={`message-container ${role === 'bot' ? 'bot' : 'user'}`}>
+      <div className="message-avatar">
+        {role === 'bot' ? <FaRobot /> : <FaUser />}
+      </div>
+      
+      <div className="message-content">
+        <div className="message-header">
+          <span className="message-sender">{role === 'bot' ? 'BHARAT AI' : 'You'}</span>
+          {message.timestamp && (
+            <span className="message-time">{formatTimestamp(message.timestamp)}</span>
+          )}
+          {language && role === 'user' && (
+            <span className="message-language">{language}</span>
+          )}
         </div>
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
-          rehypePlugins={[rehypeHighlight]}
-          className={language !== 'en' ? 'font-sans' : ''}
-        >
-          {content}
-        </ReactMarkdown>
+        
+        <div className="message-body">
+          {isLast && content === '...' ? (
+            typingIndicator()
+          ) : (
+            formatContent(content)
+          )}
+        </div>
       </div>
     </div>
   );

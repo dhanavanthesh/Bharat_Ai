@@ -1,0 +1,245 @@
+.message-container {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 12px;
+  position: relative;
+  transition: all 0.2s;
+}
+
+/* User message */
+.message-container.user {
+  background-color: rgba(99, 102, 241, 0.05);
+  align-self: flex-end;
+}
+
+.dark .message-container.user {
+  background-color: rgba(99, 102, 241, 0.1);
+}
+
+/* Bot message */
+.message-container.bot {
+  background-color: rgba(0, 0, 0, 0.02);
+  align-self: flex-start;
+}
+
+.dark .message-container.bot {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.message-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.user .message-avatar {
+  background: var(--secondary-color);
+}
+
+.message-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.message-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.message-sender {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.message-time {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.message-language {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--primary-color);
+}
+
+.message-body {
+  font-size: 15px;
+  line-height: 1.6;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+/* Markdown styling */
+.message-body p {
+  margin: 0 0 12px;
+}
+
+.message-body p:last-child {
+  margin-bottom: 0;
+}
+
+.message-body h1,
+.message-body h2,
+.message-body h3,
+.message-body h4,
+.message-body h5,
+.message-body h6 {
+  margin: 16px 0 12px;
+  font-weight: 600;
+}
+
+.message-body h1 {
+  font-size: 1.6em;
+}
+
+.message-body h2 {
+  font-size: 1.4em;
+}
+
+.message-body h3 {
+  font-size: 1.2em;
+}
+
+.message-body ul,
+.message-body ol {
+  margin: 12px 0;
+  padding-left: 24px;
+}
+
+.message-body li {
+  margin-bottom: 4px;
+}
+
+.message-body code {
+  background-color: rgba(0, 0, 0, 0.06);
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 90%;
+}
+
+.dark .message-body code {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.message-body pre {
+  margin: 12px 0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.message-body pre div {
+  border-radius: 8px;
+}
+
+.message-body blockquote {
+  border-left: 4px solid var(--primary-color);
+  padding-left: 12px;
+  margin-left: 0;
+  margin-right: 0;
+  font-style: italic;
+  color: var(--text-secondary);
+}
+
+.message-body a {
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+.message-body a:hover {
+  text-decoration: underline;
+}
+
+.message-body table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 16px 0;
+}
+
+.message-body th,
+.message-body td {
+  border: 1px solid var(--border-color);
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.message-body th {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.dark .message-body th {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Code block styling */
+.code-block-container {
+  margin: 12px 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.dark .code-block-container {
+  background-color: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.code-language {
+  padding: 4px 12px;
+  font-size: 12px;
+  background-color: rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  color: var(--text-secondary);
+  font-family: 'Roboto Mono', monospace;
+}
+
+.dark .code-language {
+  background-color: rgba(0, 0, 0, 0.5);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.code-block {
+  margin: 0;
+  padding: 12px;
+  overflow-x: auto;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .message-container {
+    padding: 12px;
+    gap: 12px;
+  }
+  
+  .message-avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+  
+  .message-body {
+    font-size: 14px;
+  }
+  
+  .code-block {
+    font-size: 12px;
+  }
+}

@@ -7,9 +7,9 @@ import { supportedLanguages } from '../config/languages';
 import { 
   FaPlus, FaPencilAlt, FaTrash, FaDownload, FaUser, FaMoon, FaSun, 
   FaSignOutAlt, FaRegCommentDots, FaCog, FaChevronDown, FaChevronUp, 
-  FaStop, FaBars, FaMicrophoneAlt, FaFileUpload, FaRobot,
-  FaLightbulb, FaEllipsisH, FaChevronLeft, FaChevronRight, FaPaperPlane,
-  FaHome, FaHistory, FaSmile, FaInfoCircle, FaExternalLinkAlt
+  FaStop, FaBars, FaMicrophoneAlt, FaFileUpload, 
+  FaChevronLeft, FaChevronRight, FaPaperPlane,
+  FaHome, FaHistory, FaSmile, FaExternalLinkAlt
 } from 'react-icons/fa';
 import EmojiPicker from 'emoji-picker-react';
 import { auth } from '../utils/auth';
@@ -17,6 +17,17 @@ import { chatApi } from '../utils/chatApi';
 import { exportChatToPDF } from '../utils/exportPdf';
 import ChatMessage from '../components/ChatMessage';
 import '../styles/Chatbot.css';
+
+// Modified resize observer for textarea auto-expand
+const useAutosizeTextArea = (textAreaRef, value) => {
+  useEffect(() => {
+    if (textAreaRef.current) {
+      textAreaRef.current.style.height = "0px";
+      const scrollHeight = textAreaRef.current.scrollHeight;
+      textAreaRef.current.style.height = Math.min(scrollHeight, 150) + "px";
+    }
+  }, [textAreaRef, value]);
+};
 
 const Chatbot = () => {
   const navigate = useNavigate();
@@ -58,6 +69,9 @@ const Chatbot = () => {
   const abortController = useRef(null);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+
+  // Add auto-resize for textarea
+  useAutosizeTextArea(inputRef, input);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", darkMode);
@@ -439,7 +453,7 @@ const Chatbot = () => {
             ></div>
           )}
           
-          {/* Enhanced Sidebar */}
+          {/* Enhanced Sidebar - Keep compact and focused */}
           <aside className={`sidebar ${sidebarCollapsed ? 'sidebar-collapsed' : ''} ${mobileSidebarOpen ? 'open' : ''}`}>
             <div className="sidebar-header">
               {!sidebarCollapsed && (
@@ -459,7 +473,7 @@ const Chatbot = () => {
               </button>
             </div>
             
-            {/* User Info */}
+            {/* User Info - More compact profile */}
             <div className={`user-info ${sidebarCollapsed ? 'collapsed' : ''}`} ref={sidebarProfileRef}>
               <div 
                 className="avatar"
@@ -505,7 +519,7 @@ const Chatbot = () => {
               )}
             </div>
             
-            {/* Main Navigation */}
+            {/* Main Navigation - Simplified and organized */}
             <nav className="sidebar-nav">
               <button 
                 className={`nav-item ${window.location.pathname === '/chat' ? 'active' : ''}`}
@@ -710,9 +724,9 @@ const Chatbot = () => {
             </div>
           </aside>
           
-          {/* Main Chat Area */}
+          {/* Main Chat Area - Improved layout */}
           <main className="chat-area">
-            {/* Chat Header - Made slimmer and with logo */}
+            {/* Chat Header - Slimmer and more elegant */}
             <header className="chat-header animated-gradient-header">
               <div className="chat-header-left">
                 <button
@@ -792,7 +806,7 @@ const Chatbot = () => {
               </div>
             </header>
             
-            {/* Messages Area */}
+            {/* Messages Area - Better spacing and alignment */}
             <div className="messages-container">
               {chats.length === 0 ? (
                 <div className="empty-chat">
@@ -837,7 +851,7 @@ const Chatbot = () => {
               )}
             </div>
             
-            {/* Chat Input Area - Enhanced with emoji picker */}
+            {/* Chat Input Area - Better organized with auto-expanding textarea */}
             <div className="chat-input-area">
               <div className="input-wrapper">
                 <button
@@ -884,7 +898,7 @@ const Chatbot = () => {
                     rows={1}
                   ></textarea>
                   
-                  <div className="emoji-container" ref={emojiPickerRef}></div>
+                  <div className="emoji-container" ref={emojiPickerRef}>
                     <button
                       onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                       className="emoji-btn"

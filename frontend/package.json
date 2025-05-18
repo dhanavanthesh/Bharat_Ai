@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "axios": "^1.8.4",
+    "emoji-picker-react": "^4.12.2",
     "idb": "^7.1.1",
     "jspdf": "^3.0.1",
     "react": "^18.2.0",
