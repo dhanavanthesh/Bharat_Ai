@@ -1,8 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaFileUpload, FaSpinner, FaArrowUp, FaStop, FaExclamationTriangle } from 'react-icons/fa';
+import { 
+  FaArrowLeft, FaFileUpload, FaSpinner, FaPaperPlane, 
+  FaStop, FaExclamationTriangle, FaPaperclip 
+} from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { API_BASE_URL } from '../config/constants';
+import '../styles/PdfSummarizer.css';
 
 const PdfSummarizer = () => {
   const navigate = useNavigate();
@@ -15,9 +19,30 @@ const PdfSummarizer = () => {
   const [chats, setChats] = useState([]);
   const [isResponding, setIsResponding] = useState(false);
   const [error, setError] = useState('');
+  const [darkMode, setDarkMode] = useState(true); // Default to dark mode
   const abortController = useRef(null);
   const chatEndRef = useRef(null);
   const fileInputRef = useRef(null);
+  
+  // Ensure dark mode is always applied on component mount
+  useEffect(() => {
+    // Force add dark class and remove light class
+    document.documentElement.classList.add("dark");
+    document.documentElement.classList.remove("light");
+    // Also apply to body for good measure
+    document.body.classList.add("dark");
+    document.body.classList.remove("light");
+  }, []); // Only run once on mount
+
+  // Apply theme based on darkMode state whenever it changes
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", darkMode);
+    document.documentElement.classList.toggle("light", !darkMode);
+    
+    // Also apply to body
+    document.body.classList.toggle("dark", darkMode);
+    document.body.classList.toggle("light", !darkMode);
+  }, [darkMode]);
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -207,153 +232,200 @@ const PdfSummarizer = () => {
   }, [chats]);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex items-center mb-8">
-          <button
-            onClick={() => navigate('/chat')}
-            className="flex items-center text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-          >
-            <FaArrowLeft className="mr-2" />
-            Back to Chat
-          </button>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white ml-4">
-            PDF Summarizer
-          </h1>
-        </div>
+    <div className={`pdf-container ${darkMode ? 'dark-theme' : 'light-theme'}`}>
+      {/* Background with particles animation matching Chatbot */}
+      <div className="chat-bg"></div>
+      <div className="particles"></div>
 
-        {error ? (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-8 dark:bg-red-900/30 dark:border-red-800">
-            <div className="flex items-center mb-4">
-              <FaExclamationTriangle className="text-red-500 text-xl mr-2" />
-              <h2 className="text-lg font-semibold text-red-700 dark:text-red-400">Error Processing PDF</h2>
-            </div>
-            <p className="text-red-600 dark:text-red-300 mb-4">{error}</p>
-            <button 
-              onClick={handleRetry}
-              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600"
-            >
-              Try Another File
-            </button>
-          </div>
-        ) : (
-          <>
-            {/* File Upload Section */}
-            <div className="mb-8">
-              <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center">
-                <input
-                  type="file"
-                  accept=".pdf"
-                  onChange={handleFileChange}
-                  className="hidden"
-                  id="pdf-upload"
-                  ref={fileInputRef}
-                />
-                <label
-                  htmlFor="pdf-upload"
-                  className="cursor-pointer flex flex-col items-center"
-                >
-                  <FaFileUpload className="text-4xl text-blue-500 mb-4" />
-                  <span className="text-lg text-gray-700 dark:text-gray-300">
-                    {fileName || 'Click to upload PDF'}
-                  </span>
-                  <span className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                    Maximum file size: 10MB
-                  </span>
-                </label>
-              </div>
-            </div>
-
-            {/* Summarize Button */}
+      <main className="pdf-area">
+        {/* Header - styled like Chatbot */}
+        <header className="pdf-header">
+          <div className="pdf-header-left">
             <button
-              onClick={handleSummarize}
-              disabled={!file || loading}
-              className={`w-full py-3 px-4 rounded-lg text-white font-medium flex items-center justify-center ${
-                !file || loading
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-blue-600 hover:bg-blue-700'
-              }`}
+              className="pdf-back-btn"
+              onClick={() => navigate('/chat')}
+              aria-label="Back to chat"
             >
-              {loading ? (
-                <>
-                  <FaSpinner className="animate-spin mr-2" />
-                  Summarizing...
-                </>
-              ) : (
-                'Summarize PDF'
-              )}
+              <FaArrowLeft />
             </button>
-          </>
-        )}
-
-        {/* Summary Section */}
-        {summary && (
-          <div className="mt-8">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-              Summary
-            </h2>
-            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-              <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                {summary}
-              </p>
+            
+            <div className="pdf-brand">
+              <div className="pdf-logo">
+                <img src="/image.png" alt="Bharat AI Logo" />
+              </div>
+              <h1 className="pdf-title">PDF ANALYZER</h1>
             </div>
           </div>
-        )}
+        </header>
 
-        {/* Chat Section */}
-        {summary && (
-          <div className="mt-8 flex flex-col max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-              Ask questions about the PDF
-            </h2>
-            <div className="flex-1 overflow-y-auto max-h-96 mb-4">
-              {chats.length === 0 ? (
-                <p className="text-gray-500 dark:text-gray-400">No questions asked yet. Type a question below to get started.</p>
-              ) : (
-                <div className="space-y-4">
-                  {chats.map((msg, idx) => (
-                    <div
-                      key={idx}
-                      className={`${
-                        msg.role === 'user'
-                          ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-900 dark:text-blue-100 ml-auto'
-                          : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-300 mr-auto'
-                      } p-3 rounded-lg max-w-[80%] w-fit`}
-                    >
-                      <p className="whitespace-pre-wrap">{msg.content}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <div ref={chatEndRef} />
-            </div>
-            <div className="flex gap-2">
-              <textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSend();
-                  }
-                }}
-                placeholder="Type your question here..."
-                rows={2}
-                className="flex-1 p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-300 resize-none"
-                disabled={isResponding}
-              />
-              <button
-                onClick={isResponding ? () => abortController.current?.abort() : handleSend}
-                disabled={!input.trim() || !pdfContentId}
-                className="px-4 py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700 disabled:bg-gray-400"
+        {/* Content Area */}
+        <div className="pdf-content">
+          {error ? (
+            <div className="pdf-error">
+              <div className="pdf-error-header">
+                <FaExclamationTriangle className="pdf-error-icon" />
+                <h2 className="pdf-error-title">Error Processing PDF</h2>
+              </div>
+              <p className="pdf-error-message">{error}</p>
+              <button 
+                onClick={handleRetry}
+                className="pdf-error-retry-btn"
               >
-                {isResponding ? <FaStop /> : <FaArrowUp />}
+                Try Another File
               </button>
             </div>
-          </div>
-        )}
-      </div>
+          ) : (
+            <>
+              {/* File Upload Section - styled like Chatbot */}
+              <div className="pdf-upload-container">
+                <div className="pdf-upload-area">
+                  <input
+                    type="file"
+                    accept=".pdf"
+                    onChange={handleFileChange}
+                    className="pdf-hidden-input"
+                    id="pdf-upload"
+                    ref={fileInputRef}
+                  />
+                  <label
+                    htmlFor="pdf-upload"
+                    className="pdf-upload-label"
+                  >
+                    <FaFileUpload className="pdf-upload-icon" />
+                    <span className="pdf-upload-text">
+                      {fileName || 'Click to upload PDF'}
+                    </span>
+                    <span className="pdf-upload-hint">
+                      Maximum file size: 10MB
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Summarize Button - styled like Chatbot buttons */}
+              <button
+                onClick={handleSummarize}
+                disabled={!file || loading}
+                className={`pdf-summarize-btn ${(!file || loading) ? 'pdf-disabled' : ''}`}
+              >
+                {loading ? (
+                  <>
+                    <FaSpinner className="pdf-spinner-icon" />
+                    <span>Summarizing...</span>
+                  </>
+                ) : (
+                  'Summarize PDF'
+                )}
+              </button>
+            </>
+          )}
+
+          {/* Summary Section - styled like Chatbot messages */}
+          {summary && (
+            <div className="pdf-summary-container">
+              <h2 className="pdf-section-title">Summary</h2>
+              <div className="pdf-summary-content">
+                <div className="pdf-message">
+                  <div className="pdf-message-avatar">
+                    <div className="pdf-bot-avatar">
+                      <img src="/image.png" alt="BHAAI" className="pdf-bot-logo" />
+                    </div>
+                  </div>
+                  <div className="pdf-message-content">
+                    <div className="pdf-message-bubble">
+                      <p className="pdf-summary-text">{summary}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Chat Section - styled like Chatbot */}
+          {summary && (
+            <div className="pdf-chat-container">
+              <h2 className="pdf-section-title">Ask questions about the PDF</h2>
+              <div className="pdf-messages-container">
+                {chats.length === 0 ? (
+                  <div className="pdf-empty-chat">
+                    <p className="pdf-empty-message">No questions asked yet. Type a question below to get started.</p>
+                  </div>
+                ) : (
+                  <div className="pdf-messages-list">
+                    {chats.map((msg, idx) => (
+                      <div key={idx} className={`pdf-message ${msg.role === 'user' ? 'pdf-user' : ''}`}>
+                        <div className="pdf-message-avatar">
+                          {msg.role === 'user' ? (
+                            <div className="pdf-user-avatar">
+                              <span>U</span>
+                            </div>
+                          ) : (
+                            <div className="pdf-bot-avatar">
+                              <img src="/image.png" alt="BHAAI" className="pdf-bot-logo" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="pdf-message-content">
+                          <div className="pdf-message-bubble">
+                            <p className="pdf-message-text">{msg.content}</p>
+                            {idx === chats.length - 1 && msg.role === 'bot' && msg.content === '...' && (
+                              <div className="pdf-typing-animation">
+                                <div className="pdf-typing-dot"></div>
+                                <div className="pdf-typing-dot"></div>
+                                <div className="pdf-typing-dot"></div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    <div ref={chatEndRef} />
+                  </div>
+                )}
+              </div>
+
+              {/* Chat Input Area - styled like Chatbot input */}
+              <div className="pdf-input-area">
+                <div className="pdf-input-wrapper">
+                  <button
+                    className="pdf-upload-btn"
+                    title="Upload PDF"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <FaPaperclip />
+                  </button>
+                  
+                  <div className="pdf-textarea-container">
+                    <textarea
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSend();
+                        }
+                      }}
+                      placeholder={input.trim() ? "Press Enter to send" : (isResponding ? "AI is thinking..." : "Ask a question about the PDF...")}
+                      className="pdf-input"
+                      disabled={isResponding}
+                      rows={1}
+                    ></textarea>
+                  </div>
+                  
+                  <button
+                    onClick={isResponding ? () => abortController.current?.abort() : handleSend}
+                    disabled={!input.trim() || !pdfContentId}
+                    className={`pdf-send-btn ${(!input.trim() || !pdfContentId) ? 'pdf-disabled' : ''}`}
+                    title={isResponding ? "Stop response" : "Send message"}
+                  >
+                    {isResponding ? <FaStop /> : <FaPaperPlane />}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </main>
     </div>
   );
 };

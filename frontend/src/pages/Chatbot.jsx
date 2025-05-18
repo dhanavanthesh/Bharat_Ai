@@ -633,7 +633,7 @@ const Chatbot = () => {
                 onClick={() => navigate('/summarize')}
               >
                 <FaFileUpload className="nav-icon" />
-                {!sidebarCollapsed && <span>Upload PDF</span>}
+                {!sidebarCollapsed && <span>Upload Document</span>}
               </button>
             </nav>
             
@@ -963,7 +963,7 @@ const Chatbot = () => {
                 <button
                   onClick={() => navigate('/summarize')}
                   className="upload-btn"
-                  title="Upload PDF"
+                  title="Upload Document"
                 >
                   <FaPaperclip />
                 </button>

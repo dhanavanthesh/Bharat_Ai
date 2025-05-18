@@ -1,0 +1,521 @@
+/* PDF Summarizer styles with proper isolation from Chatbot styles */
+
+/* Scope all styles within .pdf-container to avoid conflicts */
+.pdf-container {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Use the shared background but don't define it here to avoid duplication */
+/* Background styles are already in Chatbot.css */
+
+/* Rename conflicting classes */
+.pdf-container .pdf-area {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  background: transparent;
+}
+
+/* Header styling with pdf- prefix to avoid conflicts */
+.pdf-container .pdf-header {
+  height: 64px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  background-color: rgba(27, 9, 54, 0.8);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.pdf-container .pdf-header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.pdf-container .pdf-back-btn {
+  color: #fff;
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.pdf-container .pdf-back-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.pdf-container .pdf-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pdf-container .pdf-logo {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pdf-container .pdf-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.pdf-container .pdf-title {
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* PDF content area */
+.pdf-container .pdf-content {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  max-width: 900px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Error styling */
+.pdf-container .pdf-error {
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.pdf-container .pdf-error-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.pdf-container .pdf-error-icon {
+  color: #ef4444;
+  font-size: 20px;
+}
+
+.pdf-container .pdf-error-title {
+  color: #ef4444;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.pdf-container .pdf-error-message {
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 16px;
+}
+
+.pdf-container .pdf-error-retry-btn {
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pdf-container .pdf-error-retry-btn:hover {
+  background: #dc2626;
+}
+
+/* Upload area styling */
+.pdf-container .pdf-upload-container {
+  margin-bottom: 24px;
+}
+
+.pdf-container .pdf-upload-area {
+  border: 2px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 40px 20px;
+  text-align: center;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.pdf-container .pdf-upload-area:hover {
+  border-color: rgba(255, 107, 157, 0.5);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.pdf-container .pdf-hidden-input {
+  display: none;
+}
+
+.pdf-container .pdf-upload-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+}
+
+.pdf-container .pdf-upload-icon {
+  font-size: 40px;
+  color: var(--primary-color, #ff6b9d);
+  margin-bottom: 16px;
+}
+
+.pdf-container .pdf-upload-text {
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 8px;
+}
+
+.pdf-container .pdf-upload-hint {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Summarize button */
+.pdf-container .pdf-summarize-btn {
+  width: 100%;
+  padding: 14px 24px;
+  background: linear-gradient(45deg, var(--primary-color, #ff6b9d), var(--secondary-color, #f08bc3));
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+
+.pdf-container .pdf-summarize-btn:hover:not(.pdf-disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.pdf-container .pdf-summarize-btn.pdf-disabled {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.5);
+  cursor: not-allowed;
+}
+
+.pdf-container .pdf-spinner-icon {
+  animation: pdf-spin 1s infinite linear;
+}
+
+@keyframes pdf-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Summary styling */
+.pdf-container .pdf-summary-container {
+  margin-top: 32px;
+}
+
+.pdf-container .pdf-section-title {
+  color: #fff;
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.pdf-container .pdf-summary-content {
+  background: transparent;
+  border-radius: 8px;
+}
+
+.pdf-container .pdf-summary-text {
+  color: rgba(255, 255, 255, 0.9);
+  white-space: pre-wrap;
+}
+
+/* PDF Chat styling - prefixed to avoid conflicts */
+.pdf-container .pdf-chat-container {
+  margin-top: 32px;
+}
+
+.pdf-container .pdf-messages-container {
+  max-height: 500px;
+  overflow-y: auto;
+  margin-bottom: 20px;
+  padding: 12px 0;
+}
+
+.pdf-container .pdf-empty-chat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.pdf-container .pdf-empty-message {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 16px;
+}
+
+.pdf-container .pdf-messages-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.pdf-container .pdf-message {
+  display: flex;
+  gap: 12px;
+  padding: 8px 16px;
+}
+
+.pdf-container .pdf-message.pdf-user {
+  justify-content: flex-end;
+}
+
+.pdf-container .pdf-message-avatar {
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.pdf-container .pdf-user-avatar, 
+.pdf-container .pdf-bot-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pdf-container .pdf-user-avatar {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.pdf-container .pdf-bot-avatar {
+  background: rgba(41, 15, 78, 0.6);
+}
+
+.pdf-container .pdf-bot-logo {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.pdf-container .pdf-message-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 80%;
+}
+
+.pdf-container .pdf-message.pdf-user .pdf-message-content {
+  align-items: flex-end;
+}
+
+.pdf-container .pdf-message-bubble {
+  background: rgba(41, 15, 78, 0.4);
+  padding: 12px 16px;
+  border-radius: 16px;
+  border-top-left-radius: 2px;
+}
+
+.pdf-container .pdf-message.pdf-user .pdf-message-bubble {
+  background: rgba(255, 107, 157, 0.1);
+  border-top-right-radius: 2px;
+  border-top-left-radius: 16px;
+}
+
+.pdf-container .pdf-message-text {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.9);
+  white-space: pre-wrap;
+}
+
+/* Typing animation */
+.pdf-container .pdf-typing-animation {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.pdf-container .pdf-typing-dot {
+  width: 8px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 50%;
+  animation: pdf-bounce 1.4s infinite ease-in-out both;
+}
+
+.pdf-container .pdf-typing-dot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.pdf-container .pdf-typing-dot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes pdf-bounce {
+  0%, 80%, 100% {
+    transform: scale(0);
+    opacity: 0.6;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Chat input styling with pdf- prefix */
+.pdf-container .pdf-input-area {
+  margin-top: 16px;
+  border-radius: 8px;
+  background: rgba(41, 15, 78, 0.2);
+  padding: 16px;
+}
+
+.pdf-container .pdf-input-wrapper {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.pdf-container .pdf-upload-btn {
+  padding: 10px;
+  border-radius: 50%;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.pdf-container .pdf-upload-btn:hover:not(:disabled) {
+  background: rgba(255, 107, 157, 0.1);
+  color: var(--primary-color, #ff6b9d);
+  border-color: var(--primary-color, #ff6b9d);
+}
+
+.pdf-container .pdf-textarea-container {
+  position: relative;
+  flex: 1;
+}
+
+.pdf-container .pdf-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  resize: none;
+  min-height: 48px;
+  max-height: 150px;
+  background: rgba(41, 15, 78, 0.6);
+  color: #fff;
+  font-size: 15px;
+  line-height: 1.5;
+  outline: none;
+  transition: all 0.2s;
+  overflow: hidden;
+  font-family: inherit;
+}
+
+.pdf-container .pdf-input:focus {
+  border-color: var(--primary-color, #ff6b9d);
+  box-shadow: 0 0 0 2px rgba(255, 107, 157, 0.2);
+}
+
+.pdf-container .pdf-send-btn {
+  padding: 12px;
+  border-radius: 50%;
+  background: linear-gradient(45deg, var(--primary-color, #ff6b9d), var(--secondary-color, #f08bc3));
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.pdf-container .pdf-send-btn:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.pdf-container .pdf-send-btn.pdf-disabled {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.5);
+  cursor: not-allowed;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .pdf-container .pdf-content {
+    padding: 16px;
+  }
+  
+  .pdf-container .pdf-message-content {
+    max-width: 90%;
+  }
+}
+
+@media (max-width: 480px) {
+  .pdf-container .pdf-title {
+    font-size: 16px;
+  }
+  
+  .pdf-container .pdf-section-title {
+    font-size: 18px;
+  }
+  
+  .pdf-container .pdf-upload-text {
+    font-size: 16px;
+  }
+  
+  .pdf-container .pdf-upload-icon {
+    font-size: 32px;
+  }
+  
+  .pdf-container .pdf-message {
+    padding: 4px 8px;
+  }
+  
+  .pdf-container .pdf-message-bubble {
+    padding: 10px 12px;
+  }
+}
