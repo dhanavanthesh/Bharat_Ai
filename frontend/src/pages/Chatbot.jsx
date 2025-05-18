@@ -9,7 +9,7 @@ import {
   FaSignOutAlt, FaRegCommentDots, FaCog, FaChevronDown, FaChevronUp, 
   FaStop, FaBars, FaMicrophoneAlt, FaFileUpload, 
   FaChevronLeft, FaChevronRight, FaPaperPlane,
-  FaHome, FaHistory, FaSmile, FaExternalLinkAlt
+  FaHome, FaSmile, FaExternalLinkAlt
 } from 'react-icons/fa';
 import EmojiPicker from 'emoji-picker-react';
 import { auth } from '../utils/auth';
@@ -18,11 +18,11 @@ import { exportChatToPDF } from '../utils/exportPdf';
 import ChatMessage from '../components/ChatMessage';
 import '../styles/Chatbot.css';
 
-// Modified resize observer for textarea auto-expand
+// Modified resize observer for textarea auto-expand with enhanced reset
 const useAutosizeTextArea = (textAreaRef, value) => {
   useEffect(() => {
     if (textAreaRef.current) {
-      textAreaRef.current.style.height = "0px";
+      textAreaRef.current.style.height = "48px"; // Reset height first
       const scrollHeight = textAreaRef.current.scrollHeight;
       textAreaRef.current.style.height = Math.min(scrollHeight, 150) + "px";
     }
@@ -43,9 +43,7 @@ const Chatbot = () => {
   const [currentChatId, setCurrentChatId] = useState(null);
   const [chatHistory, setChatHistory] = useState({});
   const [model] = useState("LLaMA3");
-  const [darkMode, setDarkMode] = useState(
-    window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
-  );
+  const [darkMode, setDarkMode] = useState(true);
   const [editingTitleId, setEditingTitleId] = useState(null);
   const [newTitle, setNewTitle] = useState("");
   const [chatTitles, setChatTitles] = useState({});
@@ -75,11 +73,20 @@ const Chatbot = () => {
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", darkMode);
+    // Remove the forced dark mode
   }, [darkMode]);
 
+  // Add this function to make sure scrolling works properly after new messages
+  const scrollToBottom = useCallback(() => {
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, []);
+
+  // Update effect to use the new scroll function
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chats]);
+    scrollToBottom();
+  }, [chats, scrollToBottom]);
 
   useEffect(() => {
     setAudioAvailable(!!navigator.mediaDevices && !!navigator.mediaDevices.getUserMedia);
@@ -201,6 +208,26 @@ const Chatbot = () => {
     }
   };
 
+  // Ensure textarea resets properly after sending
+  const resetTextareaHeight = () => {
+    if (inputRef.current) {
+      setTimeout(() => {
+        inputRef.current.style.height = "48px";
+      }, 10);
+    }
+  };
+
+  // Fix handling of language selection
+  useEffect(() => {
+    // Load saved language preference when chat changes
+    if (currentChatId) {
+      const savedLanguage = localStorage.getItem(`chatLang_${currentChatId}`);
+      if (savedLanguage && Object.keys(supportedLanguages).includes(savedLanguage)) {
+        setCurrentLanguage(savedLanguage);
+      }
+    }
+  }, [currentChatId, setCurrentLanguage]);
+
   const handleSend = async () => {
     if (!input.trim() || (loading && !isResponding)) return;
     
@@ -230,6 +257,7 @@ const Chatbot = () => {
     const updatedChat = [...chats, userMessage];
     setChats(updatedChat);
     setInput("");
+    resetTextareaHeight(); // Reset textarea height after sending
 
     const placeholder = { role: "bot", content: "...", language: currentLanguage };
     const newChats = [...updatedChat, placeholder];
@@ -436,6 +464,23 @@ const Chatbot = () => {
     </div>
   );
 
+  const handleInputChange = (e) => {
+    setInput(e.target.value);
+  };
+
+  // Enhanced handler for language changes
+  const handleLanguageChange = (e) => {
+    const newLang = e.target.value;
+    setCurrentLanguage(newLang);
+    
+    // Save the preference for this chat
+    if (currentChatId) {
+      localStorage.setItem(`chatLang_${currentChatId}`, newLang);
+    }
+    
+    toast.info(`Language changed to ${supportedLanguages[newLang]}`);
+  };
+
   return (
     <div className="chat-container">
       {/* Background particles effect */}
@@ -538,14 +583,6 @@ const Chatbot = () => {
               </button>
               
               <button 
-                className={`nav-item ${window.location.pathname === '/history' ? 'active' : ''}`}
-                onClick={() => navigate('/history')}
-              >
-                <FaHistory className="nav-icon" />
-                {!sidebarCollapsed && <span>History</span>}
-              </button>
-              
-              <button 
                 className={`nav-item ${window.location.pathname === '/summarize' ? 'active' : ''}`}
                 onClick={() => navigate('/summarize')}
               >
@@ -643,7 +680,7 @@ const Chatbot = () => {
                         <label className="settings-label">Language</label>
                         <select
                           value={currentLanguage}
-                          onChange={(e) => setCurrentLanguage(e.target.value)}
+                          onChange={handleLanguageChange}
                           className="settings-select"
                         >
                           {Object.entries(supportedLanguages).map(([code, name]) => (
@@ -694,7 +731,7 @@ const Chatbot = () => {
                         <label className="settings-label">Language</label>
                         <select
                           value={currentLanguage}
-                          onChange={(e) => setCurrentLanguage(e.target.value)}
+                          onChange={handleLanguageChange}
                           className="settings-select"
                         >
                           {Object.entries(supportedLanguages).map(([code, name]) => (
@@ -727,7 +764,7 @@ const Chatbot = () => {
           {/* Main Chat Area - Improved layout */}
           <main className="chat-area">
             {/* Chat Header - Slimmer and more elegant */}
-            <header className="chat-header animated-gradient-header">
+            <header className="chat-header">
               <div className="chat-header-left">
                 <button
                   className="mobile-menu-btn"
@@ -883,7 +920,7 @@ const Chatbot = () => {
                   <textarea
                     ref={inputRef}
                     value={input}
-                    onChange={(e) => setInput(e.target.value)}
+                    onChange={handleInputChange}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();
@@ -932,7 +969,7 @@ const Chatbot = () => {
                 <div className="language-selector">
                   <select
                     value={currentLanguage}
-                    onChange={(e) => setCurrentLanguage(e.target.value)}
+                    onChange={handleLanguageChange}
                     className="language-select"
                   >
                     {Object.entries(supportedLanguages).map(([code, name]) => (

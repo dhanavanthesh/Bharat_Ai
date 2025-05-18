@@ -16,7 +16,7 @@ const ChatMessage = ({ message, darkMode, isLast, typingIndicator }) => {
     }
   };
 
-  // Simple function to format code blocks in message content
+  // Enhanced content formatter with better code highlighting
   const formatContent = (text) => {
     if (!text) return '';
 

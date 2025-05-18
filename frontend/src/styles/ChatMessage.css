@@ -5,12 +5,18 @@
   border-radius: 12px;
   position: relative;
   transition: all 0.2s;
+  background-color: rgba(31, 41, 55, 0.6);
+  backdrop-filter: blur(5px);
+  margin-bottom: 12px;
+  border: 1px solid rgba(55, 65, 81, 0.3);
 }
 
 /* User message */
 .message-container.user {
   background-color: rgba(99, 102, 241, 0.05);
   align-self: flex-end;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(79, 70, 229, 0.2));
+  border: 1px solid rgba(99, 102, 241, 0.3);
 }
 
 .dark .message-container.user {
@@ -21,6 +27,8 @@
 .message-container.bot {
   background-color: rgba(0, 0, 0, 0.02);
   align-self: flex-start;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .dark .message-container.bot {
@@ -80,6 +88,7 @@
   line-height: 1.6;
   overflow-wrap: break-word;
   word-break: break-word;
+  color: #f3f4f6; /* Improve text contrast in dark mode */
 }
 
 /* Markdown styling */
@@ -189,8 +198,8 @@
   margin: 12px 0;
   border-radius: 8px;
   overflow: hidden;
-  background-color: rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  background-color: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .dark .code-block-container {
@@ -201,9 +210,9 @@
 .code-language {
   padding: 4px 12px;
   font-size: 12px;
-  background-color: rgba(0, 0, 0, 0.1);
+  background-color: rgba(0, 0, 0, 0.5);
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-  color: var(--text-secondary);
+  color: rgba(255, 255, 255, 0.7);
   font-family: 'Roboto Mono', monospace;
 }
 
@@ -220,6 +229,7 @@
   font-size: 13px;
   line-height: 1.5;
   white-space: pre;
+  color: #e5e7eb;
 }
 
 /* Responsive adjustments */
@@ -242,4 +252,10 @@
   .code-block {
     font-size: 12px;
   }
+}
+
+/* Add these styles to improve text formatting */
+.text-content {
+  white-space: pre-wrap; /* This preserves spaces and line breaks */
+  word-break: break-word;
 }
