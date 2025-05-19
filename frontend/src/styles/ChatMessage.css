@@ -5,34 +5,36 @@
   border-radius: 12px;
   position: relative;
   transition: all 0.2s;
-  background-color: rgba(31, 41, 55, 0.6);
+  background-color: rgba(31, 41, 55, 0.85); /* More solid background */
   backdrop-filter: blur(5px);
   margin-bottom: 12px;
-  border: 1px solid rgba(55, 65, 81, 0.3);
+  border: 1px solid rgba(55, 65, 81, 0.4); /* More visible border */
 }
 
-/* User message */
+/* User message - increased visibility */
 .message-container.user {
-  background-color: rgba(99, 102, 241, 0.05);
+  background-color: rgba(99, 102, 241, 0.15);
   align-self: flex-end;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(79, 70, 229, 0.2));
-  border: 1px solid rgba(99, 102, 241, 0.3);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(79, 70, 229, 0.25));
+  border: 1px solid rgba(99, 102, 241, 0.4);
 }
 
 .dark .message-container.user {
-  background-color: rgba(99, 102, 241, 0.1);
+  background-color: rgba(99, 102, 241, 0.2);
+  border: 1px solid rgba(99, 102, 241, 0.35);
 }
 
-/* Bot message */
+/* Bot message - increased visibility */
 .message-container.bot {
-  background-color: rgba(0, 0, 0, 0.02);
+  background-color: rgba(0, 0, 0, 0.6);
   align-self: flex-start;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .dark .message-container.bot {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
 }
 
 .message-avatar {
@@ -83,12 +85,13 @@
   color: var(--primary-color);
 }
 
+/* Improved message text contrast */
 .message-body {
   font-size: 15px;
   line-height: 1.6;
   overflow-wrap: break-word;
   word-break: break-word;
-  color: #f3f4f6; /* Default for dark mode */
+  color: rgba(243, 244, 246, 1); /* Full opacity for better visibility */
 }
 
 /* Add better light mode text visibility */

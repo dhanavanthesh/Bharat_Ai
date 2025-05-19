@@ -4,15 +4,13 @@ import {
   FaArrowLeft, FaFileUpload, FaSpinner, FaPaperPlane, 
   FaStop, FaExclamationTriangle, FaPaperclip, FaFilePdf,
   FaFileExcel, FaFileWord, FaFilePowerpoint, FaFileImage,
-  FaCommentDots, FaInfoCircle, FaChevronDown, FaChevronUp,
-  FaRegLightbulb, FaEye, FaTimes, FaListAlt,
+  FaCommentDots, FaRegLightbulb, FaTimes, FaListAlt,
   FaFileAlt, FaQuestionCircle
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { API_BASE_URL } from '../config/constants';
 import '../styles/PdfSummarizer.css';
 
-// File type icons mapping
 const fileTypeIcons = {
   'application/pdf': <FaFilePdf />,
   'application/vnd.ms-excel': <FaFileExcel />,
@@ -26,7 +24,6 @@ const fileTypeIcons = {
   'image/jpeg': <FaFileImage />
 };
 
-// Get file type display name
 const getFileTypeDisplayName = (contentType) => {
   const typeMap = {
     'application/pdf': 'PDF',
@@ -56,11 +53,13 @@ const PdfSummarizer = () => {
   const [chats, setChats] = useState([]);
   const [isResponding, setIsResponding] = useState(false);
   const [error, setError] = useState('');
-  const [darkMode, setDarkMode] = useState(true); // Default to dark mode
+  const [darkMode] = useState(true); // Default to dark mode, removed unused setter
   const [activeTab, setActiveTab] = useState('upload');
+  // Removed unused setSummaryExpanded but kept the state for functionality
   const [summaryExpanded, setSummaryExpanded] = useState(true);
+  // Removed unused windowWidth state but kept setter for resize listener
+  const [, setWindowWidth] = useState(window.innerWidth);
   const [sidebarVisible, setSidebarVisible] = useState(true);
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [sidebarOverlayVisible, setSidebarOverlayVisible] = useState(false);
   const [inputProgress, setInputProgress] = useState(0);
   const [isFocused, setIsFocused] = useState(false);
@@ -90,11 +89,11 @@ const PdfSummarizer = () => {
   const user = getUserInfo();
   const userInitial = user?.name?.charAt(0)?.toUpperCase() || 'U';
   
-  // Auto-resize textarea as content grows
+  // Modify the auto-resize textarea effect to replace it with fixed height behavior
   useEffect(() => {
+    // Remove auto-resize, use fixed height instead
     if (inputRef.current) {
       inputRef.current.style.height = "48px";
-      inputRef.current.style.height = `${Math.min(inputRef.current.scrollHeight, 120)}px`;
     }
     
     // Set progress indicator based on input length
@@ -123,27 +122,26 @@ const PdfSummarizer = () => {
     document.body.classList.toggle("light", !darkMode);
   }, [darkMode]);
 
-  // Auto switch to chat tab when summary is received
+  // Remove the auto-switch effect
   useEffect(() => {
     if (summary && fileContentId && activeTab === 'upload') {
-      setActiveTab('chat');
-      // When switching to chat after summary, make sure sidebar is visible
+      // Remove automatic tab switching
       setTimeout(() => toggleSidebar(true), 100);
     }
-  }, [summary, fileContentId]);
+  }, [summary, fileContentId, activeTab]);
 
   // Improved scroll handling for chat messages
   useEffect(() => {
     if (chats.length > 0 && messagesContainerRef.current) {
       const scrollContainer = messagesContainerRef.current;
       
-      // Always scroll to bottom when a new message is added
+      // More reliable scrolling with delay for DOM updates
       setTimeout(() => {
         scrollContainer.scrollTo({
           top: scrollContainer.scrollHeight,
           behavior: 'smooth'
         });
-      }, 100);
+      }, 150);
     }
   }, [chats.length]);
 
@@ -158,10 +156,17 @@ const PdfSummarizer = () => {
     }
   }, [chats.length, activeTab, fileContentId, initialScrollDone]);
 
-  // Handle sidebar and overlay visibility together
+  // Improve toggle sidebar function to fix input area positioning
   const toggleSidebar = (visible) => {
     setSidebarVisible(visible);
     setSidebarOverlayVisible(visible);
+    
+    // Adjust input area position based on sidebar visibility
+    if (visible && window.innerWidth >= 768) {
+      document.querySelector('.pdf-input-area')?.classList.add('sidebar-visible');
+    } else {
+      document.querySelector('.pdf-input-area')?.classList.remove('sidebar-visible');
+    }
     
     // Prevent body scrolling when sidebar is open on mobile
     if (visible && window.innerWidth < 768) {
@@ -290,6 +295,7 @@ const PdfSummarizer = () => {
     }
   };
 
+  // Modified handleSummarize function
   const handleSummarize = async () => {
     if (!file) {
       toast.error('Please select a file first');
@@ -309,15 +315,17 @@ const PdfSummarizer = () => {
         setChats([]);
         setSummaryExpanded(true);
         
-        // Switch to chat tab automatically
-        setTimeout(() => setActiveTab('chat'), 500);
+        // Add notification instead of auto-switching
+        toast.info('You can now switch to Ask Questions tab to interact with your document', {
+          autoClose: 5000
+        });
       } else {
-        throw new Error(result.message || 'Failed to analyze file');
+        throw new Error(result.message || 'Failed to Summarize Document');
       }
     } catch (error) {
       console.error('Error analyzing file:', error);
-      setError(error.message || 'Failed to analyze file. Please try another file.');
-      toast.error(error.message || 'Failed to analyze file. Please try again.');
+      setError(error.message || 'Failed to Summarize Document. Please try another file.');
+      toast.error(error.message || 'Failed to Summarize Document. Please try again.');
       setSummary('');
       setFileContentId('');
     } finally {
@@ -340,11 +348,6 @@ const PdfSummarizer = () => {
     setInput('');
     setInputProgress(0);
     
-    // Reset textarea height
-    if (inputRef.current) {
-      inputRef.current.style.height = "48px";
-    }
-
     // Show loading placeholder with typing animation
     const placeholder = { role: 'bot', content: '...', timestamp: new Date().toISOString() };
     setChats([...updatedChats, placeholder]);
@@ -439,11 +442,15 @@ const PdfSummarizer = () => {
   }, [activeTab]);
 
   // Handle tab switching with clearer separation of concerns
+  // Modified switchTab function
   const switchTab = (tab) => {
     setActiveTab(tab);
+    setCurrentTab(tab);
     
-    // Reset scroll position when switching to chat tab
-    if (tab === 'chat' && messagesContainerRef.current) {
+    if (tab === 'upload') {
+      // Hide sidebar when switching to upload tab
+      toggleSidebar(false);
+    } else if (tab === 'chat' && messagesContainerRef.current) {
       setTimeout(() => {
         messagesContainerRef.current.scrollTop = 0;
       }, 100);
@@ -522,24 +529,27 @@ const PdfSummarizer = () => {
                 <span>Analyzing...</span>
               </>
             ) : (
-              `Analyze ${fileType ? getFileTypeDisplayName(fileType) : 'File'}`
+              `Summarize ${fileType ? getFileTypeDisplayName(fileType) : 'Document'}`
             )}
           </button>
           
           {!file && (
             <div className="pdf-help-text">
               <FaRegLightbulb className="pdf-help-icon" />
-              <p>Upload a document to get started. The AI will analyze your document and allow you to ask questions about it.</p>
+              <p>Upload a document to get started. The AI will Summarize your document and allow you to ask questions about it.</p>
             </div>
           )}
         </div>
       );
     }
     
-    // More clearly separated chat tab content
+    return renderChatTab();
+  };
+
+  // More clearly separated chat tab content with improved layout
+  const renderChatTab = () => {
     return (
       <div className={`pdf-chat-layout ${sidebarVisible ? 'with-sidebar' : 'no-sidebar'}`}>
-        {/* Sidebar overlay for mobile */}
         {sidebarOverlayVisible && (
           <div 
             className={`pdf-sidebar-overlay ${sidebarVisible ? 'active' : ''}`}
@@ -547,18 +557,18 @@ const PdfSummarizer = () => {
           />
         )}
         
-        {/* Enhanced mobile-friendly toggle with text label */}
+        {/* Mobile toggle is now positioned at bottom right for better visibility */}
         {!sidebarVisible && (
           <button 
             className="pdf-mobile-toggle" 
             onClick={() => toggleSidebar(true)}
+            aria-label="View document summary"
           >
             <FaFileAlt className="pdf-mobile-toggle-icon" />
-            <span>View Summary</span>
           </button>
         )}
         
-        {/* Summary Sidebar */}
+        {/* Summary Sidebar with improved positioning */}
         <aside 
           className={`pdf-summary-sidebar ${sidebarVisible ? 'visible' : 'hidden'}`}
           onTouchStart={handleTouchStart}
@@ -617,7 +627,7 @@ const PdfSummarizer = () => {
           </div>
         </aside>
         
-        {/* Main Chat Area */}
+        {/* Main Chat Area with proper positioning */}
         <div className="pdf-chat-main">
           <div className="pdf-chat-header">
             <h2>
@@ -730,7 +740,7 @@ const PdfSummarizer = () => {
                 <img src="/image.png" alt="Bharat AI Logo" />
               </div>
               <h1 className="pdf-title">
-                {fileContentId ? 'DOCUMENT ASSISTANT' : 'FILE ANALYZER'}
+                {fileContentId ? 'Interact with Documents' : 'Interact with Documents'}
               </h1>
             </div>
           </div>
@@ -770,9 +780,9 @@ const PdfSummarizer = () => {
           {renderTabContent()}
         </main>
 
-        {/* Fixed input area */}
+        {/* Fixed input area - moved outside of the renderTabContent for better positioning */}
         {activeTab === 'chat' && fileContentId && (
-          <div className="pdf-input-area">
+          <div className={`pdf-input-area ${sidebarVisible ? 'sidebar-visible' : ''}`}>
             <div className="pdf-input-wrapper">
               <button
                 className="pdf-upload-btn"
