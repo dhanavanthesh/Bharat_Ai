@@ -1,0 +1,1631 @@
+/* PDF Summarizer styles with proper isolation from Chatbot styles */
+
+/* Root container */
+.pdf-container {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Main layout structure */
+.pdf-layout {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+/* Header styling - improved contrast */
+.pdf-header {
+  height: 64px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  background-color: rgba(27, 9, 54, 0.95); /* More solid background */
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+.pdf-header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.pdf-back-btn {
+  color: #fff;
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.pdf-back-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.pdf-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pdf-logo {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pdf-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.pdf-title {
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.pdf-current-file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 6px 12px;
+  border-radius: 20px;
+  max-width: 300px;
+  overflow: hidden;
+  flex-shrink: 1; /* Allow shrinking */
+}
+
+.pdf-file-icon-header {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pdf-file-name-header {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px; /* Limit width */
+}
+
+/* Enhanced tab navigation system - improved visibility */
+.pdf-tabs {
+  display: flex;
+  background: rgba(27, 9, 54, 0.75); /* More solid background */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0;
+  flex-shrink: 0;
+  position: sticky;
+  top: 64px; /* Header height */
+  z-index: 11; /* Above content, below header */
+  height: 40px; /* Reduced height */
+}
+
+.pdf-tab {
+  padding: 0 16px;
+  height: 40px; /* Matching reduced height */
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px; /* Smaller font */
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  transition: all 0.2s;
+  flex: 1;
+  justify-content: center;
+  text-align: center;
+  border-bottom: 2px solid transparent; /* Thinner border */
+}
+
+.pdf-tab.active {
+  color: var(--primary-color, #ff6b9d);
+  background-color: rgba(255, 255, 255, 0.05);
+  border-bottom: 3px solid var(--primary-color, #ff6b9d);
+}
+
+.pdf-tab .tab-icon {
+  font-size: 18px;
+}
+
+.pdf-tab .tab-label {
+  font-weight: 600;
+}
+
+/* Main content area */
+.pdf-content {
+  flex: 1;
+  padding: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Improved uploading experience - completely separated from Q&A */
+.pdf-upload-tab {
+  max-width: 700px;
+  margin: 32px auto;
+  padding: 0 24px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.pdf-upload-container {
+  background: rgba(27, 9, 54, 0.3);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+}
+
+.pdf-upload-area {
+  border: 2px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  padding: 40px 16px; /* Reduced horizontal padding */
+  text-align: center;
+  transition: all 0.2s;
+  cursor: pointer;
+  margin-bottom: 16px;
+  width: 100%;
+}
+
+.pdf-upload-area:hover {
+  border-color: rgba(255, 107, 157, 0.5);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.pdf-hidden-input {
+  display: none;
+}
+
+/* Enhanced upload container layout */
+.pdf-upload-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  width: 100%;
+}
+
+.pdf-upload-icon {
+  font-size: 48px;
+  color: var(--primary-color, #ff6b9d);
+  margin-bottom: 16px;
+  filter: drop-shadow(0 0 10px rgba(255, 107, 157, 0.4));
+}
+
+.pdf-upload-text {
+  font-size: 20px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 8px;
+  max-width: 100%;
+  padding: 0 20px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+}
+
+.pdf-upload-hint {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* File info display */
+.pdf-file-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 16px;
+  transition: all 0.2s ease;
+  width: 100%;
+  overflow: hidden; /* Contain long file names */
+}
+
+.pdf-file-info:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+.pdf-file-icon {
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: var(--primary-color, #ff6b9d);
+}
+
+.pdf-file-details {
+  flex: 1;
+  min-width: 0; /* Enable text truncation */
+  max-width: calc(100% - 60px); /* Account for icon width and padding */
+  overflow: hidden;
+}
+
+.pdf-file-name {
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 6px;
+  word-break: break-word; /* Break very long words */
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 1; /* Show only 1 line */
+  -webkit-box-orient: vertical;
+  font-size: 14px;
+}
+
+.pdf-file-type {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Help text */
+.pdf-help-text {
+  display: flex;
+  gap: 12px;
+  background: rgba(27, 9, 54, 0.3);
+  border-radius: 10px;
+  padding: 16px;
+  margin-top: 8px;
+}
+
+.pdf-help-icon {
+  color: var(--primary-color, #ff6b9d);
+  font-size: 20px;
+  margin-top: 2px;
+}
+
+.pdf-help-text p {
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* Summarize button */
+.pdf-summarize-btn {
+  width: 100%;
+  padding: 16px 24px;
+  background: linear-gradient(45deg, var(--primary-color, #ff6b9d), var(--secondary-color, #f08bc3));
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+  box-shadow: 0 4px 20px rgba(255, 107, 157, 0.3);
+}
+
+.pdf-summarize-btn:hover:not(.pdf-disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(255, 107, 157, 0.4);
+}
+
+.pdf-summarize-btn.pdf-disabled {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.5);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.pdf-spinner-icon {
+  animation: pdf-spin 1s infinite linear;
+  font-size: 18px;
+}
+
+@keyframes pdf-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Error styling */
+.pdf-error {
+  max-width: 600px;
+  margin: 48px auto;
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  border-radius: 10px;
+  padding: 24px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+}
+
+.pdf-error-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.pdf-error-icon {
+  color: #ef4444;
+  font-size: 24px;
+}
+
+.pdf-error-title {
+  color: #ef4444;
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.pdf-error-message {
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+.pdf-error-retry-btn {
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pdf-error-retry-btn:hover {
+  background: #dc2626;
+}
+
+/* Chat tab content */
+.pdf-chat-tab {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Brand new sidebar-based layout */
+.pdf-chat-layout {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.pdf-chat-layout.with-sidebar {
+  grid-template-columns: 300px 1fr;
+}
+
+/* Completely redesigned sidebar with proper positioning */
+.pdf-summary-sidebar {
+  width: 320px;
+  height: calc(100vh - 64px - 40px); /* Adjust for reduced tab height */
+  background: rgba(35, 15, 66, 0.95); /* More solid background */
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 104px; /* Header + tabs height */
+  left: 0;
+  bottom: 0;
+  z-index: 25; /* Higher z-index */
+  transition: transform 0.3s ease;
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
+}
+
+.pdf-summary-sidebar.hidden {
+  transform: translateX(-100%);
+}
+
+.pdf-sidebar-header {
+  padding: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(27, 9, 54, 0.95);
+}
+
+.pdf-sidebar-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pdf-sidebar-close {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  padding: 6px;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.pdf-sidebar-close:hover {
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.pdf-sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1);
+}
+
+.pdf-sidebar-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.pdf-sidebar-content::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.pdf-sidebar-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+}
+
+.pdf-sidebar-footer {
+  padding: 12px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(27, 9, 54, 0.5);
+}
+
+.pdf-file-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 8px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.8);
+  max-width: 100%;
+}
+
+.pdf-file-icon-badge {
+  color: var(--primary-color, #ff6b9d);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pdf-file-badge span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Main chat area styles */
+.pdf-chat-main {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: calc(100vh - 64px - 40px - 72px); /* Header + tabs + input area */
+  padding-left: 0;
+  transition: padding-left 0.3s ease;
+  overflow: hidden;
+}
+
+.pdf-chat-layout.with-sidebar .pdf-chat-main {
+  margin-left: 320px; /* Match sidebar width */
+  width: calc(100% - 320px);
+}
+
+/* Enhanced Chat tab content for better visibility */
+.pdf-chat-header {
+  padding: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(27, 9, 54, 0.85); /* More solid background */
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.pdf-chat-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pdf-chat-icon {
+  color: var(--primary-color, #ff6b9d);
+}
+
+/* Enhanced Button for Showing Summary */
+.pdf-summary-toggle-btn {
+  position: fixed;
+  top: 76px; /* Position below header */
+  left: 16px;
+  background: rgba(255, 107, 157, 0.2);
+  border: 1px solid rgba(255, 107, 157, 0.4);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: var(--primary-color, #ff6b9d);
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  z-index: 5;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Mobile Drawer Experience for Sidebar */
+.pdf-sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 15;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+.pdf-sidebar-overlay.active {
+  display: block;
+  opacity: 1;
+}
+
+/* Chat messages container improvements */
+.pdf-messages-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 20px 16px; /* Reduced bottom padding */
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  /* Ensure content is positioned properly initially */
+  justify-content: flex-start;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Improved Summary container */
+.pdf-summary-container {
+  background: rgba(27, 9, 54, 0.3);
+  margin: 16px 16px 0;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.pdf-summary-container.collapsed {
+  max-height: 60px;
+  margin-bottom: 0;
+}
+
+.pdf-summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: rgba(27, 9, 54, 0.5);
+  cursor: pointer;
+  user-select: none;
+}
+
+.pdf-summary-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pdf-file-icon-small {
+  font-size: 18px;
+  color: var(--primary-color, #ff6b9d);
+}
+
+.pdf-summary-title h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.pdf-summary-toggle {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  transition: all 0.2s;
+  padding: 6px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+}
+
+.pdf-summary-toggle:hover {
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* New summary content styling to match chat style */
+.pdf-summary-content {
+  padding: 16px;
+}
+
+.pdf-summary-wrapper {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.pdf-summary-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(41, 15, 78, 0.6);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.pdf-summary-avatar img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+/* Improved summary text container for better readability */
+.pdf-summary-text-container {
+  background: rgba(41, 15, 78, 0.85); /* More solid background */
+  padding: 18px 20px;
+  border-radius: 16px;
+  border-top-left-radius: 4px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  flex: 1;
+}
+
+.pdf-summary-text {
+  margin: 0;
+  color: rgba(255, 255, 255, 1); /* Make text fully opaque for better readability */
+  white-space: pre-wrap;
+  line-height: 1.6;
+  font-size: 15px;
+  letter-spacing: 0.2px; /* Slightly improve text readability */
+}
+
+/* Add these styles after the pdf-summary-text styling */
+
+.pdf-document-info {
+  margin-top: 24px;
+  background: rgba(41, 15, 78, 0.3);
+  border-radius: 10px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pdf-info-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 16px;
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+
+.pdf-info-icon {
+  color: var(--primary-color, #ff6b9d);
+  font-size: 14px;
+}
+
+.pdf-info-item {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  margin-bottom: 8px;
+  line-height: 1.5;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pdf-info-item:last-child {
+  margin-bottom: 0;
+}
+
+.pdf-info-item strong {
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+  min-width: 50px;
+}
+
+/* Chat container improvements */
+.pdf-chat-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0 16px 16px;
+  margin-top: 8px;
+}
+
+/* Improved empty chat styling to match Chatbot.jsx */
+.pdf-empty-chat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 20px;
+  margin: auto; /* Center vertically too */
+  width: 100%;
+  max-width: 600px;
+  background: rgba(27, 9, 54, 0.3);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Enhanced Empty Chat Animation */
+.pdf-empty-chat-logo {
+  width: 90px;
+  height: 90px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: logoAnimation 4s infinite alternate;
+  background: rgba(41, 15, 78, 0.4);
+  border-radius: 50%;
+  padding: 8px;
+  box-shadow: 0 0 30px rgba(255, 107, 157, 0.3);
+}
+
+@keyframes logoAnimation {
+  0% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.05); filter: brightness(1.2); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+
+.pdf-empty-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.pdf-empty-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  margin: 0 0 8px;
+  background: linear-gradient(90deg, #ff6b9d, #f08bc3);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.pdf-empty-subtitle {
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 24px;
+  font-size: 17px;
+  line-height: 1.5;
+  max-width: 500px;
+}
+
+/* Enhanced example questions - now clickable */
+.pdf-example-questions {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  padding: 16px 20px;
+  text-align: left;
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 20px;
+}
+
+.pdf-example-questions p {
+  margin: 0 0 10px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 16px;
+}
+
+.pdf-example-questions ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.pdf-example-questions li {
+  color: var(--primary-color, #ff6b9d);
+  margin-bottom: 12px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+}
+
+.pdf-example-questions li:hover,
+.pdf-example-questions li:active {
+  background: rgba(255, 107, 157, 0.1);
+  border-color: rgba(255, 107, 157, 0.3);
+  padding-left: 12px;
+}
+
+.pdf-example-questions li:last-child {
+  margin-bottom: 0;
+}
+
+/* Messages list improvements */
+.pdf-messages-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 900px; /* Limit maximum width for better readability */
+  margin: 0 auto;
+  padding: 16px 0;
+  align-self: center;
+}
+
+/* Add smooth anchor scrolling */
+.pdf-scroll-anchor {
+  scroll-margin: 100px;
+}
+
+/* Make sure the message bubbles have proper styling */
+.pdf-message {
+  display: flex;
+  gap: 12px;
+  max-width: 85%;
+  margin-left: 0;
+}
+
+.pdf-message.pdf-user {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+  margin-right: 0;
+  margin-left: auto;
+}
+
+/* Enhanced avatars for better visual appeal */
+.pdf-message-avatar {
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.pdf-user-avatar, 
+.pdf-bot-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.pdf-user-avatar {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  font-weight: 600;
+  font-size: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.pdf-bot-avatar {
+  background: rgba(41, 15, 78, 0.6);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  padding: 4px;
+}
+
+.pdf-bot-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.pdf-message-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: fit-content;
+  max-width: calc(100% - 60px);
+}
+
+/* Message styling improvements for better visibility */
+.pdf-message-bubble {
+  background: rgba(41, 15, 78, 0.85); /* More solid background */
+  padding: 16px 20px;
+  border-radius: 16px;
+  border-top-left-radius: 4px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+  overflow-wrap: break-word;
+  max-width: 100%;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pdf-message-bubble:active {
+  transform: scale(0.99);
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+}
+
+.pdf-message.pdf-user .pdf-message-bubble {
+  background: rgba(255, 107, 157, 0.25); /* More visible user messages */
+  border-top-right-radius: 4px;
+  border-top-left-radius: 16px;
+  border: 1px solid rgba(255, 107, 157, 0.3);
+}
+
+.pdf-message-text {
+  margin: 0;
+  color: rgba(255, 255, 255, 1); /* Make text fully opaque for better readability */
+  white-space: pre-wrap;
+  line-height: 1.6;
+  font-size: 15px;
+  letter-spacing: 0.2px; /* Slightly improve text readability */
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1); /* Make text sharper */
+}
+
+/* Typing animation */
+.pdf-typing-animation {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.pdf-typing-dot {
+  width: 8px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 50%;
+  animation: pdf-bounce 1.4s infinite ease-in-out both;
+}
+
+.pdf-typing-dot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.pdf-typing-dot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes pdf-bounce {
+  0%, 80%, 100% {
+    transform: scale(0);
+    opacity: 0.6;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Enhanced input area with better visibility */
+.pdf-input-area {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 12px 16px;
+  height: 72px; /* Fixed height */
+  background: rgba(27, 9, 54, 0.95); /* More solid background */
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  z-index: 30; /* Higher than sidebar */
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.pdf-chat-layout.with-sidebar .pdf-input-area {
+  left: 320px; /* Match sidebar width */
+  width: calc(100% - 320px);
+}
+
+.pdf-input-wrapper {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.pdf-upload-btn {
+  padding: 12px;
+  border-radius: 50%;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.pdf-upload-btn:hover:not(:disabled) {
+  background: rgba(255, 107, 157, 0.1);
+  color: var(--primary-color, #ff6b9d);
+  border-color: var(--primary-color, #ff6b9d);
+}
+
+.pdf-textarea-container {
+  position: relative;
+  flex: 1;
+  position: relative;
+}
+
+/* Input progress indicator */
+.pdf-input-progress {
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--primary-color, #ff6b9d), var(--secondary-color, #f08bc3));
+  border-radius: 2px;
+  transition: width 0.2s ease;
+  z-index: 2;
+}
+
+.pdf-input {
+  width: 100%;
+  padding: 14px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.25); /* More visible border */
+  border-radius: 24px;
+  resize: none;
+  height: 48px; /* Fixed height */
+  max-height: 48px; /* Prevent growth */
+  background: rgba(41, 15, 78, 0.85); /* More solid background */
+  color: #fff;
+  font-size: 15px;
+  line-height: 1.5;
+  outline: none;
+  transition: all 0.2s;
+  overflow: hidden; /* Hide scrollbar */
+  font-family: inherit;
+  white-space: nowrap; /* Prevent line breaks */
+  text-overflow: ellipsis; /* Add ellipsis for overflow */
+}
+
+.pdf-input:focus {
+  border-color: var(--primary-color, #ff6b9d);
+  box-shadow: 0 0 0 2px rgba(255, 107, 157, 0.2);
+}
+
+/* Enhanced Action Buttons */
+.pdf-action-btn {
+  min-width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 16px;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pdf-action-btn:hover,
+.pdf-action-btn:active {
+  color: var(--primary-color, #ff6b9d);
+  background-color: rgba(255, 107, 157, 0.1);
+}
+
+.pdf-send-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(45deg, var(--primary-color, #ff6b9d), var(--secondary-color, #f08bc3));
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(255, 107, 157, 0.3);
+}
+
+.pdf-send-btn:hover:not(.pdf-disabled) {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(255, 107, 157, 0.4);
+}
+
+.pdf-send-btn.pdf-disabled {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.5);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Enhanced mobile sidebar toggle with label */
+.pdf-mobile-toggle {
+  display: none; /* Hidden on desktop */
+  position: fixed;
+  bottom: 80px; /* Position above the input area */
+  left: 16px;
+  background: linear-gradient(135deg, rgba(255,107,157,0.9), rgba(240,139,195,0.9));
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  font-size: 14px;
+  z-index: 40;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pdf-mobile-toggle:active {
+  transform: scale(0.95);
+}
+
+.pdf-mobile-toggle-icon {
+  font-size: 20px;
+}
+
+/* Responsive design */
+@media (max-width: 992px) {
+  .pdf-summary-sidebar {
+    width: 280px;
+  }
+}
+
+@media (max-width: 768px) {
+  .pdf-summary-sidebar {
+    width: 100%; /* Full width on mobile */
+    max-width: none;
+    height: calc(100vh - 104px); /* Subtract header + tabs height */
+    top: 104px;
+  }
+  
+  /* When sidebar is visible on mobile, hide everything else */
+  .pdf-chat-layout.with-sidebar .pdf-chat-main {
+    visibility: hidden;
+    margin-left: 0;
+    width: 100%;
+  }
+  
+  /* Ensure chat input is full width on mobile */
+  .pdf-chat-layout.with-sidebar .pdf-input-area {
+    left: 0;
+    width: 100%;
+    visibility: hidden; /* Hide when sidebar is open */
+  }
+  
+  /* Tab sizing for mobile */
+  .pdf-tab {
+    padding: 0 8px;
+    font-size: 13px;
+    gap: 4px;
+  }
+  
+  .pdf-tab .tab-icon {
+    font-size: 16px;
+  }
+  
+  /* Fix input position on very small screens */
+  .pdf-input-area {
+    padding: 10px 12px;
+    height: 68px;
+  }
+  
+  /* Fix input styling */
+  .pdf-input {
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+  
+  /* Better mobile toggle for summary */
+  .pdf-mobile-toggle {
+    bottom: 80px;
+    right: 16px;
+    width: 48px;
+    height: 48px;
+    z-index: 31; /* Above input area */
+  }
+  
+  /* Ensure chat area uses full width when sidebar is hidden */
+  .pdf-chat-layout .pdf-chat-main {
+    padding-left: 0;
+    margin-left: 0;
+    width: 100%;
+  }
+  
+  .pdf-chat-layout.with-sidebar .pdf-chat-main {
+    margin-left: 0;
+    width: 100%;
+  }
+  
+  /* More visible toggle button */
+  .pdf-summary-toggle-btn {
+    bottom: 80px;
+    top: auto;
+    left: 16px;
+    padding: 12px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    justify-content: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+    background: linear-gradient(135deg, rgba(255,107,157,0.9), rgba(240,139,195,0.9));
+  }
+  
+  .pdf-summary-toggle-btn span {
+    display: none;
+  }
+  
+  .pdf-summary-toggle-btn:hover,
+  .pdf-summary-toggle-btn:active {
+    transform: scale(1.05);
+  }
+  
+  /* Better chat header on mobile */
+  .pdf-chat-header {
+    padding: 12px 16px;
+  }
+  
+  .pdf-chat-header h2 {
+    font-size: 16px;
+  }
+  
+  /* Improve messages display on small screens */
+  .pdf-message {
+    max-width: 85%;
+    margin-bottom: 4px;
+  }
+  
+  .pdf-messages-container {
+    padding: 12px 12px 80px;
+  }
+  
+  /* Better positioned input area */
+  .pdf-input-area {
+    padding: 8px 12px;
+  }
+
+  .pdf-summary-toggle-btn {
+    display: none; /* We'll use the new mobile toggle instead */
+  }
+  
+  .pdf-mobile-toggle {
+    display: flex;
+    bottom: 80px;
+    left: auto;
+    right: 16px; /* Move to right side for better visibility */
+    width: 48px;
+    height: 48px;
+    padding: 0;
+  }
+  
+  .pdf-tab {
+    padding: 14px 8px;
+    font-size: 14px;
+    flex-direction: column;
+    gap: 6px;
+  }
+  
+  .pdf-tab .tab-icon {
+    font-size: 22px; /* Larger icon for better visibility */
+  }
+  
+  .pdf-tab .tab-label {
+    font-size: 13px;
+  }
+  
+  /* Fix tab text wrapping issue */
+  .pdf-tabs {
+    padding: 0;
+  }
+  
+  /* Clear separation between upload and chat tabs on mobile */
+  .pdf-content {
+    padding-top: 0;
+    padding-bottom: 85px; /* Make room for input area */
+  }
+  
+  /* Enhanced input area for mobile */
+  .pdf-input-area {
+    padding: 12px;
+    background: rgba(27, 9, 54, 0.98);
+  }
+
+  .pdf-current-file {
+    max-width: 180px; /* Smaller on mobile */
+  }
+
+  .pdf-file-name-header {
+    max-width: 120px; /* Smaller on mobile */
+  }
+
+  .pdf-file-info {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .pdf-file-name {
+    font-size: 14px;
+    -webkit-line-clamp: 1; /* Show only 1 line on mobile */
+  }
+
+  .pdf-file-type {
+    font-size: 12px;
+  }
+}
+
+/* Small mobile devices */
+@media (max-width: 480px) {
+  .pdf-mobile-toggle {
+    bottom: 80px; /* Lower position on very small devices */
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-size: 13px;
+    width: auto;
+    white-space: nowrap;
+  }
+  
+  .pdf-mobile-toggle:active {
+    transform: translateX(-50%) scale(0.95);
+  }
+}
+
+@media (max-width: 576px) {
+  .pdf-summary-sidebar {
+    width: 90%;
+  }
+  
+  /* Enhanced empty chat for small screens */
+  .pdf-empty-chat {
+    padding: 24px 12px;
+    margin-top: 12px;
+  }
+  
+  .pdf-empty-chat-logo {
+    width: 70px;
+    height: 70px;
+  }
+  
+  .pdf-empty-title {
+    font-size: 20px;
+  }
+  
+  /* Better tabs for mobile */
+  .pdf-tabs {
+    padding: 0;
+  }
+  
+  .pdf-tab {
+    flex: 1;
+    justify-content: center;
+    padding: 12px 8px;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .pdf-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary-color, #ff6b9d), var(--secondary-color, #f08bc3));
+  }
+  
+  /* Optimize upload area for mobile */
+  .pdf-upload-area {
+    padding: 30px 12px;
+  }
+  
+  .pdf-upload-icon {
+    font-size: 36px;
+  }
+  
+  /* Fix avatar spacing on mobile */
+  .pdf-message-avatar {
+    margin-top: 2px;
+  }
+  
+  .pdf-user-avatar, 
+  .pdf-bot-avatar {
+    width: 36px;
+    height: 36px;
+  }
+  
+  /* Mobile chat optimizations */
+  .pdf-message {
+    gap: 8px;
+  }
+  
+  /* Better touch targets */
+  .pdf-example-questions li {
+    padding: 10px 8px;
+  }
+  
+  /* Better upload experience on mobile */
+  .pdf-upload-tab {
+    padding: 0 12px;
+    margin: 16px auto;
+  }
+  
+  /* Optimized input for small screens */
+  .pdf-input-wrapper {
+    gap: 8px;
+  }
+
+  .pdf-file-info {
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .pdf-file-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 20px;
+  }
+
+  .pdf-file-name {
+    font-size: 13px;
+    line-height: 1.3;
+  }
+
+  .pdf-file-type {
+    font-size: 12px;
+  }
+
+  .pdf-upload-text {
+    font-size: 16px;
+    padding: 0 10px;
+  }
+}
+
+/* Handle very small screens */
+@media (max-width: 360px) {
+  .pdf-header {
+    padding: 0 8px;
+  }
+  
+  .pdf-title {
+    font-size: 14px;
+  }
+  
+  .pdf-empty-chat-logo {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .pdf-empty-title {
+    font-size: 18px;
+  }
+  
+  /* Even more compact input area */
+  .pdf-input-area {
+    padding: 6px;
+  }
+  
+  .pdf-send-btn {
+    min-width: 38px;
+    height: 38px;
+  }
+  
+  /* Smaller tabs */
+  .pdf-tab {
+    padding: 10px 4px;
+    font-size: 13px;
+  }
+
+  .pdf-current-file {
+    max-width: 140px;
+  }
+
+  .pdf-file-name-header {
+    max-width: 80px;
+  }
+}
+
+/* Fix for very tall screens */
+@media (min-height: 1000px) {
+  .pdf-messages-container {
+    padding-bottom: 100px;
+  }
+}

@@ -1,5 +1,5 @@
 // src/pages/Signup.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { auth } from '../utils/auth';
@@ -11,10 +11,63 @@ const Signup = () => {
   const [fullName, setFullName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [phone, setPhone] = useState('');
+  const [countryCode, setCountryCode] = useState('+91'); // Default to India
   const [loading, setLoading] = useState(false);
   const [verificationNeeded, setVerificationNeeded] = useState(false);
   const [verificationMethod, setVerificationMethod] = useState('email'); // 'email' or 'password'
+  const [passwordStrength, setPasswordStrength] = useState({
+    score: 0,
+    message: '',
+    color: 'rgba(255, 255, 255, 0.2)'
+  });
   const navigate = useNavigate();
+  
+  // Evaluate password strength
+  useEffect(() => {
+    if (!password) {
+      setPasswordStrength({
+        score: 0,
+        message: '',
+        color: 'rgba(255, 255, 255, 0.2)'
+      });
+      return;
+    }
+    
+    // Simple password strength evaluation
+    let score = 0;
+    let message = '';
+    let color = '';
+    
+    // Length check
+    if (password.length >= 8) score += 1;
+    
+    // Uppercase check
+    if (/[A-Z]/.test(password)) score += 1;
+    
+    // Lowercase check
+    if (/[a-z]/.test(password)) score += 1;
+    
+    // Number check
+    if (/\d/.test(password)) score += 1;
+    
+    // Special character check
+    if (/[^A-Za-z0-9]/.test(password)) score += 1;
+    
+    // Set message and color based on score
+    if (score < 2) {
+      message = 'Weak';
+      color = '#ff3e3e';
+    } else if (score < 4) {
+      message = 'Moderate';
+      color = '#ffb400';
+    } else {
+      message = 'Strong';
+      color = '#00cc4e';
+    }
+    
+    setPasswordStrength({ score, message, color });
+  }, [password]);
   
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,13 +82,21 @@ const Signup = () => {
       return;
     }
     
+    // Validate phone number
+    if (phone && !/^\d{10}$/.test(phone)) {
+      toast.error('Please enter a valid 10-digit phone number');
+      return;
+    }
+    
     setLoading(true);
     
     try {
+      const fullPhoneNumber = phone ? `${countryCode}${phone}` : '';
+      
       // Different flow based on verification method
       if (verificationMethod === 'email') {
         // Email verification flow
-        const result = await auth.register(email, fullName, password);
+        const result = await auth.register(email, fullName, password, fullPhoneNumber);
         
         if (result.success) {
           toast.success('Verification code sent to your email!');
@@ -45,7 +106,7 @@ const Signup = () => {
         }
       } else {
         // Password-only flow (direct signup)
-        const result = await auth.signup(email, password);
+        const result = await auth.signup(email, password, fullName, fullPhoneNumber);
         
         if (result.success) {
           toast.success('Account created successfully!');
@@ -151,6 +212,44 @@ const Signup = () => {
           </div>
         )}
         
+        {/* New Phone Number Field */}
+        <div className="form-group">
+          <label htmlFor="phone">Phone Number (Optional)</label>
+          <div className="phone-input-wrapper">
+            <div className="country-code">
+              <select 
+                value={countryCode}
+                onChange={(e) => setCountryCode(e.target.value)}
+                className="country-code-select"
+              >
+                <option value="+91">+91 (IN)</option>
+                <option value="+1">+1 (US)</option>
+                <option value="+44">+44 (UK)</option>
+                <option value="+61">+61 (AU)</option>
+                <option value="+971">+971 (UAE)</option>
+                <option value="+65">+65 (SG)</option>
+                {/* Add more country codes as needed */}
+              </select>
+            </div>
+            <div className="input-wrapper phone-number-input">
+              <span className="input-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                </svg>
+              </span>
+              <input
+                id="phone"
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+                className="auth-input"
+                placeholder="10-digit number"
+                maxLength={10}
+              />
+            </div>
+          </div>
+        </div>
+        
         <div className="form-group">
           <label htmlFor="password">Password</label>
           <div className="input-wrapper">
@@ -169,6 +268,22 @@ const Signup = () => {
               required
             />
           </div>
+          {password && (
+            <div className="password-strength">
+              <div className="strength-bar-container">
+                <div 
+                  className="strength-bar" 
+                  style={{ 
+                    width: `${(passwordStrength.score / 5) * 100}%`,
+                    backgroundColor: passwordStrength.color
+                  }}
+                ></div>
+              </div>
+              <div className="strength-text" style={{ color: passwordStrength.color }}>
+                {passwordStrength.message && `Password Strength: ${passwordStrength.message}`}
+              </div>
+            </div>
+          )}
           <p className="input-help">Password must be at least 6 characters</p>
         </div>
         

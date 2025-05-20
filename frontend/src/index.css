@@ -19,6 +19,21 @@ code {
 /* Dark mode styles */
 .dark {
   color-scheme: dark;
+  background-color: #130625 !important;
+}
+
+body.dark {
+  background-color: #130625 !important;
+}
+
+/* Light mode styles */
+body:not(.dark) {
+  background-color: #ffffff !important;
+  color-scheme: light;
+}
+
+html:not(.dark) {
+  background-color: #ffffff !important;
 }
 
 /* Markdown styling */

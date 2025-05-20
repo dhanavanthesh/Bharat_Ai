@@ -1,9 +1,6 @@
 // Get the API base URL from environment variables
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://api.bhaai.org.in';
 //const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5001';
-
-// User authentication state
-let currentUser = JSON.parse(localStorage.getItem('user')) || null;
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://api.bhaai.org.in';
 
 // Common fetch options with CORS settings
 const fetchOptions = {
@@ -55,8 +52,6 @@ const apiCall = async (endpoint, method, body, retries = 2) => {
         throw new Error('Invalid response format');
       }
       
-      console.log('Response data:', data);
-
       if (!response.ok) {
         throw new Error(data.message || data.error || `${method} request failed`);
       }
@@ -96,86 +91,33 @@ const apiCall = async (endpoint, method, body, retries = 2) => {
   }
 };
 
-// Authentication functions
-export const auth = {
-  isAuthenticated: () => !!currentUser,
-  getCurrentUser: () => currentUser,
-
-  signup: async (email, password, fullName = '', phoneNumber = '') => {
-    const data = await apiCall('/api/signup', 'POST', { 
-      email, 
-      password, 
-      fullName,
-      phoneNumber
-    });
-    if (data.success) {
-      currentUser = data.user;
-      localStorage.setItem('user', JSON.stringify(currentUser));
-    }
-    return data;
-  },
-
-  register: async (email, fullName, password, phoneNumber = '') => {
-    return await apiCall('/api/register', 'POST', { 
-      email, 
-      fullName, 
-      password,
-      phoneNumber
+// Profile-related functions
+export const profileApi = {
+  /**
+   * Reset user password
+   * @param {string} userId - User ID
+   * @param {string} currentPassword - Current password
+   * @param {string} newPassword - New password
+   * @returns {Promise<Object>} - API response
+   */
+  resetPassword: async (userId, currentPassword, newPassword) => {
+    return await apiCall('/api/reset-password', 'POST', {
+      userId,
+      currentPassword,
+      newPassword
     });
   },
 
-  verifyEmail: async (email, code) => {
-    const data = await apiCall('/api/verify', 'POST', { email, code });
-    if (data.success) {
-      currentUser = data.user;
-      localStorage.setItem('user', JSON.stringify(currentUser));
-    }
-    return data;
-  },
-
-  sendVerification: async (email) => {
-    return await apiCall('/api/send-verification', 'POST', { email });
-  },
-
-  login: async (email, password) => {
-    const data = await apiCall('/api/login', 'POST', { email, password });
-    if (data.success) {
-      currentUser = data.user;
-      localStorage.setItem('user', JSON.stringify(currentUser));
-    }
-    return data;
-  },
-
-  logout: () => {
-    currentUser = null;
-    localStorage.removeItem('user');
-  },
-
-  // Check if the API is available
-  checkApiHealth: async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/health`, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json'
-        },
-        signal: AbortSignal.timeout(5000) // 5 second timeout
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        return {
-          available: true,
-          status: data.status,
-          database: data.database,
-          timestamp: data.timestamp
-        };
-      }
-      
-      return { available: false };
-    } catch (error) {
-      console.error('API health check failed:', error);
-      return { available: false, error: error.message };
-    }
+  /**
+   * Update user profile
+   * @param {string} userId - User ID
+   * @param {Object} profileData - Profile data to update
+   * @returns {Promise<Object>} - API response
+   */
+  updateProfile: async (userId, profileData) => {
+    return await apiCall('/api/update-profile', 'PUT', {
+      userId,
+      ...profileData
+    });
   }
 };

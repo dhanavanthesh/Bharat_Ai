@@ -1,15 +1,49 @@
 // src/pages/Chatbot.jsx
-import React, { useState,useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useSpeech } from '../context/SpeechContext';
 import { supportedLanguages } from '../config/languages';
-import { FaPlus, FaPencilAlt, FaTrash, FaDownload, FaUser, FaMoon, FaSun, FaSignOutAlt, FaRegCommentDots, FaCog, FaChevronDown, FaChevronUp, FaArrowUp, FaStop, FaBars, FaMicrophoneAlt, FaFileUpload } from 'react-icons/fa';
+import { 
+  FaPlus, FaPencilAlt, FaTrash, FaDownload, FaUser, FaMoon, FaSun, 
+  FaSignOutAlt, FaRegCommentDots, FaCog, FaChevronDown, FaChevronUp, 
+  FaStop, FaBars, FaMicrophoneAlt, FaFileUpload, 
+  FaChevronLeft, FaChevronRight, FaPaperPlane,
+  FaHome, FaSmile, FaPaperclip
+} from 'react-icons/fa';
+import EmojiPicker from 'emoji-picker-react';
 import { auth } from '../utils/auth';
 import { chatApi } from '../utils/chatApi';
 import { exportChatToPDF } from '../utils/exportPdf';
 import ChatMessage from '../components/ChatMessage';
+import '../styles/Chatbot.css';
 
+// Modified resize observer for textarea auto-expand with enhanced reset
+const useAutosizeTextArea = (textAreaRef, value) => {
+  useEffect(() => {
+    if (textAreaRef.current) {
+      textAreaRef.current.style.height = "48px"; // Reset height first
+      const scrollHeight = textAreaRef.current.scrollHeight;
+      textAreaRef.current.style.height = Math.min(scrollHeight, 150) + "px";
+    }
+  }, [textAreaRef, value]);
+};
+
+// Add this improved debounced scroll function near the top of the component
+const useDebounce = (callback, delay) => {
+  const timeoutRef = useRef(null);
+  
+  return useCallback((...args) => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    timeoutRef.current = setTimeout(() => {
+      callback(...args);
+    }, delay);
+  }, [callback, delay]);
+};
+
+// Ensure we use the correct background style that matches Home.jsx
 const Chatbot = () => {
   const navigate = useNavigate();
   const [input, setInput] = useState("");
@@ -24,9 +58,7 @@ const Chatbot = () => {
   const [currentChatId, setCurrentChatId] = useState(null);
   const [chatHistory, setChatHistory] = useState({});
   const [model] = useState("LLaMA3");
-  const [darkMode, setDarkMode] = useState(
-    window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
-  );
+  const [darkMode, setDarkMode] = useState(true);
   const [editingTitleId, setEditingTitleId] = useState(null);
   const [newTitle, setNewTitle] = useState("");
   const [chatTitles, setChatTitles] = useState({});
@@ -40,6 +72,8 @@ const Chatbot = () => {
   const [sidebarProfileOpen, setSidebarProfileOpen] = useState(false);
   const sidebarProfileRef = useRef(null);
   const settingsRef = useRef(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const emojiPickerRef = useRef(null);
   
   const chatEndRef = useRef(null);
   const inputRef = useRef(null);
@@ -47,14 +81,69 @@ const Chatbot = () => {
   const [isResponding, setIsResponding] = useState(false);
   const abortController = useRef(null);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
 
+  // Add auto-resize for textarea
+  useAutosizeTextArea(inputRef, input);
+
+  // Ensure dark mode is always applied
   useEffect(() => {
+    // Force add dark class and remove light class
+    document.documentElement.classList.add("dark");
+    document.documentElement.classList.remove("light");
+    // Also apply to body for good measure
+    document.body.classList.add("dark");
+    document.body.classList.remove("light");
+  }, []); // Only run once on mount
+
+  // Allow theme toggle between dark and light mode
+  useEffect(() => {
+    // Apply theme based on state
     document.documentElement.classList.toggle("dark", darkMode);
+    document.documentElement.classList.toggle("light", !darkMode);
+    
+    // Also apply to body
+    document.body.classList.toggle("dark", darkMode);
+    document.body.classList.toggle("light", !darkMode);
   }, [darkMode]);
 
+  // Add a smoothScrollInProgress flag to prevent duplicate scrolls
+  const [smoothScrollInProgress, setSmoothScrollInProgress] = useState(false);
+  const messageListRef = useRef(null);
+  
+  // Replace the existing scrollToBottom with this improved version
+  const scrollToBottom = useCallback(() => {
+    if (chatEndRef.current && !smoothScrollInProgress) {
+      setSmoothScrollInProgress(true);
+      
+      // Smooth scroll with better behavior
+      chatEndRef.current.scrollIntoView({ 
+        behavior: "smooth", 
+        block: "end" 
+      });
+      
+      // Reset the scroll flag after animation completes
+      setTimeout(() => {
+        setSmoothScrollInProgress(false);
+      }, 300);
+    }
+  }, [chatEndRef, smoothScrollInProgress]);
+  
+  // Create a debounced version of scrollToBottom
+  const debouncedScrollToBottom = useDebounce(scrollToBottom, 100);
+  
+  // Update effect to use debounced scroll
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chats]);
+    // Only scroll if we're at or near the bottom already
+    if (messageListRef.current) {
+      const { scrollHeight, scrollTop, clientHeight } = messageListRef.current;
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+      
+      if (isNearBottom) {
+        debouncedScrollToBottom();
+      }
+    }
+  }, [chats, debouncedScrollToBottom]);
 
   useEffect(() => {
     setAudioAvailable(!!navigator.mediaDevices && !!navigator.mediaDevices.getUserMedia);
@@ -71,6 +160,9 @@ const Chatbot = () => {
       }
       if (sidebarProfileRef.current && !sidebarProfileRef.current.contains(event.target)) {
         setSidebarProfileOpen(false);
+      }
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target)) {
+        setShowEmojiPicker(false);
       }
     }
 
@@ -173,6 +265,26 @@ const Chatbot = () => {
     }
   };
 
+  // Ensure textarea resets properly after sending
+  const resetTextareaHeight = () => {
+    if (inputRef.current) {
+      setTimeout(() => {
+        inputRef.current.style.height = "48px";
+      }, 10);
+    }
+  };
+
+  // Fix handling of language selection
+  useEffect(() => {
+    // Load saved language preference when chat changes
+    if (currentChatId) {
+      const savedLanguage = localStorage.getItem(`chatLang_${currentChatId}`);
+      if (savedLanguage && Object.keys(supportedLanguages).includes(savedLanguage)) {
+        setCurrentLanguage(savedLanguage);
+      }
+    }
+  }, [currentChatId, setCurrentLanguage]);
+
   const handleSend = async () => {
     if (!input.trim() || (loading && !isResponding)) return;
     
@@ -202,10 +314,17 @@ const Chatbot = () => {
     const updatedChat = [...chats, userMessage];
     setChats(updatedChat);
     setInput("");
+    resetTextareaHeight(); // Reset textarea height after sending
+    
+    // Force scroll to bottom after sending user message
+    setTimeout(scrollToBottom, 50);
 
-    const placeholder = { role: "bot", content: "...", language: currentLanguage };
+    const placeholder = { role: "bot", content: "", language: currentLanguage };
     const newChats = [...updatedChat, placeholder];
     setChats(newChats);
+    
+    // Force scroll to bottom again after adding placeholder
+    setTimeout(scrollToBottom, 50);
 
     // Auto-title for new empty chats
     if (chatTitles[currentChatId] === 'New Chat' && chats.length === 0) {
@@ -237,9 +356,15 @@ const Chatbot = () => {
       if (response.reply) {
         let i = 0;
         const responseLength = response.reply.length;
-        const chunkSize = Math.max(1, Math.floor(responseLength / 20));
+        
+        // More gradual animation with smaller chunks
+        const chunkSize = Math.max(1, Math.min(5, Math.floor(responseLength / 50)));
+        let lastScrollTime = 0;
         
         const interval = setInterval(() => {
+          const now = Date.now();
+          const shouldScroll = now - lastScrollTime > 300;
+          
           if (i <= responseLength) {
             const streamingContent = response.reply.slice(0, i);
             setChats(chats => 
@@ -247,6 +372,13 @@ const Chatbot = () => {
                 idx === chats.length - 1 ? { ...msg, content: streamingContent } : msg
               )
             );
+            
+            // Only scroll periodically to avoid visual jumps
+            if (shouldScroll) {
+              debouncedScrollToBottom();
+              lastScrollTime = now;
+            }
+            
             i += chunkSize;
           } else {
             clearInterval(interval);
@@ -261,8 +393,11 @@ const Chatbot = () => {
             setLoading(false);
             setIsResponding(false);
             abortController.current = null;
+            
+            // Final scroll once animation is complete
+            setTimeout(scrollToBottom, 50);
           }
-        }, 50);
+        }, 30); // A bit faster but more granular
       } else {
         toast.error('Failed to get response');
         setChats(updatedChat);
@@ -384,281 +519,277 @@ const Chatbot = () => {
     navigate('/login');
   };
 
-  if (initialLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-100 dark:bg-gray-900">
-        <div className="text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
-          <p className="mt-4 text-lg font-medium text-gray-700 dark:text-gray-300">Loading chats...</p>
-        </div>
+  const renderLoadingState = () => (
+    <div className="loading-container">
+      <div className="spinner"></div>
+      <p className="loading-text">Preparing your AI assistant...</p>
+      <div className="image-container loading-logo">
+        <img src="/image.png" alt="Bharat AI Lotus Logo" />
       </div>
-    );
-  }
+    </div>
+  );
+
+  const onEmojiClick = (emojiData) => {
+    setInput(prevInput => prevInput + emojiData.emoji);
+    setShowEmojiPicker(false);
+    inputRef.current?.focus();
+  };
+
+  const renderTypingIndicator = () => (
+    <div className="typing-animation" key="typing-animation">
+      <div className="typing-dot"></div>
+      <div className="typing-dot"></div>
+      <div className="typing-dot"></div>
+    </div>
+  );
+
+  const handleInputChange = (e) => {
+    setInput(e.target.value);
+  };
+
+  // Enhanced handler for language changes
+  const handleLanguageChange = (e) => {
+    const newLang = e.target.value;
+    setCurrentLanguage(newLang);
+    
+    // Save the preference for this chat
+    if (currentChatId) {
+      localStorage.setItem(`chatLang_${currentChatId}`, newLang);
+    }
+    
+    toast.info(`Language changed to ${supportedLanguages[newLang]}`);
+  };
+
+  // Enhanced theme toggle handler with visual feedback
+  const toggleTheme = () => {
+    const newMode = !darkMode;
+    setDarkMode(newMode);
+    toast.info(`Switched to ${newMode ? 'Dark' : 'Light'} mode`, {
+      position: "bottom-right",
+      autoClose: 2000,
+      hideProgressBar: true,
+      icon: newMode ? '🌙' : '☀️'
+    });
+  };
+
+  // Enhanced handling for mobile sidebar
+  const handleToggleMobileSidebar = (isOpen) => {
+    setMobileSidebarOpen(isOpen);
+    // Prevent body scrolling when sidebar is open
+    document.body.style.overflow = isOpen ? 'hidden' : '';
+  };
 
   return (
-    <div className={`flex flex-col h-screen ${darkMode ? 'dark' : ''}`}>
-      <div className="flex flex-1 overflow-hidden bg-gray-100 dark:bg-gray-900">
-        {/* Collapsible Sidebar */}
-        <div
-          className={`
-            bg-gray-200 dark:bg-gray-800 flex flex-col transition-all duration-300
-            ${sidebarCollapsed ? 'w-0 md:w-9' : 'w-64'}
-            md:relative md:z-10 md:h-full
-            fixed top-0 left-0 h-full z-50
-            transition-transform duration-300
-            ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-            w-4/5 max-w-xs
-            md:translate-x-0 md:w-64 md:max-w-none
-            ${window.innerWidth > 768 ? '' : 'md:hidden'}
-          `}
-          style={window.innerWidth > 768 ? {} : {}}
-        >
-          {/* Sidebar Header */}
-          <div className="p-4 border-b border-gray-300 dark:border-gray-700 flex items-center justify-between">
-            {!sidebarCollapsed && (
-              <button
-                onClick={handleNewChat}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center justify-center flex-1 mr-2"
-              >
-                <FaPlus className="mr-2" /> <span className="hidden md:inline">New Chat</span>
-              </button>
-            )}
-            <button
-              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="p-2 rounded hover:bg-gray-300 dark:hover:bg-gray-700 hidden md:inline-flex"
-            >
-              {sidebarCollapsed ? '→' : '←'}
-            </button>
-          </div>
+    <div className={`chat-container ${darkMode ? 'dark-theme' : 'light-theme'}`}>
+      {/* Background with particles animation matching Home.css */}
+      <div className="chat-bg"></div>
+      <div className="particles"></div>
+      
+      {initialLoading ? (
+        renderLoadingState()
+      ) : (
+        <>
+          {/* Sidebar overlay for mobile */}
+          {mobileSidebarOpen && (
+            <div 
+              className={`sidebar-overlay ${mobileSidebarOpen ? 'active' : ''}`} 
+              onClick={() => handleToggleMobileSidebar(false)}
+            ></div>
+          )}
           
-          {/* User Info */}
-          {!sidebarCollapsed ? (
-            <div className="p-4 border-b border-gray-300 dark:border-gray-700">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white">
-                  {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+          {/* Enhanced Sidebar with Close Button for Mobile */}
+          <aside className={`sidebar ${sidebarCollapsed ? 'sidebar-collapsed' : ''} ${mobileSidebarOpen ? 'open' : ''}`}>
+            {/* Add mobile-specific close button */}
+            <button 
+              className="mobile-sidebar-close"
+              onClick={() => handleToggleMobileSidebar(false)}
+              aria-label="Close sidebar"
+            >
+              <FaChevronLeft />
+            </button>
+            
+            <div className="sidebar-header">
+              {!sidebarCollapsed && (
+                <div className="sidebar-brand">
+                  <div className="sidebar-logo">
+                   <button 
+                className={`nav-item ${window.location.pathname === '/' ? 'active' : ''}`}
+                onClick={() => navigate('/')}
+              >
+                <FaHome className="nav-icon" />
+                {!sidebarCollapsed && <span>Home</span>}
+              </button>
+                  </div>
+                  {/* <span className="sidebar-title">Bharat AI</span> */}
                 </div>
-                <div className="truncate">
-                  <p className="font-medium text-gray-800 dark:text-white truncate">{user?.name || 'User'}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email || ''}</p>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="p-2 border-b border-gray-300 dark:border-gray-700 flex justify-center relative" ref={sidebarProfileRef}>
+              )}
               <button
-                onClick={() => setSidebarProfileOpen(!sidebarProfileOpen)}
-                className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white hover:bg-blue-600 transition-colors duration-200"
-                title={user?.name || 'User'}
+                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                className="collapse-btn"
+                aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              >
+                {sidebarCollapsed ? <FaChevronRight /> : <FaChevronLeft />}
+              </button>
+            </div>
+            
+            {/* User Info - More compact profile */}
+            <div className={`user-info ${sidebarCollapsed ? 'collapsed' : ''}`} ref={sidebarProfileRef}>
+              <div 
+                className="avatar"
+                onClick={() => sidebarCollapsed && setSidebarProfileOpen(!sidebarProfileOpen)}
               >
                 {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
-              </button>
-
+              </div>
+              
+              {!sidebarCollapsed && (
+                <div className="user-details">
+                  <p className="user-name">{user?.name || 'User'}</p>
+                  <p className="user-email">{user?.email || ''}</p>
+                </div>
+              )}
+              
               {/* Profile Popup for Collapsed Mode */}
-              {sidebarProfileOpen && (
-                <div className="absolute top-12 left-16 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3 min-w-[220px] border border-gray-200 dark:border-gray-700 transform transition-all duration-200 ease-in-out z-50">
-                  <div className="space-y-3">
-                    {/* Profile Header */}
-                    <div className="flex items-center space-x-3 pb-3 border-b border-gray-200 dark:border-gray-700">
-                      <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white text-lg">
-                        {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900 dark:text-white truncate">
-                          {user?.name || 'User'}
-                        </p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                          {user?.email || ''}
-                        </p>
-                      </div>
+              {sidebarCollapsed && sidebarProfileOpen && (
+                <div className="popup-menu profile-popup">
+                  <div className="popup-header">
+                    <div className="avatar">
+                      {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
                     </div>
-
-                    {/* Quick Actions */}
-                    <div className="space-y-2">
-                      <button
-                        onClick={() => navigate('/profile')}
-                        className="w-full flex items-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 text-gray-700 dark:text-gray-300"
-                      >
-                        <FaUser className="mr-2" />
-                        View Profile
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setSidebarProfileOpen(false);
-                          handleLogout();
-                        }}
-                        className="w-full flex items-center p-2 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors duration-200"
-                      >
-                        <FaSignOutAlt className="mr-2" />
-                        Sign Out
-                      </button>
+                    <div>
+                      <p className="popup-title">{user?.name || 'User'}</p>
+                      <p className="popup-subtitle">{user?.email || ''}</p>
                     </div>
-
-                    {/* Account Status */}
-                    <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Signed in as {user?.email}
-                      </p>
-                    </div>
+                  </div>
+                  <div className="popup-actions">
+                    <button onClick={() => navigate('/profile')}>
+                      <FaUser /> View Profile
+                    </button>
+                    <button 
+                      className="danger-action"
+                      onClick={() => {
+                        setSidebarProfileOpen(false);
+                        handleLogout();
+                      }}
+                    >
+                      <FaSignOutAlt /> Sign Out
+                    </button>
                   </div>
                 </div>
               )}
             </div>
-          )}
-          
-          {/* Chat List */}
-          <div className="flex-1 overflow-y-auto p-2">
-            {Object.keys(chatHistory).length === 0 ? (
-              <div className="text-center text-gray-500 dark:text-gray-400 mt-4">
-                {!sidebarCollapsed ? 'No chats yet. Start a new one!' : '...'}
+            
+            {/* Main Navigation - Simplified and organized */}
+            <nav className="sidebar-nav">
+              
+              
+              <button
+                onClick={handleNewChat}
+                className="nav-item new-chat"
+              >
+                <FaPlus className="nav-icon" />
+                {!sidebarCollapsed && <span>New Chat</span>}
+              </button>
+              
+              <button 
+                className={`nav-item ${window.location.pathname === '/summarize' ? 'active' : ''}`}
+                onClick={() => navigate('/summarize')}
+              >
+                <FaFileUpload className="nav-icon" />
+                {!sidebarCollapsed && <span>Upload Document</span>}
+              </button>
+            </nav>
+            
+            {/* Chat List Header */}
+            {!sidebarCollapsed && (
+              <div className="chat-list-header">
+                <h3>Recent Chats</h3>
               </div>
-            ) : (
-              Object.keys(chatHistory).map((id) => (
-                <div 
-                  key={id}
-                  onClick={() => handleSelectChat(id)}
-                  className={`flex items-center mb-2 p-2 rounded cursor-pointer ${
-                    id === currentChatId 
-                    ? 'bg-blue-100 dark:bg-blue-900'
-                    : 'hover:bg-gray-300 dark:hover:bg-gray-700'
-                  } ${sidebarCollapsed ? 'justify-center' : ''}`}
-                  title={sidebarCollapsed ? (chatTitles[id] || id) : undefined}
-                >
-                  {sidebarCollapsed ? (
-                    <div className="w-8 h-8 rounded-full bg-blue-500 bg-opacity-20 dark:bg-opacity-40 flex items-center justify-center">
-                      <FaRegCommentDots className="text-blue-500 dark:text-blue-300" />
-                    </div>
-                  ) : (
-                    <>
-                      <FaRegCommentDots className="mr-2 text-blue-500 dark:text-blue-300" />
-                      {editingTitleId === id ? (
-                        <div className="flex-1 flex">
-                          <input
-                            type="text"
-                            value={newTitle}
-                            onChange={(e) => setNewTitle(e.target.value)}
-                            onBlur={handleTitleChange}
-                            onKeyPress={(e) => e.key === "Enter" && handleTitleChange()}
-                            autoFocus
-                            className="flex-1 px-2 py-1 rounded border dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                          />
-                        </div>
-                      ) : (
-                        <>
-                          <div className="flex-1 truncate dark:text-white">
-                            {chatTitles[id] || id}
-                          </div>
-                          <button
-                            onClick={(e) => startEditingTitle(id, e)}
-                            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 ml-2"
-                          >
-                            <FaPencilAlt size={14} />
-                          </button>
-                          <button
-                            onClick={(e) => handleDeleteChat(id, e)}
-                            className="text-red-500 hover:text-red-700 ml-2"
-                          >
-                            <FaTrash size={14} />
-                          </button>
-                        </>
-                      )}
-                    </>
-                  )}
-                </div>
-              ))
             )}
-          </div>
-          
-          {/* Settings Section */}
-          <div className="border-t border-gray-300 dark:border-gray-700">
-            {!sidebarCollapsed ? (
-              <div className="p-4">
-                <button
-                  onClick={() => setSettingsOpen(!settingsOpen)}
-                  className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors duration-200"
-                >
-                  <div className="flex items-center">
-                    <FaCog className="mr-2" />
-                    <span>Settings</span>
+            
+            {/* Chat List */}
+            <div className="chat-list">
+              {Object.keys(chatHistory).length === 0 ? (
+                <div className="empty-chat-list">
+                  <FaRegCommentDots size={24} style={{ opacity: 0.6, marginBottom: '10px' }} />
+                  <p>{!sidebarCollapsed ? "No conversations yet" : ""}</p>
+                  {!sidebarCollapsed && <p>Start by creating a new chat</p>}
+                </div>
+              ) : (
+                Object.keys(chatHistory).map((id) => (
+                  <div 
+                    key={id}
+                    onClick={() => handleSelectChat(id)}
+                    className={`chat-item ${id === currentChatId ? 'active' : ''}`}
+                    title={sidebarCollapsed ? (chatTitles[id] || "Chat") : ""}
+                  >
+                    {sidebarCollapsed ? (
+                      <FaRegCommentDots className="chat-icon" />
+                    ) : (
+                      <>
+                        <FaRegCommentDots className="chat-icon" />
+                        {editingTitleId === id ? (
+                          <div className="flex-1">
+                            <input
+                              type="text"
+                              value={newTitle}
+                              onChange={(e) => setNewTitle(e.target.value)}
+                              onBlur={handleTitleChange}
+                              onKeyPress={(e) => e.key === "Enter" && handleTitleChange()}
+                              autoFocus
+                              className="title-input"
+                            />
+                          </div>
+                        ) : (
+                          <>
+                            <div className="chat-title">
+                              {chatTitles[id] || 'New Chat'}
+                            </div>
+                            <div className="chat-actions">
+                              <button
+                                onClick={(e) => startEditingTitle(id, e)}
+                                className="edit-btn"
+                                aria-label="Edit chat title"
+                              >
+                                <FaPencilAlt />
+                              </button>
+                              <button
+                                onClick={(e) => handleDeleteChat(id, e)}
+                                className="delete-btn"
+                                aria-label="Delete chat"
+                              >
+                                <FaTrash />
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </>
+                    )}
                   </div>
-                  {settingsOpen ? <FaChevronUp /> : <FaChevronDown />}
-                </button>
-                
-                {settingsOpen && (
-                  <div className="mt-2 space-y-2">
-                    <div className="p-2 rounded-lg bg-gray-300 dark:bg-gray-700">
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Language
-                      </label>
-                      <select
-                        value={currentLanguage}
-                        onChange={(e) => setCurrentLanguage(e.target.value)}
-                        className="w-full p-2 rounded border-none bg-gray-200 dark:bg-gray-600 dark:text-white text-sm focus:ring-2 focus:ring-blue-500"
-                      >
-                        {Object.entries(supportedLanguages).map(([code, name]) => (
-                          <option key={code} value={code}>{name}</option>
-                        ))}
-                      </select>
-                    </div>
-                    
-                    <button
-                      onClick={() => navigate('/profile')}
-                      className="w-full flex items-center p-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors duration-200"
-                    >
-                      <FaUser className="mr-2" />
-                      Profile
-                    </button>
-                    
-                    <button
-                      onClick={() => setDarkMode(!darkMode)}
-                      className="w-full flex items-center p-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors duration-200"
-                    >
-                      {darkMode ? (
-                        <>
-                          <FaSun className="mr-2" />
-                          Light Mode
-                        </>
-                      ) : (
-                        <>
-                          <FaMoon className="mr-2" />
-                          Dark Mode
-                        </>
-                      )}
-                    </button>
-                    
-                    <button
-                      onClick={handleLogout}
-                      className="w-full flex items-center p-2 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors duration-200"
-                    >
-                      <FaSignOutAlt className="mr-2" />
-                      Logout
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="p-2 flex flex-col items-center space-y-4" ref={settingsRef}>
-                <button
-                  onClick={() => setSettingsOpen(!settingsOpen)}
-                  className="p-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors duration-200"
-                  title="Settings"
-                >
-                  <FaCog className={`transform transition-transform duration-200 ${settingsOpen ? 'rotate-180' : ''}`} />
-                </button>
-                
-                {/* Popup Menu for Collapsed Mode */}
-                {settingsOpen && (
-                  <div className="absolute bottom-16 left-16 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 min-w-[200px] border border-gray-200 dark:border-gray-700 transform transition-all duration-200 ease-in-out z-50">
-                    <div className="space-y-2">
-                      <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Language
-                        </label>
+                ))
+              )}
+            </div>
+            
+            {/* Settings Section */}
+            <div className="sidebar-footer">
+              {!sidebarCollapsed ? (
+                <>
+                  <button
+                    onClick={() => setSettingsOpen(!settingsOpen)}
+                    className="action-btn settings-btn"
+                  >
+                    <FaCog className="action-icon" /> 
+                    <span>Settings</span> 
+                    {settingsOpen ? <FaChevronUp className="toggle-icon" /> : <FaChevronDown className="toggle-icon" />}
+                  </button>
+                  
+                  {settingsOpen && (
+                    <div className="settings-panel">
+                      <div className="settings-section">
+                        <label className="settings-label">Language</label>
                         <select
                           value={currentLanguage}
-                          onChange={(e) => setCurrentLanguage(e.target.value)}
-                          className="w-full p-2 rounded border-none bg-gray-200 dark:bg-gray-600 dark:text-white text-sm focus:ring-2 focus:ring-blue-500"
+                          onChange={handleLanguageChange}
+                          className="settings-select"
                         >
                           {Object.entries(supportedLanguages).map(([code, name]) => (
                             <option key={code} value={code}>{name}</option>
@@ -666,272 +797,299 @@ const Chatbot = () => {
                         </select>
                       </div>
                       
-                      <button
-                        onClick={() => navigate('/profile')}
-                        className="w-full flex items-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
-                      >
-                        <FaUser className="mr-2" />
-                        Profile
-                      </button>
-                      
-                      <button
-                        onClick={() => setDarkMode(!darkMode)}
-                        className="w-full flex items-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
-                      >
-                        {darkMode ? (
-                          <>
-                            <FaSun className="mr-2" />
-                            Light Mode
-                          </>
-                        ) : (
-                          <>
-                            <FaMoon className="mr-2" />
-                            Dark Mode
-                          </>
-                        )}
-                      </button>
-                      
-                      <button
-                        onClick={handleLogout}
-                        className="w-full flex items-center p-2 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors duration-200"
-                      >
-                        <FaSignOutAlt className="mr-2" />
-                        Logout
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-        
-        {/* Main Chat Area */}
-        <div className="flex-1 flex flex-col w-full md:w-auto">
-          {/* Chat Header */}
-          <div className="animated-gradient-header p-4 shadow flex justify-between items-center">
-            {/* Mobile menu button */}
-            <button
-              className="md:hidden mr-2 text-purple-700 hover:text-purple-900 focus:outline-none"
-              onClick={() => setMobileSidebarOpen(true)}
-              aria-label="Open sidebar"
-              style={{ fontSize: 24 }}
-            >
-              <FaBars />
-            </button>
-            <div className="w-20 hidden md:block"></div> {/* Spacer for desktop */}
-            <h1 className="text-2xl font-bold text-purple-500 dark:text-purple-400 flex-1 text-center">
-              BHARAT AI
-            </h1>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => navigate('/summarize')}
-                className="flex items-center justify-end text-blue-600 hover:text-blue-800 dark:text-blue-400 px-3 py-1 rounded transition-colors duration-200 hover:bg-blue-50 dark:hover:bg-blue-900"
-                title="Summarize PDF"
-              >
-                <FaFileUpload className="mr-1" />
-                <span className="hidden md:inline">Summarize PDF</span>
-              </button>
-              {/* User Info Dropdown */}
-              <div className="relative" ref={headerProfileRef}>
-                <button
-                  onClick={() => setHeaderProfileOpen(!headerProfileOpen)}
-                  className="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center text-white hover:bg-blue-600 transition-colors duration-200 ml-2 focus:outline-none"
-                  title={user?.name || 'User'}
-                >
-                  {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
-                </button>
-                {headerProfileOpen && (
-                  <div className="absolute right-0 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3 min-w-[220px] border border-gray-200 dark:border-gray-700 z-50">
-                    <div className="space-y-3">
-                      {/* Profile Header */}
-                      <div className="flex items-center space-x-3 pb-3 border-b border-gray-200 dark:border-gray-700">
-                        <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white text-lg">
-                          {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-gray-900 dark:text-white truncate">
-                            {user?.name || 'User'}
-                          </p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                            {user?.email || ''}
-                          </p>
-                        </div>
-                      </div>
-                      {/* Quick Actions */}
-                      <div className="space-y-2">
+                      <div className="actions-group">
                         <button
-                          onClick={() => { setHeaderProfileOpen(false); navigate('/profile'); }}
-                          className="w-full flex items-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 text-gray-700 dark:text-gray-300"
+                          onClick={() => navigate('/profile')}
+                          className="action-btn profile-btn"
                         >
-                          <FaUser className="mr-2" />
-                          View Profile
+                          <FaUser className="action-icon" /> Profile
                         </button>
+                        
                         <button
-                          onClick={() => { setHeaderProfileOpen(false); handleLogout(); }}
-                          className="w-full flex items-center p-2 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors duration-200"
+                          onClick={toggleTheme}
+                          className="action-btn theme-btn"
                         >
-                          <FaSignOutAlt className="mr-2" />
-                          Sign Out
+                          {darkMode ? <><FaSun className="action-icon" /> Light Mode</> : <><FaMoon className="action-icon" /> Dark Mode</>}
+                        </button>
+                        
+                        <button
+                          onClick={handleLogout}
+                          className="action-btn logout-btn"
+                        >
+                          <FaSignOutAlt className="action-icon" /> Logout
                         </button>
                       </div>
-                      {/* Account Status */}
-                      <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          Signed in as {user?.email}
-                        </p>
-                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-          
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-2 md:p-4 bg-gray-50 dark:bg-gray-900">
-            {chats.length === 0 ? (
-              <div className="flex items-center justify-center h-full">
-                <div className="text-center p-8 bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-md mx-auto">
-                  <div className="text-blue-500 dark:text-blue-400 mb-4">
-                    <FaRegCommentDots size={48} className="mx-auto" />
-                  </div>
-                  <h3 className="text-xl md:text-2xl font-semibold mb-4 dark:text-white">Welcome to <br />BHARAT AI (BHAAI)</h3>
-                  <p className="text-gray-600 dark:text-gray-300 mb-6">Start a conversation by typing a message below. You can:</p>
-                  <ul className="text-left text-gray-600 dark:text-gray-300 space-y-2 mb-6">
-                    <li className="flex items-center">
-                      <FaPlus className="mr-2 text-green-500" /> Start new conversations
-                    </li>
-                    <li className="flex items-center">
-                      <FaDownload className="mr-2 text-blue-500" /> Export your chats
-                    </li>
-                    <li className="flex items-center">
-                      <FaMoon className="mr-2 text-purple-500" /> Toggle dark mode
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {chats.map((msg, idx) => (
-                  <ChatMessage key={idx} message={msg} darkMode={darkMode} />
-                ))}
-              </div>
-            )}
-            <div ref={chatEndRef} />
-          </div>
-          
-          {/* Input Area - Mobile responsive */}
-          <div className="bg-white dark:bg-gray-800 p-2 md:p-4 border-t dark:border-gray-700">
-            <div className="max-w-4xl mx-auto">
-              <div className="flex flex-col md:flex-row gap-2">
-                <div 
-                  className="flex items-center gap-2 flex-1 bg-gray-50 dark:bg-gray-700 p-2 rounded-lg 
-                    transition-all duration-300 ease-in-out transform 
-                    hover:scale-[1.02] hover:shadow-lg
-                    focus-within:scale-[1.02] focus-within:shadow-lg
-                    group focus-within:ring-2 focus-within:ring-blue-500 
-                    focus-within:bg-white dark:focus-within:bg-gray-600
-                    hover:bg-white dark:hover:bg-gray-600"
-                >
+                  )}
+                </>
+              ) : (
+                <div className="collapsed-footer" ref={settingsRef}>
                   <button
-                    onClick={async () => {
-                      if (isListening) {
-                        stopListening();
-                      } else {
-                        try {
-                          const result = await startListening(currentLanguage);
-                          console.log('Speech result:', result);
-                          if (result) {
-                            setInput(result.text);
-                            if (result.language && result.language !== currentLanguage) {
-                              setCurrentLanguage(result.language);
-                            }
-                          }
-                        } catch (error) {
-                          toast.error('Error with voice input: ' + error.message);
-                        }
-                      }
-                    }}
-                    className={`p-2 rounded-full transition-all duration-200 transform 
-                      hover:scale-110 active:scale-95 
-                      ${isListening 
-                        ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse'
-                        : 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500'
-                      }`}
-                    disabled={!audioAvailable}
-                    title={audioAvailable ? (isListening ? "Stop recording" : "Start voice input") : "Voice input not available"}
+                    onClick={() => setSettingsOpen(!settingsOpen)}
+                    className="collapse-settings-btn"
+                    aria-label="Settings"
                   >
-                    <FaMicrophoneAlt />
+                    <FaCog />
                   </button>
                   
+                  {/* Popup Menu for Collapsed Mode */}
+                  {settingsOpen && (
+                    <div className="popup-menu settings-popup">
+                      <div className="settings-section">
+                        <label className="settings-label">Language</label>
+                        <select
+                          value={currentLanguage}
+                          onChange={handleLanguageChange}
+                          className="settings-select"
+                        >
+                          {Object.entries(supportedLanguages).map(([code, name]) => (
+                            <option key={code} value={code}>{name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      
+                      <div className="popup-actions">
+                        <button onClick={() => navigate('/profile')}>
+                          <FaUser /> Profile
+                        </button>
+                        <button onClick={toggleTheme}>
+                          {darkMode ? <><FaSun /> Light Mode</> : <><FaMoon /> Dark Mode</>}
+                        </button>
+                        <button 
+                          className="danger-action"
+                          onClick={handleLogout}
+                        >
+                          <FaSignOutAlt /> Logout
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </aside>
+          
+          {/* Main Chat Area - Improved layout */}
+          <main className="chat-area">
+            {/* Chat Header - Slimmer and more elegant */}
+            <header className="chat-header">
+              <div className="chat-header-left">
+                <button
+                  className="mobile-menu-btn"
+                  onClick={() => handleToggleMobileSidebar(true)}
+                  aria-label="Open menu"
+                >
+                  <FaBars />
+                </button>
+                
+                <div className="header-brand">
+                  <div className="header-logo">
+                    <img src="/image.png" alt="Bharat AI Logo" />
+                  </div>
+                  <h1 className="chat-name">BHARAT AI</h1>
+                </div>
+                
+                <div className="language-badge">
+                  <span>{supportedLanguages[currentLanguage] || 'English'}</span>
+                </div>
+              </div>
+              
+              <div className="chat-header-actions">
+                <button
+                  onClick={() => navigate('/summarize')}
+                  className="header-btn"
+                  title="Upload PDF"
+                >
+                  <FaFileUpload />
+                  <span className="header-btn-text">Upload</span>
+                </button>
+                
+                <button
+                  onClick={handleExportChat}
+                  className="header-btn"
+                  title="Export chat"
+                  disabled={chats.length === 0}
+                >
+                  <FaDownload />
+                  <span className="header-btn-text">Export</span>
+                </button>
+                
+                <div className="profile-dropdown" ref={headerProfileRef}>
+                  <button
+                    onClick={() => setHeaderProfileOpen(!headerProfileOpen)}
+                    className="avatar header-avatar"
+                    title={user?.name || 'User'}
+                  >
+                    {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                  </button>
+                  
+                  {headerProfileOpen && (
+                    <div className="popup-menu header-profile-popup">
+                      <div className="popup-header">
+                        <div className="avatar">
+                          {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                        </div>
+                        <div>
+                          <p className="popup-title">{user?.name || 'User'}</p>
+                          <p className="popup-subtitle">{user?.email || ''}</p>
+                        </div>
+                      </div>
+                      <div className="popup-actions">
+                        <button onClick={() => { setHeaderProfileOpen(false); navigate('/profile'); }}>
+                          <FaUser /> View Profile
+                        </button>
+                        <button 
+                          className="danger-action"
+                          onClick={() => { setHeaderProfileOpen(false); handleLogout(); }}
+                        >
+                          <FaSignOutAlt /> Sign Out
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </header>
+            
+            {/* Messages Area - Better spacing and alignment */}
+            <div className="messages-container">
+              {chats.length === 0 ? (
+                <div className="empty-chat">
+                  <div className="empty-chat-image">
+                    <img src="/image.png" alt="Bharat AI Lotus Logo" className="lotus-logo" />
+                  </div>
+                  <h3>Welcome to BHARAT AI (BHAAI)</h3>
+                  <p>India's first LMLM <span>(Large Multi-Language Model)</span></p>
+                  <p className="subtitle">World's First Humanized AI Model (H.A.I)</p>
+                  
+                  <div className="feature-list">
+                    <div className="feature-item">
+                      <span className="feature-icon">🌐</span>
+                      <span>Multilingual Support</span>
+                    </div>
+                    <div className="feature-item">
+                      <span className="feature-icon">🔊</span>
+                      <span>Voice Commands</span>
+                    </div>
+                    <div className="feature-item">
+                      <span className="feature-icon">🔒</span>
+                      <span>Secure Conversations</span>
+                    </div>
+                    <div className="feature-item">
+                      <span className="feature-icon">🤖</span>
+                      <span>Aigentic Modules</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="messages-list" ref={messageListRef}>
+                  {chats.map((msg, idx) => (
+                    <ChatMessage 
+                      key={idx} 
+                      message={msg} 
+                      darkMode={darkMode}
+                      isLast={idx === chats.length - 1 && msg.role === 'bot' && loading}
+                      typingIndicator={renderTypingIndicator}
+                    />
+                  ))}
+                  <div ref={chatEndRef} className="scroll-anchor" />
+                </div>
+              )}
+            </div>
+            
+            {/* Chat Input Area - Better organized with auto-expanding textarea */}
+            <div className="chat-input-area">
+              <div className="input-wrapper">
+                <button
+                  onClick={async () => {
+                    if (isListening) {
+                      stopListening();
+                    } else {
+                      try {
+                        const result = await startListening(currentLanguage);
+                        if (result) {
+                          setInput(result.text);
+                          if (result.language && result.language !== currentLanguage) {
+                            setCurrentLanguage(result.language);
+                          }
+                        }
+                      } catch (error) {
+                        toast.error('Error with voice input: ' + error.message);
+                      }
+                    }
+                  }}
+                  className={`voice-btn ${isListening ? 'active' : ''}`}
+                  disabled={!audioAvailable}
+                  title={audioAvailable ? (isListening ? "Stop recording" : "Start voice input") : "Voice input not available"}
+                >
+                  <FaMicrophoneAlt />
+                </button>
+                
+                {/* Keep only this one attachment button */}
+                <button
+                  onClick={() => navigate('/summarize')}
+                  className="upload-btn"
+                  title="Upload Document"
+                >
+                  <FaPaperclip />
+                </button>
+                
+                <div className="textarea-container">
                   <textarea
                     ref={inputRef}
                     value={input}
-                    onChange={(e) => setInput(e.target.value)}
+                    onChange={handleInputChange}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();
                         handleSend();
                       }
                     }}
-                    placeholder={input.trim() ? "Press ↵ to send" : (loading ? "AI is thinking..." : "Type your message...")}
+                    onFocus={() => setIsFocused(true)}
+                    onBlur={() => setIsFocused(false)}
+                    placeholder={input.trim() ? "Press Enter to send" : (loading ? "AI is thinking..." : "Type your message here...")}
+                    className={`chat-input ${isFocused ? 'focused' : ''}`}
+                    disabled={loading && isResponding}
                     rows={1}
-                    style={{ resize: "none", overflow: "auto" }}
-                    className="flex-1 p-2 bg-transparent border-none outline-none \
-                      dark:text-white text-sm md:text-base \
-                      placeholder-gray-500 dark:placeholder-gray-400 \
-                      transition-all duration-300 ease-in-out \
-                      focus:placeholder-blue-500 dark:focus:placeholder-blue-400\
-                      group-hover:placeholder-blue-500 dark:group-hover:placeholder-blue-400"
-                    disabled={loading}
-                  />
-                
+                  ></textarea>
                   
-                  <button
-                    onClick={isResponding ? stopResponse : handleSend}
-                    className={`p-3 rounded-full transition-all duration-300 transform hover:scale-110 active:scale-95 ${
-                      isResponding 
-                        ? 'bg-red-500 hover:bg-red-600 text-white'
-                        : loading 
-                          ? 'bg-red-500 hover:bg-red-600'
-                          : input.trim()
-                            ? 'bg-blue-600 hover:bg-blue-700 text-white hover:shadow-lg'
-                            : 'bg-gray-300 cursor-not-allowed'
-                    }`}
-                    disabled={!input.trim() && !isResponding}
-                    title={isResponding ? "Stop response" : "Send message"}
-                  >
-                    {isResponding ? (
-                      <FaStop className="w-5 h-5 text-white" />
-                    ) : loading ? (
-                      <FaStop className="w-5 h-5 text-white" />
-                    ) : (
-                      <FaArrowUp className={`w-5 h-5 ${input.trim() ? 'text-white' : 'text-gray-500'}`} />
+                  {/* Remove the attachment-container div that contained the second paperclip icon */}
+                  
+                  <div className="emoji-container" ref={emojiPickerRef}>
+                    <button
+                      onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                      className="emoji-btn"
+                      title="Insert emoji"
+                    >
+                      <FaSmile />
+                    </button>
+                    
+                    {showEmojiPicker && (
+                      <div className="emoji-picker-wrapper">
+                        <EmojiPicker
+                          onEmojiClick={onEmojiClick}
+                          theme={darkMode ? "dark" : "light"}
+                        />
+                      </div>
                     )}
-                  </button>
-                  <button
-                    onClick={handleExportChat}
-                    className="p-3 rounded-full transition-all duration-300 transform hover:scale-110 active:scale-95 bg-green-600 hover:bg-green-700 text-white ml-2"
-                    title="Export Chat"
-                  >
-                    <FaDownload className="w-5 h-5" />
-                  </button>
+                  </div>
                 </div>
                 
-                
+                <button
+                  onClick={isResponding ? stopResponse : handleSend}
+                  className={`send-btn ${(!input.trim() && !isResponding) ? 'disabled' : ''}`}
+                  disabled={!input.trim() && !isResponding}
+                  title={isResponding ? "Stop response" : "Send message"}
+                >
+                  {isResponding ? <FaStop /> : <FaPaperPlane />}
+                </button>
               </div>
+              
+              {/* Remove the language selector footer completely */}
+              {/* No need for any footer here */}
             </div>
-          </div>
-        </div>
-      </div>
-      {/* Overlay for mobile */}
-      {mobileSidebarOpen && window.innerWidth <= 768 && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
-          onClick={() => setMobileSidebarOpen(false)}
-          aria-label="Close sidebar"
-        />
+          </main>
+        </>
       )}
     </div>
   );

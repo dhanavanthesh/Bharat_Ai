@@ -68,8 +68,13 @@ const Home = () => {
             </div>
             <div className="feature-item" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}>
               <span className="feature-icon">🔒</span>
-              <span>Secure Chats</span>
+              <span>Secure Conversations</span>
             </div>
+            <div className="feature-item" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}>
+              <span className="feature-icon">🤖</span>
+              <span>Aigentic Modules</span>
+            </div>
+
           </div>
           
           <div className="buttons">
