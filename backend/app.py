@@ -75,8 +75,8 @@ except ImportError:
     tesseract_available = False
     logger.warning("pytesseract not installed - Image OCR will be limited")
 
-#load_dotenv('/etc/bharatai.env')
-load_dotenv('.env')
+load_dotenv('/etc/bharatai.env')
+#load_dotenv('.env')
 
 # Function to create directory with proper permissions for VPS
 def create_directory_with_permissions(dir_path):
