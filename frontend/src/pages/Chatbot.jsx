@@ -29,6 +29,20 @@ const useAutosizeTextArea = (textAreaRef, value) => {
   }, [textAreaRef, value]);
 };
 
+// Add this improved debounced scroll function near the top of the component
+const useDebounce = (callback, delay) => {
+  const timeoutRef = useRef(null);
+  
+  return useCallback((...args) => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    timeoutRef.current = setTimeout(() => {
+      callback(...args);
+    }, delay);
+  }, [callback, delay]);
+};
+
 // Ensure we use the correct background style that matches Home.jsx
 const Chatbot = () => {
   const navigate = useNavigate();
@@ -93,17 +107,43 @@ const Chatbot = () => {
     document.body.classList.toggle("light", !darkMode);
   }, [darkMode]);
 
-  // Add this function to make sure scrolling works properly after new messages
+  // Add a smoothScrollInProgress flag to prevent duplicate scrolls
+  const [smoothScrollInProgress, setSmoothScrollInProgress] = useState(false);
+  const messageListRef = useRef(null);
+  
+  // Replace the existing scrollToBottom with this improved version
   const scrollToBottom = useCallback(() => {
-    if (chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior: "smooth" });
+    if (chatEndRef.current && !smoothScrollInProgress) {
+      setSmoothScrollInProgress(true);
+      
+      // Smooth scroll with better behavior
+      chatEndRef.current.scrollIntoView({ 
+        behavior: "smooth", 
+        block: "end" 
+      });
+      
+      // Reset the scroll flag after animation completes
+      setTimeout(() => {
+        setSmoothScrollInProgress(false);
+      }, 300);
     }
-  }, []);
-
-  // Update effect to use the new scroll function
+  }, [chatEndRef, smoothScrollInProgress]);
+  
+  // Create a debounced version of scrollToBottom
+  const debouncedScrollToBottom = useDebounce(scrollToBottom, 100);
+  
+  // Update effect to use debounced scroll
   useEffect(() => {
-    scrollToBottom();
-  }, [chats, scrollToBottom]);
+    // Only scroll if we're at or near the bottom already
+    if (messageListRef.current) {
+      const { scrollHeight, scrollTop, clientHeight } = messageListRef.current;
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+      
+      if (isNearBottom) {
+        debouncedScrollToBottom();
+      }
+    }
+  }, [chats, debouncedScrollToBottom]);
 
   useEffect(() => {
     setAudioAvailable(!!navigator.mediaDevices && !!navigator.mediaDevices.getUserMedia);
@@ -275,10 +315,16 @@ const Chatbot = () => {
     setChats(updatedChat);
     setInput("");
     resetTextareaHeight(); // Reset textarea height after sending
+    
+    // Force scroll to bottom after sending user message
+    setTimeout(scrollToBottom, 50);
 
-    const placeholder = { role: "bot", content: "...", language: currentLanguage };
+    const placeholder = { role: "bot", content: "", language: currentLanguage };
     const newChats = [...updatedChat, placeholder];
     setChats(newChats);
+    
+    // Force scroll to bottom again after adding placeholder
+    setTimeout(scrollToBottom, 50);
 
     // Auto-title for new empty chats
     if (chatTitles[currentChatId] === 'New Chat' && chats.length === 0) {
@@ -310,9 +356,15 @@ const Chatbot = () => {
       if (response.reply) {
         let i = 0;
         const responseLength = response.reply.length;
-        const chunkSize = Math.max(1, Math.floor(responseLength / 20));
+        
+        // More gradual animation with smaller chunks
+        const chunkSize = Math.max(1, Math.min(5, Math.floor(responseLength / 50)));
+        let lastScrollTime = 0;
         
         const interval = setInterval(() => {
+          const now = Date.now();
+          const shouldScroll = now - lastScrollTime > 300;
+          
           if (i <= responseLength) {
             const streamingContent = response.reply.slice(0, i);
             setChats(chats => 
@@ -320,6 +372,13 @@ const Chatbot = () => {
                 idx === chats.length - 1 ? { ...msg, content: streamingContent } : msg
               )
             );
+            
+            // Only scroll periodically to avoid visual jumps
+            if (shouldScroll) {
+              debouncedScrollToBottom();
+              lastScrollTime = now;
+            }
+            
             i += chunkSize;
           } else {
             clearInterval(interval);
@@ -334,8 +393,11 @@ const Chatbot = () => {
             setLoading(false);
             setIsResponding(false);
             abortController.current = null;
+            
+            // Final scroll once animation is complete
+            setTimeout(scrollToBottom, 50);
           }
-        }, 50);
+        }, 30); // A bit faster but more granular
       } else {
         toast.error('Failed to get response');
         setChats(updatedChat);
@@ -474,7 +536,7 @@ const Chatbot = () => {
   };
 
   const renderTypingIndicator = () => (
-    <div className="typing-animation">
+    <div className="typing-animation" key="typing-animation">
       <div className="typing-dot"></div>
       <div className="typing-dot"></div>
       <div className="typing-dot"></div>
@@ -920,7 +982,7 @@ const Chatbot = () => {
                   </div>
                 </div>
               ) : (
-                <div className="messages-list">
+                <div className="messages-list" ref={messageListRef}>
                   {chats.map((msg, idx) => (
                     <ChatMessage 
                       key={idx} 
@@ -930,7 +992,7 @@ const Chatbot = () => {
                       typingIndicator={renderTypingIndicator}
                     />
                   ))}
-                  <div ref={chatEndRef} />
+                  <div ref={chatEndRef} className="scroll-anchor" />
                 </div>
               )}
             </div>
