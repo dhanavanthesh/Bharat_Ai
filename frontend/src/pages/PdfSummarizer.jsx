@@ -66,12 +66,15 @@ const PdfSummarizer = () => {
   const [touchStartY, setTouchStartY] = useState(0);
   const [initialScrollDone, setInitialScrollDone] = useState(false);
   const [currentTab, setCurrentTab] = useState('upload');
+  // Add drag state for tracking drag operations
+  const [isDragging, setIsDragging] = useState(false);
   
   const abortController = useRef(null);
   const chatEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const inputRef = useRef(null);
   const messagesContainerRef = useRef(null);
+  const dropZoneRef = useRef(null);
   
   // Get user info for avatar
   const getUserInfo = () => {
@@ -195,6 +198,47 @@ const PdfSummarizer = () => {
       document.body.style.overflow = '';
     };
   }, [sidebarVisible]);
+
+  // Add drag and drop handlers
+  const handleDragEnter = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+  
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isDragging) setIsDragging(true);
+  };
+  
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Only set isDragging to false if we're leaving the dropzone itself
+    // not its children
+    if (e.currentTarget === e.target) {
+      setIsDragging(false);
+    }
+  };
+  
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    
+    const droppedFiles = e.dataTransfer.files;
+    if (droppedFiles && droppedFiles.length > 0) {
+      // Use a synthetic event object to reuse our existing handleFileChange function
+      const syntheticEvent = {
+        target: {
+          files: droppedFiles
+        }
+      };
+      handleFileChange(syntheticEvent);
+    }
+  };
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -477,12 +521,19 @@ const PdfSummarizer = () => {
       );
     }
     
-    // Enhanced upload tab with clearer separation
+    // Enhanced upload tab with clearer separation and drag-drop support
     if (activeTab === 'upload') {
       return (
         <div className="pdf-upload-tab">
           <div className="pdf-upload-container">
-            <div className="pdf-upload-area">
+            <div 
+              className={`pdf-upload-area ${isDragging ? 'pdf-dragging' : ''}`}
+              ref={dropZoneRef}
+              onDragEnter={handleDragEnter}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
               <input
                 type="file"
                 accept=".pdf,.xlsx,.xls,.csv,.doc,.docx,.ppt,.pptx,.png,.jpg,.jpeg"
@@ -497,7 +548,7 @@ const PdfSummarizer = () => {
               >
                 <FaFileUpload className="pdf-upload-icon" />
                 <span className="pdf-upload-text">
-                  {fileName || 'Click to Upload Document'}
+                  {fileName || (isDragging ? 'Drop your file here' : 'Click or drag file to upload')}
                 </span>
                 <span className="pdf-upload-hint">
                   PDF, Excel, Word, PowerPoint, JPEG, PNG (Max 10MB)
@@ -536,7 +587,7 @@ const PdfSummarizer = () => {
           {!file && (
             <div className="pdf-help-text">
               <FaRegLightbulb className="pdf-help-icon" />
-              <p>Upload a document to get started. The AI will Summarize your document and allow you to ask questions about it.</p>
+              <p>Upload or drag & drop a document to get started. The AI will Summarize your document and allow you to ask questions about it.</p>
             </div>
           )}
         </div>

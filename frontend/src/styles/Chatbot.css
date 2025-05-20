@@ -53,6 +53,16 @@ body, html {
   overflow: hidden;
 }
 
+/* Mobile optimization for chat interface */
+
+/* Ensure the chat container takes full viewport height on mobile */
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  max-height: -webkit-fill-available; /* For iOS Safari */
+}
+
 .chat-bg {
   position: fixed;
   top: 0;
@@ -706,6 +716,14 @@ body:not(.dark) .mobile-sidebar-close {
   transition: margin-left var(--transition-speed) ease, width var(--transition-speed) ease;
 }
 
+/* Improve chat area layout for mobile */
+.chat-area {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
 /* Fix the gap issue when sidebar is collapsed */
 .sidebar-collapsed + .chat-area {
   margin-left: var(--sidebar-collapsed-width);
@@ -837,11 +855,29 @@ body:not(.dark) .chat-header {
 /* Messages container - improved scrolling */
 .messages-container {
   flex: 1;
-  overflow-y: auto;
-  padding: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.messages-list {
+  flex: 1;
+  overflow-y: auto; /* This enables scrolling */
+  -webkit-overflow-scrolling: touch; /* For smooth scrolling on iOS */
   scroll-behavior: smooth;
-  scrollbar-width: thin;
-  scrollbar-color: var(--text-secondary) transparent;
+  padding: 1rem 0.8rem;
+  padding-bottom: 16px;
+}
+
+/* Fix messages container height and scrolling */
+.messages-container {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 8px;
 }
 
 .messages-container::-webkit-scrollbar {
@@ -868,6 +904,16 @@ body:not(.dark) .messages-container::-webkit-scrollbar-thumb {
   max-width: 900px;
   margin: 0 auto;
   padding-bottom: 16px;
+}
+
+/* Improve messages list for mobile scrolling */
+.messages-list {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  scrollbar-width: thin;
+  padding: 1rem 0.8rem;
+  padding-bottom: 16px; /* Space at the bottom */
 }
 
 .empty-chat {
@@ -969,6 +1015,16 @@ body:not(.dark) .messages-container::-webkit-scrollbar-thumb {
   position: relative;
 }
 
+/* Fix input area to bottom on mobile */
+.chat-input-area {
+  position: relative; /* Not fixed or sticky */
+  width: 100%;
+  padding: 12px 8px;
+  background-color: var(--bg-primary);
+  border-top: 1px solid var(--border-color);
+  z-index: 10;
+}
+
 body:not(.dark) .chat-input-area {
   background-color: rgba(248, 250, 252, 0.95);
   border-top: 1px solid #e2e8f0;
@@ -981,6 +1037,16 @@ body:not(.dark) .chat-input-area {
   gap: 10px;
   max-width: 900px;
   margin: 0 auto;
+}
+
+/* Ensure the input wrapper has proper spacing */
+.input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0 4px;
 }
 
 .voice-btn {
@@ -1025,6 +1091,13 @@ body:not(.dark) .chat-input-area {
   position: relative;
 }
 
+/* Make textarea container take available space */
+.textarea-container {
+  flex: 1;
+  position: relative;
+  min-height: 48px;
+}
+
 .chat-input {
   width: 100%;
   padding: 12px 40px 12px 16px;
@@ -1044,6 +1117,16 @@ body:not(.dark) .chat-input-area {
   font-family: 'Poppins', sans-serif;
   overflow: hidden; /* Hide scrollbar */
   padding-right: 70px; /* Allow space for both attachment and emoji buttons */
+}
+
+/* Fix textarea scrolling and size on mobile */
+.chat-input {
+  width: 100%;
+  max-height: 150px;
+  padding: 14px 40px 14px 10px; /* Space for emoji button */
+  border-radius: 24px;
+  resize: none;
+  font-size: 16px; /* Prevent zoom on focus in iOS */
 }
 
 body:not(.dark) .chat-input {
@@ -1106,6 +1189,16 @@ body:not(.dark) .chat-input:focus {
   border-radius: var(--border-radius);
   box-shadow: var(--shadow-md);
   border: 1px solid var(--border-color);
+}
+
+/* Ensure emoji picker doesn't overflow screen */
+.emoji-picker-wrapper {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  right: 0;
+  max-width: 90vw;
+  max-height: 60vh;
+  z-index: 20;
 }
 
 .send-btn {
@@ -1715,4 +1808,119 @@ body:not(.dark) .message-container.bot {
   width: 32px;
   height: 32px;
   object-fit: contain;
+}
+
+/* Improve visibility for chat messages on mobile */
+.chat-message {
+  max-width: 92%;
+  margin-bottom: 12px;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+/* Improve sidebar transition for mobile */
+.sidebar {
+  position: fixed;
+  height: 100%;
+  z-index: 20;
+  transition: transform 0.3s ease, left 0.3s ease;
+}
+
+/* Improve sidebar overlay for mobile */
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 15;
+  transition: opacity 0.3s ease;
+  backdrop-filter: blur(2px);
+}
+
+/* Media queries for responsive design */
+@media screen and (max-width: 768px) {
+  .chat-input {
+    font-size: 16px; /* Ensures no zoom on focus in iOS */
+  }
+  
+  .chat-header {
+    padding: 8px;
+  }
+  
+  .chat-name {
+    font-size: 18px;
+  }
+  
+  .chat-header-actions {
+    gap: 6px;
+  }
+  
+  .header-btn-text {
+    display: none;
+  }
+  
+  .header-btn {
+    padding: 8px;
+    min-width: initial;
+  }
+  
+  /* Fix safe area for iOS devices */
+  .chat-input-area {
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+  
+  /* Ensure content doesn't get hidden behind notches */
+  .chat-header {
+    padding-top: max(8px, env(safe-area-inset-top));
+  }
+  
+  /* Improve button sizes for touch */
+  .voice-btn, .upload-btn, .send-btn, .emoji-btn {
+    min-height: 40px;
+    min-width: 40px;
+  }
+  
+  /* Optimize scroll anchor position */
+  .scroll-anchor {
+    margin-bottom: 16px;
+  }
+}
+
+/* Fix iOS viewport height issues */
+@supports (-webkit-touch-callout: none) {
+  .chat-container {
+    height: -webkit-fill-available;
+  }
+}
+
+/* Safe area support for iOS */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .chat-input-area {
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+}
+
+/* Add some space at the bottom of messages for better visibility */
+.scroll-anchor {
+  height: 10px;
+  margin-bottom: 10px;
+}
+
+/* Mobile-specific adjustments */
+@media screen and (max-width: 768px) {
+  .chat-input-area {
+    padding-bottom: max(12px, env(safe-area-inset-bottom, 12px));
+  }
+  
+  /* Ensure chat messages can be scrolled and viewed */
+  .messages-container {
+    overflow: hidden;
+    height: calc(100% - 60px); /* Adjust for input height */
+  }
+  
+  .messages-list {
+    -webkit-overflow-scrolling: touch;
+  }
 }

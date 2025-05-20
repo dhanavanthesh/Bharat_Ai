@@ -192,6 +192,8 @@
   border-radius: 16px;
   padding: 24px;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  margin-bottom: 2rem;
 }
 
 .pdf-upload-area {
@@ -203,24 +205,62 @@
   cursor: pointer;
   margin-bottom: 16px;
   width: 100%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.02);
 }
 
-.pdf-upload-area:hover {
-  border-color: rgba(255, 107, 157, 0.5);
-  background: rgba(255, 255, 255, 0.05);
+.dark-theme .pdf-upload-area {
+  background-color: rgba(255, 255, 255, 0.03);
+  border-color: rgba(200, 200, 200, 0.3);
 }
 
-.pdf-hidden-input {
-  display: none;
+/* Active drag state styling */
+.pdf-upload-area.pdf-dragging {
+  border-color: #4a89dc;
+  background-color: rgba(74, 137, 220, 0.08);
+  transform: scale(1.01);
+  box-shadow: 0 0 15px rgba(74, 137, 220, 0.2);
 }
 
-/* Enhanced upload container layout */
+.dark-theme .pdf-upload-area.pdf-dragging {
+  background-color: rgba(74, 137, 220, 0.15);
+  border-color: #5a99ec;
+}
+
+/* Make the upload text more visible during drag */
+.pdf-dragging .pdf-upload-text {
+  color: #4a89dc;
+  font-weight: 600;
+}
+
+.dark-theme .pdf-dragging .pdf-upload-text {
+  color: #6aa8ff;
+}
+
+/* Better styling for the upload icon during drag */
+.pdf-dragging .pdf-upload-icon {
+  color: #4a89dc;
+  transform: translateY(-5px);
+  transition: transform 0.3s ease;
+}
+
+.dark-theme .pdf-dragging .pdf-upload-icon {
+  color: #6aa8ff;
+}
+
+/* Enhanced upload area styling */
 .pdf-upload-label {
   display: flex;
   flex-direction: column;
   align-items: center;
-  cursor: pointer;
+  justify-content: center;
   width: 100%;
+  height: 100%;
+  cursor: pointer;
 }
 
 .pdf-upload-icon {
@@ -228,6 +268,11 @@
   color: var(--primary-color, #ff6b9d);
   margin-bottom: 16px;
   filter: drop-shadow(0 0 10px rgba(255, 107, 157, 0.4));
+  transition: all 0.3s ease;
+}
+
+.dark-theme .pdf-upload-icon {
+  color: rgba(200, 200, 200, 0.7);
 }
 
 .pdf-upload-text {
@@ -241,11 +286,36 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   display: block;
+  transition: color 0.3s ease;
 }
 
 .pdf-upload-hint {
   font-size: 14px;
   color: rgba(255, 255, 255, 0.6);
+}
+
+.dark-theme .pdf-upload-hint {
+  color: rgba(200, 200, 200, 0.6);
+}
+
+/* Ensure upload container has appropriate spacing */
+.pdf-upload-container {
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+/* Make sure the hidden input doesn't interfere with drag operations */
+.pdf-hidden-input {
+  display: none;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* File info display */

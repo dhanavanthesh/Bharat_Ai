@@ -112,49 +112,24 @@ const Chatbot = () => {
   const [smoothScrollInProgress, setSmoothScrollInProgress] = useState(false);
   const messageListRef = useRef(null);
   
-  // Replace the existing scrollToBottom with this improved version
+  // FIXED: Keep the original scrolling functionality 
   const scrollToBottom = useCallback((force = false) => {
     if (!chatEndRef.current) return;
     
-    // Only auto-scroll if user hasn't manually scrolled up or we're forcing it
-    if (force || !userScrolled) {
-      setSmoothScrollInProgress(true);
-      
-      chatEndRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'end'
-      });
-      
-      setTimeout(() => {
-        setSmoothScrollInProgress(false);
-      }, 300);
-    }
-  }, [userScrolled]);
-  
-  // Create a debounced version of scrollToBottom
-  const debouncedScrollToBottom = useDebounce(scrollToBottom, 100);
-  
-  // Add scroll handler for the messages container
+    chatEndRef.current.scrollIntoView({
+      behavior: 'smooth',
+      block: 'end'
+    });
+  }, []);
+
+  // Use a simpler handleScroll that doesn't interfere with normal scroll behavior
   const handleScroll = useCallback((e) => {
-    const { scrollTop, scrollHeight, clientHeight } = e.target;
-    const isAtBottom = Math.abs(scrollHeight - scrollTop - clientHeight) < 50;
-    
-    // Mark as not scrolled if user scrolled to bottom
-    if (isAtBottom) {
-      setUserScrolled(false);
-    } 
-    // Mark as scrolled if user is scrolling up
-    else if (scrollTop < lastScrollPosition.current) {
-      setUserScrolled(true);
-    }
-    
-    lastScrollPosition.current = scrollTop;
+    // Simple scroll handler that doesn't prevent scrolling up
   }, []);
   
-  // Reset user scroll state when changing chats
+  // Reset scroll handling to simpler approach
   useEffect(() => {
-    setUserScrolled(false);
-    // Also force scroll to bottom when switching chats
+    // Force scroll to bottom when switching chats
     setTimeout(() => scrollToBottom(true), 100);
   }, [currentChatId, scrollToBottom]);
 
@@ -391,7 +366,7 @@ const Chatbot = () => {
             
             // Only scroll periodically if user hasn't manually scrolled up
             if (shouldScroll && !userScrolled) {
-              debouncedScrollToBottom();
+              setTimeout(scrollToBottom, 10);
               lastScrollTime = now;
             }
             
@@ -596,6 +571,79 @@ const Chatbot = () => {
     // Prevent body scrolling when sidebar is open
     document.body.style.overflow = isOpen ? 'hidden' : '';
   };
+
+  // Add mobile viewport height fix for iOS
+  useEffect(() => {
+    // Fix for iOS viewport height issue
+    const setVh = () => {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    };
+    
+    setVh();
+    window.addEventListener('resize', setVh);
+    
+    return () => {
+      window.removeEventListener('resize', setVh);
+    };
+  }, []);
+  
+  // Enhanced scroll handling for mobile - prevent rubber banding effect
+  useEffect(() => {
+    // Fix for mobile keyboards pushing content up
+    const handleFocus = () => {
+      // On mobile, scroll to bottom with a short delay
+      if (window.innerWidth <= 768) {
+        setTimeout(scrollToBottom, 300);
+      }
+    };
+    
+    const textArea = inputRef.current;
+    if (textArea) {
+      textArea.addEventListener('focus', handleFocus);
+    }
+    
+    return () => {
+      if (textArea) {
+        textArea.removeEventListener('focus', handleFocus);
+      }
+    };
+  }, [scrollToBottom]);
+
+  // Handle viewport changes when virtual keyboard appears/disappears
+  useEffect(() => {
+    // Detect virtual keyboard and adjust layout
+    const handleVisualViewportResize = () => {
+      if (window.visualViewport) {
+        // Get the current visual viewport height
+        const viewportHeight = window.visualViewport.height;
+        const windowHeight = window.innerHeight;
+        
+        // If visual viewport is significantly smaller than window height,
+        // keyboard is probably visible
+        const keyboardVisible = windowHeight - viewportHeight > 150;
+        
+        if (keyboardVisible) {
+          // Ensure chat container adjusts to keyboard
+          document.documentElement.style.setProperty('--keyboard-height', 
+            `${windowHeight - viewportHeight}px`);
+        } else {
+          document.documentElement.style.setProperty('--keyboard-height', '0px');
+        }
+      }
+    };
+    
+    // Setup event listeners if visualViewport API is available
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleVisualViewportResize);
+    }
+    
+    return () => {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleVisualViewportResize);
+      }
+    };
+  }, []);
 
   return (
     <div className={`chat-container ${darkMode ? 'dark-theme' : 'light-theme'}`}>
@@ -1003,8 +1051,8 @@ const Chatbot = () => {
                 <div 
                   className="messages-list" 
                   ref={messageListRef}
-                  onScroll={handleScroll}
                 >
+                  {/* Remove the onScroll handler to fix scrolling issues */}
                   {chats.map((msg, idx) => (
                     <ChatMessage 
                       key={idx} 
@@ -1075,8 +1123,6 @@ const Chatbot = () => {
                     rows={1}
                   ></textarea>
                   
-                  {/* Remove the attachment-container div that contained the second paperclip icon */}
-                  
                   <div className="emoji-container" ref={emojiPickerRef}>
                     <button
                       onClick={() => setShowEmojiPicker(!showEmojiPicker)}
@@ -1091,6 +1137,8 @@ const Chatbot = () => {
                         <EmojiPicker
                           onEmojiClick={onEmojiClick}
                           theme={darkMode ? "dark" : "light"}
+                          width={window.innerWidth <= 768 ? "280px" : "350px"}
+                          height="350px"
                         />
                       </div>
                     )}
@@ -1106,9 +1154,6 @@ const Chatbot = () => {
                   {isResponding ? <FaStop /> : <FaPaperPlane />}
                 </button>
               </div>
-              
-              {/* Remove the language selector footer completely */}
-              {/* No need for any footer here */}
             </div>
           </main>
         </>
