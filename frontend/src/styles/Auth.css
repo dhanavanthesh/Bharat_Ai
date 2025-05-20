@@ -459,3 +459,80 @@
       padding: 10px;
     }
   }
+
+/* Phone number input styles */
+.phone-input-wrapper {
+  display: flex;
+  gap: 8px;
+}
+
+.country-code {
+  width: 30%;
+  min-width: 90px;
+}
+
+.country-code-select {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 15px;
+  color: white;
+  transition: all 0.3s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='rgba(255, 255, 255, 0.5)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+
+.country-code-select:focus {
+  outline: none;
+  border-color: #ff00cc;
+  box-shadow: 0 0 0 2px rgba(255, 0, 204, 0.2);
+}
+
+.country-code-select option {
+  background-color: #270042;
+  color: white;
+}
+
+.phone-number-input {
+  flex: 1;
+}
+
+/* Password strength indicator styles */
+.password-strength {
+  margin-top: 10px;
+}
+
+.strength-bar-container {
+  height: 4px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.strength-bar {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.strength-text {
+  font-size: 12px;
+  text-align: right;
+}
+
+@media (max-width: 480px) {
+  .phone-input-wrapper {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .country-code {
+    width: 100%;
+  }
+}

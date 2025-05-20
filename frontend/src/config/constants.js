@@ -1,4 +1,5 @@
-export const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://api.bhaai.org.in';
+export const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://api.bhaai.org.in';
+//export const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 
 export const DEFAULT_MODEL = 'LLaMA3';
 export const DEFAULT_LANGUAGE = 'en';
