@@ -896,7 +896,7 @@ const Chatbot = () => {
                   <div className="empty-chat-image">
                     <img src="/image.png" alt="Bharat AI Lotus Logo" className="lotus-logo" />
                   </div>
-                  <h3>Welcome to BHARAT AI</h3>
+                  <h3>Welcome to BHARAT AI (BHAAI)</h3>
                   <p>India's first LMLM <span>(Large Multi-Language Model)</span></p>
                   <p className="subtitle">World's First Humanized AI Model (H.A.I)</p>
                   
@@ -911,7 +911,11 @@ const Chatbot = () => {
                     </div>
                     <div className="feature-item">
                       <span className="feature-icon">🔒</span>
-                      <span>Secure Chats</span>
+                      <span>Secure Conversations</span>
+                    </div>
+                    <div className="feature-item">
+                      <span className="feature-icon">🤖</span>
+                      <span>Aigentic Modules</span>
                     </div>
                   </div>
                 </div>
