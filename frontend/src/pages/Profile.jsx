@@ -50,8 +50,7 @@ const Profile = () => {
       </div>
       
       <div className="profile-card">
-        <div className="profile-logo">
-          Bharat AI (BHAAI)        </div>
+        
         
         <div className="profile-header">
           <div className="profile-avatar">
