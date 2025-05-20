@@ -677,6 +677,8 @@ def signup():
     data = request.get_json()
     email = data.get("email", "").lower()
     password = data.get("password", "")
+    full_name = data.get("fullName", "")
+    phone_number = data.get("phoneNumber", "")
 
     if not email or not password:
         return jsonify({"success": False, "message": "Missing required fields"}), 400
@@ -690,12 +692,16 @@ def signup():
         if existing_user:
             return jsonify({"success": False, "message": "Email already registered"}), 400
         
+        # Use email username as name if not provided
+        if not full_name:
+            full_name = email.split('@')[0]
+            
         # Create new user
-        full_name = email.split('@')[0]  # Use email username as name
         user = {
             "name": full_name,
             "email": email,
             "password": password,  # In production, this should be hashed
+            "phone_number": phone_number,  # Store phone number
             "created_at": datetime.now()
         }
         
@@ -709,7 +715,8 @@ def signup():
             "user": {
                 "id": user_id,
                 "name": full_name,
-                "email": email
+                "email": email,
+                "phoneNumber": phone_number
             }
         })
     except Exception as e:
@@ -726,6 +733,7 @@ def register():
     email = data.get("email", "").lower()
     full_name = data.get("fullName", "")
     password = data.get("password", "")
+    phone_number = data.get("phoneNumber", "")
 
     logger.info(f"Registration attempt for {email} with name: {full_name}")
 
@@ -758,6 +766,7 @@ def register():
             "code": code,
             "full_name": full_name,
             "password": password,
+            "phone_number": phone_number,  # Store phone number in verification
             "created_at": datetime.now(),
             "expires_at": expires_at
         }
@@ -826,6 +835,7 @@ def verify():
                 "name": verification["full_name"],
                 "email": email,
                 "password": verification["password"],  # In production, this should be hashed
+                "phone_number": verification.get("phone_number", ""),  # Get phone number from verification
                 "created_at": datetime.now()
             }
             
@@ -844,7 +854,8 @@ def verify():
             "user": {
                 "id": user_id,
                 "name": name,
-                "email": email
+                "email": email,
+                "phoneNumber": user.get("phone_number", "")  # Include phone number in response
             }
         })
     except Exception as e:
@@ -1429,6 +1440,107 @@ def ask_pdf_question():
     except Exception as e:
         logger.error(f"Error answering file question: {str(e)}")
         return jsonify({"success": False, "message": f"Failed to answer question: {str(e)}"}), 500
+
+@app.route("/api/reset-password", methods=["POST"])
+def reset_password():
+    """Reset user password"""
+    if db is None:
+        return jsonify({"error": "Database connection is not available"}), 500
+        
+    data = request.get_json()
+    user_id = data.get("userId")
+    current_password = data.get("currentPassword")
+    new_password = data.get("newPassword")
+
+    if not user_id or not current_password or not new_password:
+        return jsonify({"success": False, "message": "Missing required fields"}), 400
+
+    if len(new_password) < 6:
+        return jsonify({"success": False, "message": "New password must be at least 6 characters long"}), 400
+
+    try:
+        # Find user by ID
+        try:
+            user = db.users.find_one({"_id": ObjectId(user_id)})
+        except Exception as e:
+            logger.error(f"Error finding user: {str(e)}")
+            return jsonify({"success": False, "message": "Invalid user ID"}), 400
+        
+        if not user:
+            return jsonify({"success": False, "message": "User not found"}), 404
+        
+        # Check current password (in production, you should use a proper password hash comparison)
+        if user["password"] != current_password:
+            return jsonify({"success": False, "message": "Current password is incorrect"}), 401
+        
+        # Update password
+        db.users.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$set": {"password": new_password}}  # In production, this should be hashed
+        )
+        
+        logger.info(f"Password reset successful for user {user_id}")
+        
+        return jsonify({
+            "success": True,
+            "message": "Password reset successful"
+        })
+    except Exception as e:
+        logger.error(f"Password reset error: {str(e)}")
+        return jsonify({"success": False, "message": f"An error occurred during password reset: {str(e)}"}), 500
+
+@app.route("/api/update-profile", methods=["PUT"])
+def update_profile():
+    """Update user profile information"""
+    if db is None:
+        return jsonify({"error": "Database connection is not available"}), 500
+        
+    data = request.get_json()
+    user_id = data.get("userId")
+    name = data.get("name")
+
+    if not user_id:
+        return jsonify({"success": False, "message": "User ID is required"}), 400
+
+    try:
+        # Find user by ID
+        try:
+            user = db.users.find_one({"_id": ObjectId(user_id)})
+        except Exception as e:
+            logger.error(f"Error finding user: {str(e)}")
+            return jsonify({"success": False, "message": "Invalid user ID"}), 400
+        
+        if not user:
+            return jsonify({"success": False, "message": "User not found"}), 404
+        
+        # Update fields that are provided
+        update_fields = {}
+        if name:
+            update_fields["name"] = name
+        
+        if update_fields:
+            db.users.update_one(
+                {"_id": ObjectId(user_id)},
+                {"$set": update_fields}
+            )
+        
+        logger.info(f"Profile updated for user {user_id}")
+        
+        # Get updated user data
+        updated_user = db.users.find_one({"_id": ObjectId(user_id)})
+        
+        return jsonify({
+            "success": True,
+            "message": "Profile updated successfully",
+            "user": {
+                "id": user_id,
+                "name": updated_user.get("name"),
+                "email": updated_user.get("email")
+            }
+        })
+    except Exception as e:
+        logger.error(f"Profile update error: {str(e)}")
+        return jsonify({"success": False, "message": f"An error occurred during profile update: {str(e)}"}), 500
 
 @app.errorhandler(404)
 def not_found(error):

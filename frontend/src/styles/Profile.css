@@ -333,6 +333,92 @@
   transform: translateY(-2px);
 }
 
+/* Password reset styling */
+.profile-section-divider {
+  position: relative;
+  text-align: center;
+  margin: 30px 0 20px;
+}
+
+.profile-section-divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.profile-section-divider span {
+  position: relative;
+  background: rgba(41, 15, 78, 0.8);
+  padding: 0 12px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+body:not(.dark) .profile-section-divider span {
+  background: rgba(248, 250, 252, 0.95);
+}
+
+.profile-password-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(255, 0, 204, 0.1);
+  border: 1px solid rgba(255, 0, 204, 0.2);
+  border-radius: 8px;
+  color: var(--primary-color, #ff00cc);
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  width: 100%;
+  justify-content: center;
+}
+
+.profile-password-btn:hover {
+  background: rgba(255, 0, 204, 0.2);
+  transform: translateY(-2px);
+}
+
+.password-reset-form {
+  margin-top: 10px;
+  animation: fadeIn 0.3s ease;
+}
+
+.password-reset-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.cancel-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  padding: 12px;
+  color: var(--text-primary, white);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex: 1;
+  font-weight: 500;
+}
+
+.cancel-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.input-help {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 5px;
+}
+
+/* End of new styles */
+
 @media (max-width: 480px) {
   .profile-card {
     padding: 25px 20px;

@@ -3,15 +3,22 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { auth } from '../utils/auth';
+import { profileApi } from '../utils/profileApi';
 import '../styles/Profile.css';
 
 const Profile = () => {
   const user = auth.getCurrentUser();
   const navigate = useNavigate();
   
-
   const [name, setName] = useState(user?.name || '');
   const [loading, setLoading] = useState(false);
+  
+  // Password reset states
+  const [showPasswordReset, setShowPasswordReset] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordLoading, setPasswordLoading] = useState(false);
   
   const handleLogout = () => {
     auth.logout();
@@ -23,13 +30,59 @@ const Profile = () => {
     e.preventDefault();
     setLoading(true);
     
-    // Profile updates not implemented in the backend yet
-    // In a real app, you would send a request to update the user profile
-    
-    setTimeout(() => {
-      toast.success('Profile updated successfully!');
+    try {
+      // Profile updates not implemented in the backend yet
+      // In a real app, you would send a request to update the user profile
+      const result = await profileApi.updateProfile(user.id, { name });
+      
+      if (result.success) {
+        toast.success('Profile updated successfully!');
+      } else {
+        toast.error(result.message || 'Failed to update profile');
+      }
+    } catch (error) {
+      toast.error('An error occurred while updating profile');
+      console.error(error);
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
+  };
+  
+  const handlePasswordReset = async (e) => {
+    e.preventDefault();
+    
+    if (newPassword !== confirmPassword) {
+      toast.error('New passwords do not match');
+      return;
+    }
+    
+    if (newPassword.length < 6) {
+      toast.error('Password must be at least 6 characters long');
+      return;
+    }
+    
+    setPasswordLoading(true);
+    
+    try {
+      const result = await profileApi.resetPassword(user.id, currentPassword, newPassword);
+      
+      if (result.success) {
+        toast.success('Password reset successful!');
+        // Clear form fields
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+        // Hide password reset section
+        setShowPasswordReset(false);
+      } else {
+        toast.error(result.message || 'Failed to reset password');
+      }
+    } catch (error) {
+      toast.error('An error occurred while resetting password');
+      console.error(error);
+    } finally {
+      setPasswordLoading(false);
+    }
   };
   
   if (!user) {
@@ -43,15 +96,14 @@ const Profile = () => {
       <div className="profile-bg"></div>
       
       <div className="profile-title">
-        Bharat AI (BHAAI)      </div>
+        Bharat AI (BHAAI)
+      </div>
       
       <div className="profile-subtitle">
         Manage your account settings
       </div>
       
       <div className="profile-card">
-        
-        
         <div className="profile-header">
           <div className="profile-avatar">
             {name.charAt(0).toUpperCase()}
@@ -116,6 +168,117 @@ const Profile = () => {
             ) : 'Save Changes'}
           </button>
         </form>
+        
+        <div className="profile-section-divider">
+          <span>Password Management</span>
+        </div>
+        
+        {!showPasswordReset ? (
+          <button 
+            className="profile-password-btn" 
+            onClick={() => setShowPasswordReset(true)}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+            </svg>
+            Reset Password
+          </button>
+        ) : (
+          <form onSubmit={handlePasswordReset} className="profile-form password-reset-form">
+            <div className="form-group">
+              <label htmlFor="currentPassword">Current Password</label>
+              <div className="input-wrapper">
+                <span className="input-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                  </svg>
+                </span>
+                <input
+                  id="currentPassword"
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className="profile-input"
+                  placeholder="Enter your current password"
+                  required
+                />
+              </div>
+            </div>
+            
+            <div className="form-group">
+              <label htmlFor="newPassword">New Password</label>
+              <div className="input-wrapper">
+                <span className="input-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                  </svg>
+                </span>
+                <input
+                  id="newPassword"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="profile-input"
+                  placeholder="Enter your new password"
+                  required
+                  minLength={6}
+                />
+              </div>
+              <p className="input-help">Password must be at least 6 characters long</p>
+            </div>
+            
+            <div className="form-group">
+              <label htmlFor="confirmPassword">Confirm New Password</label>
+              <div className="input-wrapper">
+                <span className="input-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                  </svg>
+                </span>
+                <input
+                  id="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="profile-input"
+                  placeholder="Confirm your new password"
+                  required
+                />
+              </div>
+            </div>
+            
+            <div className="password-reset-actions">
+              <button
+                type="button"
+                className="cancel-btn"
+                onClick={() => {
+                  setShowPasswordReset(false);
+                  setCurrentPassword('');
+                  setNewPassword('');
+                  setConfirmPassword('');
+                }}
+              >
+                Cancel
+              </button>
+              
+              <button
+                type="submit"
+                disabled={passwordLoading}
+                className="profile-submit-btn"
+              >
+                {passwordLoading ? (
+                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <svg className="loading-spinner" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: '8px', animation: 'spin 1s linear infinite' }}>
+                      <path opacity="0.25" d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2Z" stroke="white" strokeWidth="4"/>
+                      <path d="M12 2C6.47715 2 2 6.47715 2 12" stroke="white" strokeWidth="4" strokeLinecap="round"/>
+                    </svg>
+                    Resetting...
+                  </span>
+                ) : 'Reset Password'}
+              </button>
+            </div>
+          </form>
+        )}
         
         <div className="profile-alert warning" style={{ marginTop: '30px' }}>
           <div className="profile-alert-title">
