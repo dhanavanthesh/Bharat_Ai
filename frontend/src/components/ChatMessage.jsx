@@ -139,7 +139,13 @@ const ChatMessage = memo(({ message, darkMode, isLast, typingIndicator }) => {
               {message.content}
             </ReactMarkdown>
           ) : (
-            isLast && message.role === 'bot' && typingIndicator()
+            // Show "AI is thinking" when message has the thinking flag, otherwise show the normal typing indicator
+            message.thinking ? (
+              <div className="ai-thinking">
+                <span>AI is thinking</span>
+                {typingIndicator()}
+              </div>
+            ) : (isLast && message.role === 'bot' && typingIndicator())
           )}
         </div>
       </div>

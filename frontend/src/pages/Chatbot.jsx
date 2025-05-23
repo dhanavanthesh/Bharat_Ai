@@ -19,36 +19,10 @@ import { exportChatToPDF } from '../utils/exportPdf';
 import ChatMessage from '../components/ChatMessage';
 import '../styles/Chatbot.css';
 
-// Replace the entire useAutosizeTextArea hook with this ultra-optimized version
+// REPLACE: Remove the complex auto-resize hook completely - it's causing lag
 const useAutosizeTextArea = (textAreaRef) => {
-  useLayoutEffect(() => {
-    if (!textAreaRef.current) return;
-    
-    // Setup MutationObserver for content changes
-    const textArea = textAreaRef.current;
-    
-    // Function to resize immediately with no lag
-    const resize = () => {
-      textArea.style.height = 'auto'; // Reset height
-      textArea.style.height = `${Math.min(Math.max(textArea.scrollHeight, 48), 150)}px`;
-    };
-
-    // Handle input events directly for immediate feedback
-    const handleInput = () => {
-      window.requestAnimationFrame(resize);
-    };
-
-    // Attach event listeners directly to DOM
-    textArea.addEventListener('input', handleInput);
-    
-    // Initial resize
-    resize();
-    
-    // Cleanup
-    return () => {
-      textArea.removeEventListener('input', handleInput);
-    };
-  }, [textAreaRef]);
+  // Empty implementation - we'll rely on CSS instead of JS for autosize
+  // This removes the performance-intensive resize calculations
 };
 
 // eslint-disable-next-line no-unused-vars
@@ -292,7 +266,7 @@ const Chatbot = () => {
     }
   }, [currentChatId, setCurrentLanguage]);
 
-  // Replace the handleSend function with this optimized version
+  // Replace handleSend function with this improved version
   const handleSend = async () => {
     if (!input.trim() || (loading && !isResponding)) return;
     
@@ -328,17 +302,23 @@ const Chatbot = () => {
     const updatedChat = [...chats, userMessage];
     setChats(updatedChat);
     
-    // Clear input and reset textarea height
+    // Clear input and reset textarea height - IMPORTANT: Update both the state and DOM for immediate feedback
     setInput("");
     if (inputRef.current) {
+      inputRef.current.value = ""; // Direct DOM update for immediate visual feedback
       inputRef.current.style.height = "48px";
     }
     
     // Force scroll to bottom after sending user message
     setTimeout(scrollToBottom, 20);
 
-    // Add placeholder for bot response
-    const placeholder = { role: "bot", content: "", language: currentLanguage };
+    // Add placeholder for bot response with "thinking" state
+    const placeholder = { 
+      role: "bot", 
+      content: "", 
+      language: currentLanguage,
+      thinking: true // Add this flag to indicate AI is thinking
+    };
     const newChats = [...updatedChat, placeholder];
     setChats(newChats);
     
@@ -370,104 +350,20 @@ const Chatbot = () => {
       );
       
       if (response.reply) {
-        // Reset user scroll state when sending a new message
-        setUserScrolled(false);
+        // Remove streaming and just show the full response immediately
+        const finalChats = updatedChat.concat({
+          role: "bot",
+          content: response.reply,
+          language: currentLanguage,
+          timestamp: new Date().toISOString()
+        });
         
-        // Optimize streaming by increasing chunk size for faster responses
-        const responseLength = response.reply.length;
-        
-        // For very short responses, just show them immediately
-        if (responseLength < 50) {
-          const finalChats = updatedChat.concat({
-            role: "bot",
-            content: response.reply,
-            language: currentLanguage,
-            timestamp: new Date().toISOString()
-          });
-          setChats(finalChats);
-          setChatHistory(prev => ({ ...prev, [currentChatId]: finalChats }));
-          setLoading(false);
-          setIsResponding(false);
-          abortController.current = null;
-          setTimeout(scrollToBottom, 20);
-          return;
-        }
-        
-        // Adaptive chunk size strategy based on total length
-        // Shorter responses = smaller chunks for smoother appearance
-        // Longer responses = larger chunks for better performance
-        const getChunkSize = (totalLength) => {
-          if (totalLength < 200) return 3;
-          if (totalLength < 500) return 10;
-          if (totalLength < 1000) return 25;
-          if (totalLength < 5000) return 50;
-          return 100; // For very long responses
-        };
-        
-        const chunkSize = getChunkSize(responseLength);
-        
-        // Faster update interval for shorter content, slower for longer (feels more responsive)
-        const getUpdateInterval = (totalLength) => {
-          if (totalLength < 200) return 20;
-          if (totalLength < 1000) return 30;
-          return 40;
-        };
-        
-        const updateInterval = getUpdateInterval(responseLength);
-        let position = 0;
-        
-        // Use a more efficient streaming approach that doesn't cause lag
-        const interval = setInterval(() => {
-          // Exit condition
-          if (position >= responseLength) {
-            clearInterval(interval);
-            
-            // Finalize the chat with the complete response
-            const finalChats = updatedChat.concat({
-              role: "bot",
-              content: response.reply,
-              language: currentLanguage,
-              timestamp: new Date().toISOString()
-            });
-            
-            // Update state and cleanup
-            setChats(finalChats);
-            setChatHistory(prev => ({ ...prev, [currentChatId]: finalChats }));
-            setLoading(false);
-            setIsResponding(false);
-            abortController.current = null;
-            
-            // Final scroll
-            if (!userScrolled) {
-              setTimeout(scrollToBottom, 20);
-            }
-            return;
-          }
-          
-          // Calculate next position
-          const nextPosition = Math.min(position + chunkSize, responseLength);
-          const streamingContent = response.reply.slice(0, nextPosition);
-          
-          // Update the last message efficiently
-          setChats(currentChats => {
-            const newChats = [...currentChats];
-            const lastIndex = newChats.length - 1;
-            newChats[lastIndex] = {
-              ...newChats[lastIndex],
-              content: streamingContent
-            };
-            return newChats;
-          });
-          
-          // Scroll periodically, but only if needed
-          if (!userScrolled && position % (chunkSize * 3) === 0) {
-            setTimeout(scrollToBottom, 10);
-          }
-          
-          // Move to next chunk
-          position = nextPosition;
-        }, updateInterval);
-        
+        setChats(finalChats);
+        setChatHistory(prev => ({ ...prev, [currentChatId]: finalChats }));
+        setLoading(false);
+        setIsResponding(false);
+        abortController.current = null;
+        setTimeout(scrollToBottom, 20);
       } else {
         toast.error('Failed to get response');
         setChats(updatedChat);
@@ -634,15 +530,10 @@ const Chatbot = () => {
     </div>
   );
 
-  // Replace handleInputChange with this optimized version
+  // REPLACE: Simplify input change to be more performant
   const handleInputChange = (e) => {
-    // Use direct DOM access for instant feedback
-    const value = e.target.value;
-    
-    // Update React state afterward (this won't block the UI)
-    setTimeout(() => {
-      setInput(value);
-    }, 0);
+    // Direct state update without any extra processing
+    setInput(e.target.value);
   };
 
   // Fix 2: Define handleLanguageChange function
@@ -1164,7 +1055,7 @@ const Chatbot = () => {
                 <div className="textarea-container">
                   <textarea
                     ref={inputRef}
-                    defaultValue={input} // Use defaultValue instead of value for uncontrolled component
+                    value={input}
                     onChange={handleInputChange}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && !e.shiftKey) {
@@ -1172,11 +1063,9 @@ const Chatbot = () => {
                         handleSend();
                       }
                     }}
-                    onFocus={() => setIsFocused(true)}
-                    onBlur={() => setIsFocused(false)}
-                    placeholder={loading ? "AI is thinking..." : "Type your message here..."}
+                    placeholder={isResponding ? "AI is thinking..." : "Type your message here..."}
                     className="chat-input"
-                    disabled={loading && isResponding}
+                    disabled={isResponding}
                     rows={1}
                     spellCheck="false"
                     autoComplete="off"

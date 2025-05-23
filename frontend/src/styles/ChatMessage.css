@@ -75,16 +75,25 @@
   display: flex;
   justify-content: space-between;
   margin-bottom: 6px;
+  align-items: center; /* Better alignment */
+  gap: 12px; /* Add gap to prevent collapse */
 }
 
 .message-sender {
   font-weight: 600;
   font-size: 14px;
+  white-space: nowrap; /* Prevent wrapping */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 1; /* Allow shrinking */
+  max-width: 70%; /* Limit width to prevent overlap */
 }
 
 .message-time {
   font-size: 12px;
   color: #6b7280;
+  white-space: nowrap; /* Prevent wrapping */
+  flex-shrink: 0; /* Don't shrink timestamp */
 }
 
 .message-body {
@@ -149,10 +158,10 @@
 
 /* Typing animation */
 .typing-animation {
-  display: flex;
+  display: inline-flex; /* Changed to inline-flex */
   align-items: center;
   gap: 4px;
-  padding: 8px 0;
+  vertical-align: middle;
 }
 
 .typing-dot {
@@ -209,4 +218,17 @@
   max-width: 100%;
   border-radius: 4px;
   margin: 10px 0;
+}
+
+/* Add AI thinking indicator style */
+.ai-thinking {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.ai-thinking span {
+  margin-right: 8px;
 }
