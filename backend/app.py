@@ -1525,7 +1525,7 @@ def update_profile():
             "success": True,
             "message": "Profile updated successfully",
             "user": {
-                "id": user_id,
+                "id": str(updated_user["_id"]),
                 "name": updated_user.get("name"),
                 "email": updated_user.get("email"),
                 "phoneNumber": updated_user.get("phone_number", "")  # Use updated_user instead of user
@@ -1911,6 +1911,7 @@ def get_training_job(job_id):
         
         # Get the config details
         config = db.model_configs.find_one({"_id": ObjectId(job["config_id"])})
+       
         config_details = {
             "id": str(config["_id"]),
             "name": config["name"],
@@ -2113,6 +2114,92 @@ def search_documents_endpoint():
     except Exception as e:
         logger.error(f"Error searching documents: {str(e)}")
         return jsonify({"success": False, "message": f"Failed to search documents: {str(e)}"}), 500
+
+@app.route("/api/profile/<user_id>", methods=["GET"])
+def get_user_profile(user_id):
+    """Get user profile by ID"""
+    if db is None:
+        return jsonify({"error": "Database connection is not available"}), 500
+        
+    try:
+        # Find user by ID
+        try:
+            user = db.users.find_one({"_id": ObjectId(user_id)})
+        except Exception as e:
+            logger.error(f"Error finding user: {str(e)}")
+            return jsonify({"success": False, "message": "Invalid user ID"}), 400
+        
+        if not user:
+            return jsonify({"success": False, "message": "User not found"}), 404
+        
+        # Return user data without sensitive information
+        return jsonify({
+            "success": True,
+            "user": {
+                "id": str(user["_id"]),
+                "name": user.get("name"),
+                "email": user.get("email"),
+                "phoneNumber": user.get("phone_number", "")
+            }
+        })
+    except Exception as e:
+        logger.error(f"Get profile error: {str(e)}")
+        return jsonify({"success": False, "message": f"Failed to get profile: {str(e)}"}), 500
+
+@app.route("/api/profile/<user_id>/update", methods=["POST"])
+def update_user_profile(user_id):
+    """Update specific user profile information"""
+    if db is None:
+        return jsonify({"error": "Database connection is not available"}), 500
+        
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "message": "No data provided"}), 400
+
+    try:
+        # Find user by ID
+        try:
+            user = db.users.find_one({"_id": ObjectId(user_id)})
+        except Exception as e:
+            logger.error(f"Error finding user: {str(e)}")
+            return jsonify({"success": False, "message": "Invalid user ID"}), 400
+        
+        if not user:
+            return jsonify({"success": False, "message": "User not found"}), 404
+        
+        # Update fields that are provided
+        update_fields = {}
+        for field in ["name", "email", "phone_number"]:
+            if field in data and data[field]:
+                update_fields[field] = data[field]
+        
+        if not update_fields:
+            return jsonify({"success": False, "message": "No valid fields to update"}), 400
+            
+        # Update user data
+        db.users.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$set": update_fields}
+        )
+        
+        logger.info(f"Profile updated for user {user_id}: {update_fields}")
+        
+        # Get updated user data
+        updated_user = db.users.find_one({"_id": ObjectId(user_id)})
+        
+        return jsonify({
+            "success": True,
+            "message": "Profile updated successfully",
+            "user": {
+                "id": str(updated_user["_id"]),
+                "name": updated_user.get("name"),
+                "email": updated_user.get("email"),
+                "phoneNumber": updated_user.get("phone_number", "")
+            }
+        })
+    except Exception as e:
+        logger.error(f"Profile update error: {str(e)}")
+        return jsonify({"success": False, "message": f"An error occurred during profile update: {str(e)}"}), 500
 
 if __name__ == "__main__":
     # Define the port for the server

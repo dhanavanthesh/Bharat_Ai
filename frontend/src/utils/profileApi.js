@@ -158,5 +158,57 @@ export const profileApi = {
    */
   getProfileImageUrl: (userId) => {
     return `${API_BASE_URL}/api/profile/image/${userId}`;
+  },
+
+  /**
+   * Update user profile information
+   * @param {string} userId - User ID
+   * @param {Object} userData - User data to update
+   * @returns {Promise<Object>} - API response
+   */
+  updateUserProfile: async (userId, userData) => {
+    try {
+      // Use apiCall instead of direct fetch for consistency
+      const data = await apiCall(`/api/profile/${userId}/update`, 'POST', userData);
+      
+      if (data.success && data.user) {
+        // Update the user data in localStorage to keep it in sync
+        const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+        const updatedUser = { ...currentUser, ...data.user };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        console.log('Profile updated and stored in localStorage:', updatedUser);
+      } else {
+        console.error('Update profile API returned error:', data);
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      return { success: false, message: 'Failed to update profile' };
+    }
+  },
+  
+  /**
+   * Refresh user data from the backend
+   * @param {string} userId - User ID
+   * @returns {Promise<Object|null>} - Refreshed user data or null if failed
+   */
+  refreshUserData: async (userId) => {
+    try {
+      // Use apiCall instead of direct fetch for consistency and error handling
+      const data = await apiCall(`/api/profile/${userId}`, 'GET');
+      
+      if (data.success && data.user) {
+        // Update local storage with fresh data
+        localStorage.setItem('user', JSON.stringify(data.user));
+        console.log('User data refreshed successfully:', data.user);
+        return data.user;
+      }
+      console.error('Failed to refresh user data:', data);
+      return null;
+    } catch (error) {
+      console.error('Error refreshing user data:', error);
+      return null;
+    }
   }
 };

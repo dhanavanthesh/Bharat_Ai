@@ -7,7 +7,12 @@ import { profileApi } from '../utils/profileApi';
 import '../styles/Profile.css';
 
 const Profile = () => {
-  const user = auth.getCurrentUser();
+  // Add state variables for the form inputs
+  const [user, setUser] = useState(auth.getCurrentUser());
+  const [displayName, setDisplayName] = useState(user?.name || '');
+  const [email, setEmail] = useState(user?.email || '');
+  const [isSaving, setIsSaving] = useState(false);
+  
   const navigate = useNavigate();
 
   const [name, setName] = useState(user?.name || '');
@@ -35,6 +40,28 @@ const Profile = () => {
     }
   }, [user]);
 
+  // Update state if user data changes
+  useEffect(() => {
+    if (user) {
+      setDisplayName(user.name || '');
+      setEmail(user.email || '');
+    }
+  }, [user]);
+
+  // Refresh user data on component mount
+  useEffect(() => {
+    const refreshUserData = async () => {
+      if (user?.id) {
+        const freshUserData = await profileApi.refreshUserData(user.id);
+        if (freshUserData) {
+          setUser(freshUserData);
+        }
+      }
+    };
+    
+    refreshUserData();
+  }, [user?.id]); // Add user.id as dependency
+  
   const handleLogout = () => {
     auth.logout();
     toast.info('You have been logged out');
@@ -126,6 +153,35 @@ const Profile = () => {
     }
   };
 
+  const handleSaveProfile = async () => {
+    // Show loading state
+    setIsSaving(true);
+    
+    try {
+      const response = await profileApi.updateUserProfile(user.id, {
+        name: displayName,
+        email: email
+      });
+      
+      if (response.success) {
+        // Update local user data
+        auth.updateCurrentUser({
+          name: displayName,
+          email: email
+        });
+        
+        toast.success('Profile updated successfully!');
+      } else {
+        toast.error(response.message || 'Failed to update profile');
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast.error('An error occurred while updating your profile');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+  
   if (!user) {
     navigate('/login');
     return null;

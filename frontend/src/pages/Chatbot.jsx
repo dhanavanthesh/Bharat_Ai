@@ -71,7 +71,7 @@ const Chatbot = () => {
   
   const chatEndRef = useRef(null);
   const inputRef = useRef(null);
-  const user = auth.getCurrentUser();
+  const [user, setUser] = useState(auth.getCurrentUser());
   // Add profileImageUrl state
   const [profileImageUrl, setProfileImageUrl] = useState('');
   const [isResponding, setIsResponding] = useState(false);
@@ -607,14 +607,35 @@ const Chatbot = () => {
     document.body.style.overflow = isOpen ? 'hidden' : '';
   };
 
-  // Add this effect to load the profile image when component mounts
+  // Add a function to refresh user data
+  const refreshUserData = useCallback(async () => {
+    const freshUserData = await auth.refreshCurrentUser();
+    if (freshUserData) {
+      setUser(freshUserData);
+    }
+  }, []);
+
+  // Add effect to refresh user data on component mount and focus
+  useEffect(() => {
+    refreshUserData();
+    
+    // Also refresh when window regains focus (user might have updated profile in another tab)
+    const handleFocus = () => refreshUserData();
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [refreshUserData]);
+
+  // Update the profile image fetching logic
   useEffect(() => {
     // Load profile image if user exists
     if (user?.id) {
       const imageUrl = profileApi.getProfileImageUrl(user.id);
       setProfileImageUrl(imageUrl);
     }
-  }, [user]); // Only run when user changes
+  }, [user]); // Depend on user object so it refreshes when user data changes
 
   return (
     <div className={`chat-container ${darkMode ? 'dark-theme' : 'light-theme'}`}>
