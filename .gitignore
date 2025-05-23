@@ -30,3 +30,4 @@ dist-ssr/
 Thumbs.db
 /backend/venv
 /backend/.env
+backend/profile_images

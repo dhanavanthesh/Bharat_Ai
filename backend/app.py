@@ -25,8 +25,6 @@ from io import BytesIO
 import json
 import re
 from PIL import Image
-import pytesseract
-
 # Configure logging first - before any logger references
 logging.basicConfig(
     level=logging.DEBUG,
@@ -68,15 +66,8 @@ except ImportError:
     pptx_available = False
     logger.warning("python-pptx not installed - PowerPoint processing will be limited")
 
-try:
-    import pytesseract
-    tesseract_available = True
-except ImportError:
-    tesseract_available = False
-    logger.warning("pytesseract not installed - Image OCR will be limited")
-
-load_dotenv('/etc/bharatai.env')
-#load_dotenv('.env')
+#load_dotenv('/etc/bharatai.env')
+load_dotenv('.env')
 
 # Function to create directory with proper permissions for VPS
 def create_directory_with_permissions(dir_path):
@@ -1544,6 +1535,77 @@ def update_profile():
         logger.error(f"Profile update error: {str(e)}")
         return jsonify({"success": False, "message": f"An error occurred during profile update: {str(e)}"}), 500
 
+# New endpoint to upload profile image
+@app.route("/api/profile/image", methods=["POST"])
+def upload_profile_image():
+    logger.info(f"Received request to upload profile image: method={request.method}, path={request.path}")
+    if db is None:
+        return jsonify({"error": "Database connection is not available"}), 500
+
+    if 'image' not in request.files:
+        return jsonify({"success": False, "message": "No image file provided"}), 400
+
+    image_file = request.files['image']
+    user_id = request.form.get('userId')
+
+    if not user_id:
+        return jsonify({"success": False, "message": "User ID is required"}), 400
+
+    if image_file.filename == '':
+        return jsonify({"success": False, "message": "Empty image file"}), 400
+
+    try:
+        # Create directory for profile images if not exists
+        upload_dir = os.path.join(app.static_folder, "uploads", "profile_images")
+        if not os.path.exists(upload_dir):
+            os.makedirs(upload_dir, exist_ok=True)
+
+        # Save the image file with userId as filename + extension
+        _, ext = os.path.splitext(image_file.filename)
+        filename = f"{user_id}{ext}"
+        file_path = os.path.join(upload_dir, filename)
+        image_file.save(file_path)
+
+        # Update user's profile image filename in DB
+        db.users.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$set": {"profile_image": filename}}
+        )
+
+        logger.info(f"Profile image uploaded for user {user_id}: {filename}")
+
+        return jsonify({"success": True, "message": "Profile image uploaded successfully", "filename": filename})
+    except Exception as e:
+        logger.error(f"Error uploading profile image: {str(e)}")
+        return jsonify({"success": False, "message": f"Failed to upload profile image: {str(e)}"}), 500
+
+# New endpoint to get profile image by user ID
+@app.route("/api/profile/image/<user_id>", methods=["GET"])
+def get_profile_image(user_id):
+    if db is None:
+        return jsonify({"error": "Database connection is not available"}), 500
+
+    try:
+        user = db.users.find_one({"_id": ObjectId(user_id)})
+        if not user:
+            return jsonify({"success": False, "message": "User not found"}), 404
+
+        filename = user.get("profile_image")
+        upload_dir = os.path.join(app.static_folder, "uploads", "profile_images")
+
+        if filename and os.path.exists(os.path.join(upload_dir, filename)):
+            return send_from_directory(upload_dir, filename)
+        else:
+            # Return default avatar image if no profile image found
+            default_avatar_path = os.path.join(app.static_folder, "image.png")
+            if os.path.exists(default_avatar_path):
+                return send_from_directory(app.static_folder, "image.png")
+            else:
+                return jsonify({"success": False, "message": "Profile image not found"}), 404
+    except Exception as e:
+        logger.error(f"Error retrieving profile image: {str(e)}")
+        return jsonify({"success": False, "message": f"Failed to retrieve profile image: {str(e)}"}), 500
+
 @app.errorhandler(404)
 def not_found(error):
     return jsonify({"error": "Endpoint not found"}), 404
@@ -1557,11 +1619,7 @@ def internal_server_error(error):
     logger.error(f"Internal server error: {str(error)}")
     return jsonify({"error": f"Internal server error: {str(error)}"}), 500
 
-# Import new modules for model training
-import training
-import model_utils
 
-# New routes for model training system
 
 @app.route("/api/training/upload", methods=["POST"])
 def upload_training_data():

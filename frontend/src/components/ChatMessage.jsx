@@ -1,68 +1,150 @@
-import React from 'react';
+import React, { useRef, useEffect, useState, memo } from 'react';
 import ReactMarkdown from 'react-markdown';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import remarkGfm from 'remark-gfm';
+import { toast } from 'react-toastify';
 import '../styles/ChatMessage.css';
+import { auth } from '../utils/auth';
+import { profileApi } from '../utils/profileApi';
 
-// Simplified ChatMessage component without syntax highlighting
-const ChatMessage = ({ message, darkMode, isLast, typingIndicator }) => {
-  const isUser = message.role === 'user';
+// Using memo to prevent unnecessary re-renders
+const ChatMessage = memo(({ message, darkMode, isLast, typingIndicator }) => {
+  const messageRef = useRef(null);
+  const [profileImageUrl, setProfileImageUrl] = useState('');
+  const [userName, setUserName] = useState(''); 
   
-  // Get the first initial of the user's name, or use a default
-  const getUserInitial = () => {
-    // Check if message contains user info
-    if (message.userName) {
-      return message.userName.charAt(0).toUpperCase();
-    }
-    
-    // Try to get the current user from localStorage or session
-    try {
-      const userString = localStorage.getItem('user');
-      if (userString) {
-        const user = JSON.parse(userString);
-        if (user && user.name) {
-          return user.name.charAt(0).toUpperCase();
-        }
+  // Effect for loading user info - including profile image
+  useEffect(() => {
+    if (message.role === 'user') {
+      const user = auth.getCurrentUser();
+      if (user?.id) {
+        setProfileImageUrl(profileApi.getProfileImageUrl(user.id));
+        // Always use the name, not email
+        setUserName(user.name || 'You');
       }
-    } catch (e) {
-      console.log('Error getting user from storage', e);
     }
+  }, [message.role]);
+
+  // Add highlight effect for new messages
+  useEffect(() => {
+    if (!messageRef.current) return;
+    messageRef.current.classList.add('new-message');
     
-    // Default to a person icon representation
-    return '👤';
+    const timer = setTimeout(() => {
+      if (messageRef.current) {
+        messageRef.current.classList.remove('new-message');
+      }
+    }, 300);
+    
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Efficient language detection
+  const getCodeLanguage = (codeString) => {
+    const firstLine = codeString.trim().split('\n')[0].trim();
+    if (firstLine.includes('```')) {
+      const lang = firstLine.replace('```', '').trim().toLowerCase();
+      if (lang) return lang;
+    }
+    return 'javascript';
   };
-  
+
   return (
-    <div className={`message-container ${isUser ? 'user' : 'bot'}`}>
+    <div 
+      ref={messageRef}
+      className={`message-container ${message.role === 'user' ? 'user-message' : 'bot-message'}`}
+    >
       <div className="message-avatar">
-        {isUser ? (
-          <div className="avatar user-avatar">
-            <span>{getUserInitial()}</span>
-          </div>
+        {message.role === 'user' ? (
+          profileImageUrl ? (
+            <img src={profileImageUrl} alt="User" className="user-avatar-img" loading="lazy" />
+          ) : (
+            <div className="user-avatar-placeholder">
+              {userName ? userName.charAt(0).toUpperCase() : 'U'}
+            </div>
+          )
         ) : (
           <div className="bot-avatar">
-            <img src="/image.png" alt="BHAAI" className="bot-logo" />
+            <img src="/image.png" alt="BHAAI" className="bot-avatar-img" loading="lazy" />
           </div>
         )}
       </div>
       
       <div className="message-content">
-        <div className="message-bubble">
-          {isLast ? (
-            <>
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {message.content}
-              </ReactMarkdown>
-              {typingIndicator && typingIndicator()}
-            </>
-          ) : (
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+        <div className="message-header">
+          <span className="message-sender">
+            {message.role === 'user' ? userName : 'BHAAI'}
+          </span>
+          {message.timestamp && (
+            <span className="message-time">
+              {new Date(message.timestamp).toLocaleTimeString([], { 
+                hour: '2-digit', 
+                minute: '2-digit'
+              })}
+            </span>
+          )}
+        </div>
+        
+        <div className={`message-body ${darkMode ? 'dark-mode' : 'light-mode'}`}>
+          {message.content ? (
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={{
+                code({node, inline, className, children, ...props}) {
+                  const match = /language-(\w+)/.exec(className || '');
+                  const codeString = String(children).replace(/\n$/, '');
+                  
+                  if (!inline && codeString.length > 0) {
+                    const language = match ? match[1] : getCodeLanguage(codeString);
+                    
+                    return (
+                      <div className="code-block-container">
+                        <div className="code-block-header">
+                          <span className="code-language">{language}</span>
+                          <button 
+                            className="copy-button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(codeString);
+                              toast.success("Code copied to clipboard!");
+                            }}
+                          >
+                            Copy
+                          </button>
+                        </div>
+                        <SyntaxHighlighter
+                          language={language}
+                          style={oneDark}
+                          showLineNumbers={codeString.split('\n').length > 1}
+                          wrapLines={true}
+                        >
+                          {codeString}
+                        </SyntaxHighlighter>
+                      </div>
+                    );
+                  }
+                  
+                  return <code className={className} {...props}>{children}</code>;
+                },
+                table({node, ...props}) {
+                  return (
+                    <div className="table-container">
+                      <table {...props} />
+                    </div>
+                  );
+                }
+              }}
+              skipHtml={false}
+            >
               {message.content}
             </ReactMarkdown>
+          ) : (
+            isLast && message.role === 'bot' && typingIndicator()
           )}
         </div>
       </div>
     </div>
   );
-};
+});
 
 export default ChatMessage;

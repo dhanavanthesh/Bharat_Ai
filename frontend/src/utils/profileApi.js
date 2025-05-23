@@ -1,6 +1,5 @@
 // Get the API base URL from environment variables
-//const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5001';
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://api.bhaai.org.in';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5001';
 
 // Common fetch options with CORS settings
 const fetchOptions = {
@@ -119,5 +118,45 @@ export const profileApi = {
       userId,
       ...profileData
     });
+  },
+
+  /**
+   * Upload profile image
+   * @param {string} userId - User ID
+   * @param {File} imageFile - Image file to upload
+   * @returns {Promise<Object>} - API response
+   */
+  uploadProfileImage: async (userId, imageFile) => {
+    const formData = new FormData();
+    formData.append('userId', userId);
+    formData.append('image', imageFile);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/profile/image`, {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return { success: false, message: errorData.message || 'Upload failed' };
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error uploading profile image:', error);
+      return { success: false, message: error.message || 'Network error' };
+    }
+  },
+
+  /**
+   * Get profile image URL
+   * @param {string} userId - User ID
+   * @returns {string} - URL to fetch profile image
+   */
+  getProfileImageUrl: (userId) => {
+    return `${API_BASE_URL}/api/profile/image/${userId}`;
   }
 };
