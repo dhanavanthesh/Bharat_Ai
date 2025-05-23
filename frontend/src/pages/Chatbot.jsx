@@ -19,12 +19,7 @@ import { exportChatToPDF } from '../utils/exportPdf';
 import ChatMessage from '../components/ChatMessage';
 import '../styles/Chatbot.css';
 
-// REPLACE: Remove the complex auto-resize hook completely - it's causing lag
-const useAutosizeTextArea = (textAreaRef) => {
-  // Empty implementation - we'll rely on CSS instead of JS for autosize
-  // This removes the performance-intensive resize calculations
-};
-
+// REMOVE: Completely remove the empty auto-resize hook
 // eslint-disable-next-line no-unused-vars
 const useDebounce = (callback, delay) => {
   const timeoutRef = useRef(null);
@@ -42,7 +37,8 @@ const useDebounce = (callback, delay) => {
 // Ensure we use the correct background style that matches Home.jsx
 const Chatbot = () => {
   const navigate = useNavigate();
-  const [input, setInput] = useState("");
+  // Keep input state for component's awareness, but don't sync during typing
+  const [input, setInput] = useState("");  
   const {
     isListening,
     currentLanguage,
@@ -86,8 +82,8 @@ const Chatbot = () => {
   // eslint-disable-next-line no-unused-vars
   const lastScrollPosition = useRef(0);
 
-  // Add auto-resize for textarea
-  useAutosizeTextArea(inputRef);
+  // Remove: No longer need this hook since we'll rely on CSS for auto-sizing
+  // useAutosizeTextArea(inputRef);
 
   useEffect(() => {
     // Force add dark class and remove light class
@@ -266,9 +262,12 @@ const Chatbot = () => {
     }
   }, [currentChatId, setCurrentLanguage]);
 
-  // Replace handleSend function with this improved version
+  // Replace handleSend function with this improved uncontrolled-component version
   const handleSend = async () => {
-    if (!input.trim() || (loading && !isResponding)) return;
+    // Get input value directly from DOM instead of React state
+    const userMessageText = inputRef.current?.value.trim() || "";
+    
+    if (!userMessageText || (loading && !isResponding)) return;
     
     // If currently responding, stop the response
     if (isResponding) {
@@ -288,9 +287,6 @@ const Chatbot = () => {
     setLoading(true);
     setIsResponding(true);
     
-    // Save the input before clearing it
-    const userMessageText = input.trim();
-    
     const userMessage = { 
       role: "user", 
       content: userMessageText,
@@ -302,12 +298,15 @@ const Chatbot = () => {
     const updatedChat = [...chats, userMessage];
     setChats(updatedChat);
     
-    // Clear input and reset textarea height - IMPORTANT: Update both the state and DOM for immediate feedback
-    setInput("");
+    // Clear input directly in the DOM - which is faster and prevents re-renders
     if (inputRef.current) {
-      inputRef.current.value = ""; // Direct DOM update for immediate visual feedback
-      inputRef.current.style.height = "48px";
+      inputRef.current.value = "";
+      // Reset height to default
+      inputRef.current.style.height = "auto"; 
     }
+    
+    // Also update React state for other component usage
+    setInput("");
     
     // Force scroll to bottom after sending user message
     setTimeout(scrollToBottom, 20);
@@ -497,43 +496,45 @@ const Chatbot = () => {
 
   // Optimize emoji handling for better text input performance
   const onEmojiClick = useCallback((emojiData) => {
-    // More efficiently update input when adding emoji
+    if (!inputRef.current) return;
+    
+    // Get current cursor position
+    const start = inputRef.current.selectionStart;
+    const end = inputRef.current.selectionEnd;
+    
+    // Get current value directly from DOM
+    const currentValue = inputRef.current.value;
+    
+    // Insert emoji at cursor position
+    const newText = 
+      currentValue.substring(0, start) + 
+      emojiData.emoji + 
+      currentValue.substring(end);
+    
+    // Update textarea value directly (faster than state updates)
+    inputRef.current.value = newText;
+    
+    // Close picker immediately for better performance
+    setShowEmojiPicker(false);
+    
+    // Focus and place cursor after emoji
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+        inputRef.current.selectionStart = start + emojiData.emoji.length;
+        inputRef.current.selectionEnd = start + emojiData.emoji.length;
+      }
+    }, 10);
+    
+    // Update state only when needed (not during typing)
+    syncInputState();
+  }, []); // No dependencies needed since we access DOM directly
+
+  // Replace handleInputChange with a function that only updates state on blur for non-typing actions
+  const syncInputState = () => {
     if (inputRef.current) {
-      const start = inputRef.current.selectionStart;
-      const end = inputRef.current.selectionEnd;
-      const newText = 
-        input.substring(0, start) + 
-        emojiData.emoji + 
-        input.substring(end);
-        
-      setInput(newText);
-      
-      // Close picker immediately for better performance
-      setShowEmojiPicker(false);
-      
-      // Focus and place cursor after emoji
-      setTimeout(() => {
-        if (inputRef.current) {
-          inputRef.current.focus();
-          inputRef.current.selectionStart = start + emojiData.emoji.length;
-          inputRef.current.selectionEnd = start + emojiData.emoji.length;
-        }
-      }, 10);
+      setInput(inputRef.current.value);
     }
-  }, [input]);
-
-  const renderTypingIndicator = () => (
-    <div className="typing-animation" key="typing-animation">
-      <div className="typing-dot"></div>
-      <div className="typing-dot"></div>
-      <div className="typing-dot"></div>
-    </div>
-  );
-
-  // REPLACE: Simplify input change to be more performant
-  const handleInputChange = (e) => {
-    // Direct state update without any extra processing
-    setInput(e.target.value);
   };
 
   // Fix 2: Define handleLanguageChange function
@@ -576,6 +577,15 @@ const Chatbot = () => {
       setProfileImageUrl(imageUrl);
     }
   }, [user]); // Only run when user changes
+
+  // Add the missing renderTypingIndicator function
+  const renderTypingIndicator = () => (
+    <div className="typing-animation" key="typing-animation">
+      <div className="typing-dot"></div>
+      <div className="typing-dot"></div>
+      <div className="typing-dot"></div>
+    </div>
+  );
 
   return (
     <div className={`chat-container ${darkMode ? 'dark-theme' : 'light-theme'}`}>
@@ -1015,7 +1025,7 @@ const Chatbot = () => {
               )}
             </div>
             
-            {/* Chat Input Area - Better organized with auto-expanding textarea */}
+            {/* Chat Input Area - Refactored for uncontrolled textarea */}
             <div className="chat-input-area">
               <div className="input-wrapper">
                 <button
@@ -1026,7 +1036,11 @@ const Chatbot = () => {
                       try {
                         const result = await startListening(currentLanguage);
                         if (result) {
-                          setInput(result.text);
+                          // Update textarea DOM directly for better performance
+                          if (inputRef.current) {
+                            inputRef.current.value = result.text;
+                            syncInputState(); // Update React state to match DOM
+                          }
                           if (result.language && result.language !== currentLanguage) {
                             setCurrentLanguage(result.language);
                           }
@@ -1043,7 +1057,6 @@ const Chatbot = () => {
                   <FaMicrophoneAlt />
                 </button>
                 
-                {/* Keep only this one attachment button */}
                 <button
                   onClick={() => navigate('/summarize')}
                   className="upload-btn"
@@ -1055,8 +1068,7 @@ const Chatbot = () => {
                 <div className="textarea-container">
                   <textarea
                     ref={inputRef}
-                    value={input}
-                    onChange={handleInputChange}
+                    onBlur={syncInputState} // Sync React state when focus is lost
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();
@@ -1073,7 +1085,6 @@ const Chatbot = () => {
                     data-gramm="false"
                   />
                   
-                  {/* Emoji picker code */}
                   <div className="emoji-container" ref={emojiPickerRef}>
                     <button
                       onClick={() => setShowEmojiPicker(!showEmojiPicker)}
@@ -1083,7 +1094,6 @@ const Chatbot = () => {
                       <FaSmile />
                     </button>
                     
-                    {/* Only render picker when visible */}
                     {showEmojiPicker && (
                       <div className="emoji-picker-wrapper">
                         <EmojiPicker
@@ -1091,9 +1101,9 @@ const Chatbot = () => {
                           theme={darkMode ? "dark" : "light"}
                           width={window.innerWidth <= 768 ? "280px" : "350px"}
                           height="350px"
-                          lazyLoadEmojis={true} // Improve performance
-                          searchDisabled={true} // Disable search for better performance
-                          previewConfig={{ showPreview: false }} // Disable preview for better performance
+                          lazyLoadEmojis={true}
+                          searchDisabled={true}
+                          previewConfig={{ showPreview: false }}
                         />
                       </div>
                     )}
@@ -1102,8 +1112,8 @@ const Chatbot = () => {
                 
                 <button
                   onClick={isResponding ? stopResponse : handleSend}
-                  className={`send-btn ${(!input.trim() && !isResponding) ? 'disabled' : ''}`}
-                  disabled={!input.trim() && !isResponding}
+                  className={`send-btn ${(!inputRef.current?.value.trim() && !isResponding) ? 'disabled' : ''}`}
+                  disabled={!inputRef.current?.value.trim() && !isResponding}
                   title={isResponding ? "Stop response" : "Send message"}
                 >
                   {isResponding ? <FaStop /> : <FaPaperPlane />}
