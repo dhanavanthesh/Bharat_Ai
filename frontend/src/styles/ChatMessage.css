@@ -213,6 +213,14 @@
   50% { opacity: 0; }
 }
 
+/* Add styles to prevent layout shift during animation */
+.animated-text-container {
+  min-height: 24px;
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
 /* Improve AI thinking indicator style */
 .ai-thinking {
   display: flex;

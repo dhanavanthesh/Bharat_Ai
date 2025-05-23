@@ -195,6 +195,20 @@ const Chatbot = () => {
     }
   }, [user, navigate]);
 
+  // Update handleSelectChat to properly mark messages as history
+  const handleSelectChat = (id) => {
+    setCurrentChatId(id);
+    
+    // Ensure all messages from chat history are marked as history when loaded
+    const selectedChatMessages = chatHistory[id] || [];
+    const messagesWithHistoryFlag = selectedChatMessages.map(msg => ({
+      ...msg,
+      isHistory: true
+    }));
+    
+    setChats(messagesWithHistoryFlag);
+  };
+
   useEffect(() => {
     const loadChats = async () => {
       if (!user || !user.id) {
@@ -213,11 +227,12 @@ const Chatbot = () => {
           const chatTitlesMap = {};
           
           Object.entries(userChats).forEach(([chatId, chat]) => {
-            // Mark messages as history messages when loading from database
+            // Mark ALL messages from chat history as history messages
             const historyMessages = (chat.messages || []).map(msg => ({
               ...msg,
-              isHistory: true // Add a flag to identify history messages
+              isHistory: true // Always mark loaded messages as history
             }));
+            
             chatHistoryMap[chatId] = historyMessages;
             chatTitlesMap[chatId] = chat.title || 'New Chat';
           });
@@ -278,7 +293,7 @@ const Chatbot = () => {
     </div>
   );
 
-  // Improve handleSend function to better support the typing animation
+  // Modify handleSend to ensure only new messages have animations
   const handleSend = async () => {
     // Get input value directly from DOM instead of React state
     const userMessageText = inputRef.current?.value.trim() || "";
@@ -307,7 +322,8 @@ const Chatbot = () => {
       role: "user", 
       content: userMessageText,
       language: currentLanguage,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      isHistory: false // Explicitly mark as NOT history
     };
     
     // Update the chat immediately with user message
@@ -334,7 +350,8 @@ const Chatbot = () => {
       role: "bot", 
       content: "", 
       language: currentLanguage,
-      thinking: true // Add this flag to indicate AI is thinking
+      thinking: true,
+      isHistory: false // Explicitly mark as NOT history
     };
     const newChats = [...updatedChat, placeholder];
     setChats(newChats);
@@ -367,17 +384,22 @@ const Chatbot = () => {
       );
       
       if (response.reply) {
-        // Remove streaming and just show the full response - the ChatMessage component
-        // will now handle the typing animation effect
+        // Add final bot response with explicit isHistory=false
         const finalChats = updatedChat.concat({
           role: "bot",
           content: response.reply,
           language: currentLanguage,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          isHistory: false // Explicitly mark as NOT history
         });
         
         setChats(finalChats);
-        setChatHistory(prev => ({ ...prev, [currentChatId]: finalChats }));
+        
+        // When updating chat history, make sure to keep the isHistory flags
+        setChatHistory(prev => ({ 
+          ...prev, 
+          [currentChatId]: finalChats
+        }));
         setLoading(false);
         setIsResponding(false);
         abortController.current = null;
@@ -403,11 +425,6 @@ const Chatbot = () => {
       setIsResponding(false);
       abortController.current = null;
     }
-  };
-
-  const handleSelectChat = (id) => {
-    setCurrentChatId(id);
-    setChats(chatHistory[id] || []);
   };
 
   const handleDeleteChat = async (id, e) => {
@@ -1030,7 +1047,8 @@ const Chatbot = () => {
                       darkMode={darkMode}
                       isLast={idx === chats.length - 1 && msg.role === 'bot' && loading}
                       typingIndicator={renderTypingIndicator}
-                      isHistoryMessage={msg.isHistory} // Pass the history flag to component
+                      isHistoryMessage={msg.isHistory} // Pass through the isHistory flag
+                      enableAnimation={true} // Pass animation control flag
                     />
                   ))}
                   <div ref={chatEndRef} className="scroll-anchor" />

@@ -9,7 +9,14 @@ import { auth } from '../utils/auth';
 import { profileApi } from '../utils/profileApi';
 
 // Using memo to prevent unnecessary re-renders
-const ChatMessage = memo(({ message, darkMode, isLast, typingIndicator, isHistoryMessage = false }) => {
+const ChatMessage = memo(({ 
+  message, 
+  darkMode, 
+  isLast, 
+  typingIndicator, 
+  isHistoryMessage = false, 
+  enableAnimation = true // Add enableAnimation prop with default true
+}) => {
   const messageRef = useRef(null);
   const [profileImageUrl, setProfileImageUrl] = useState('');
   const [userName, setUserName] = useState('');
@@ -18,6 +25,7 @@ const ChatMessage = memo(({ message, darkMode, isLast, typingIndicator, isHistor
   const [displayedText, setDisplayedText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [typingComplete, setTypingComplete] = useState(false);
+  const [animationStarted, setAnimationStarted] = useState(false);  // New state to track animation start
   const typeAnimationRef = useRef(null);
   
   // Effect for loading user info - including profile image
@@ -48,12 +56,26 @@ const ChatMessage = memo(({ message, darkMode, isLast, typingIndicator, isHistor
 
   // Updated effect to handle typing animation for bot messages with history check
   useEffect(() => {
-    // Only animate new bot messages with content, skip animation for history messages
-    if (message.role === 'bot' && message.content && !message.thinking && !isHistoryMessage) {
+    // Only animate new bot messages with content if:
+    // 1. Not a history message
+    // 2. Animations are enabled globally
+    // 3. Message is from bot and has content
+    // 4. Message is not in "thinking" state
+    const shouldAnimate = 
+      message.role === 'bot' && 
+      message.content && 
+      !message.thinking && 
+      !isHistoryMessage && 
+      enableAnimation;
+    
+    if (shouldAnimate) {
       // Reset animation states when starting a new message
       setDisplayedText('');
       setIsTyping(true);
       setTypingComplete(false);
+      
+      // Set animation started flag to false initially
+      setAnimationStarted(false);
       
       // Calculate typing speed based on content length
       const content = message.content;
@@ -73,37 +95,42 @@ const ChatMessage = memo(({ message, darkMode, isLast, typingIndicator, isHistor
         clearTimeout(typeAnimationRef.current);
       }
       
-      // Function to simulate typing animation
-      const typeCharacter = () => {
-        if (index < contentLength) {
-          // Add next character to displayed text
-          setDisplayedText(prev => prev + content.charAt(index));
-          
-          // Increment index
-          index++;
-          
-          // Random variation in typing speed for more natural effect
-          const randomVariation = Math.random() * 10 - 5; // -5 to +5 ms
-          const nextDelay = baseDelay + randomVariation;
-          
-          // Slight pause after sentence-ending punctuation
-          const lastChar = content.charAt(index - 1);
-          if (['.', '!', '?', '\n'].includes(lastChar)) {
-            // Add extra delay after punctuation (20-50ms)
-            const punctuationPause = lastChar === '\n' ? 50 : 20; 
-            typeAnimationRef.current = setTimeout(typeCharacter, nextDelay + punctuationPause);
+      // Wait for proper render cycle before starting animation
+      typeAnimationRef.current = setTimeout(() => {
+        setAnimationStarted(true); // Mark animation as started
+        
+        // Function to simulate typing animation
+        const typeCharacter = () => {
+          if (index < contentLength) {
+            // Add next character to displayed text
+            setDisplayedText(prev => prev + content.charAt(index));
+            
+            // Increment index
+            index++;
+            
+            // Random variation in typing speed for more natural effect
+            const randomVariation = Math.random() * 10 - 5; // -5 to +5 ms
+            const nextDelay = baseDelay + randomVariation;
+            
+            // Slight pause after sentence-ending punctuation
+            const lastChar = content.charAt(index - 1);
+            if (['.', '!', '?', '\n'].includes(lastChar)) {
+              // Add extra delay after punctuation (20-50ms)
+              const punctuationPause = lastChar === '\n' ? 50 : 20; 
+              typeAnimationRef.current = setTimeout(typeCharacter, nextDelay + punctuationPause);
+            } else {
+              typeAnimationRef.current = setTimeout(typeCharacter, nextDelay);
+            }
           } else {
-            typeAnimationRef.current = setTimeout(typeCharacter, nextDelay);
+            // Animation complete
+            setIsTyping(false);
+            setTypingComplete(true);
           }
-        } else {
-          // Animation complete
-          setIsTyping(false);
-          setTypingComplete(true);
-        }
-      };
-      
-      // Start typing animation with a small initial delay
-      typeAnimationRef.current = setTimeout(typeCharacter, 300);
+        };
+        
+        // Start the typing animation immediately after render cycle
+        typeCharacter();
+      }, 50); // Short delay for render cycle to complete
       
       // Cleanup function
       return () => {
@@ -116,8 +143,9 @@ const ChatMessage = memo(({ message, darkMode, isLast, typingIndicator, isHistor
       setDisplayedText(message.content);
       setTypingComplete(true);
       setIsTyping(false);  // Ensure isTyping is false for non-animating messages
+      setAnimationStarted(true); // Mark as started for history messages
     }
-  }, [message.content, message.role, message.thinking, isHistoryMessage]);
+  }, [message.content, message.role, message.thinking, isHistoryMessage, enableAnimation]);
 
   // Efficient language detection
   const getCodeLanguage = (codeString) => {
@@ -133,8 +161,15 @@ const ChatMessage = memo(({ message, darkMode, isLast, typingIndicator, isHistor
   const renderMarkdown = useCallback(() => {
     if (!message.content) return null;
     
-    // If still typing, render the partial text; otherwise render the full message
-    const textToRender = (message.role === 'bot' && isTyping) ? displayedText : message.content;
+    // If animation hasn't started yet, show nothing for bot messages (prevents flash)
+    if (message.role === 'bot' && !isHistoryMessage && enableAnimation && !animationStarted) {
+      return null;
+    }
+    
+    // If still typing and animations are enabled, render the partial text; otherwise render the full message
+    const textToRender = (message.role === 'bot' && isTyping && enableAnimation) 
+      ? displayedText 
+      : message.content;
     
     return (
       <ReactMarkdown
@@ -188,7 +223,7 @@ const ChatMessage = memo(({ message, darkMode, isLast, typingIndicator, isHistor
         {textToRender}
       </ReactMarkdown>
     );
-  }, [message.content, message.role, isTyping, displayedText]);
+  }, [message.content, message.role, isTyping, displayedText, isHistoryMessage, animationStarted, enableAnimation]);
 
   return (
     <div 
@@ -230,8 +265,8 @@ const ChatMessage = memo(({ message, darkMode, isLast, typingIndicator, isHistor
           {message.content ? (
             <div className="animated-text-container">
               {renderMarkdown()}
-              {/* Only show cursor when actively typing (not for completed messages or history) */}
-              {message.role === 'bot' && isTyping && !isHistoryMessage && (
+              {/* Only show cursor when actively typing, not history, and animations enabled */}
+              {message.role === 'bot' && isTyping && !isHistoryMessage && enableAnimation && animationStarted && (
                 <span className="typing-cursor"></span>
               )}
             </div>
