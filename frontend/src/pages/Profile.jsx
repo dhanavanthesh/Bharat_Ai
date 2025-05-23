@@ -11,13 +11,13 @@ const Profile = () => {
   const [user, setUser] = useState(auth.getCurrentUser());
   const [displayName, setDisplayName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
-  const [isSaving, setIsSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
   
   const navigate = useNavigate();
 
   const [name, setName] = useState(user?.name || '');
-  const [loading, setLoading] = useState(false);
-
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  
   // Profile image states
   const [profileImageUrl, setProfileImageUrl] = useState('');
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -28,7 +28,6 @@ const Profile = () => {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [passwordLoading, setPasswordLoading] = useState(false);
   
   // Confirmation modal state
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -153,35 +152,16 @@ const Profile = () => {
     }
   };
 
-  const handleSaveProfile = async () => {
-    // Show loading state
-    setIsSaving(true);
-    
-    try {
-      const response = await profileApi.updateUserProfile(user.id, {
-        name: displayName,
-        email: email
-      });
-      
-      if (response.success) {
-        // Update local user data
-        auth.updateCurrentUser({
-          name: displayName,
-          email: email
-        });
-        
-        toast.success('Profile updated successfully!');
-      } else {
-        toast.error(response.message || 'Failed to update profile');
-      }
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      toast.error('An error occurred while updating your profile');
-    } finally {
-      setIsSaving(false);
+  // Update the avatar placeholder to use email when name isn't available
+  const getInitialLetter = () => {
+    if (user?.name && user.name.trim()) {
+      return user.name.charAt(0).toUpperCase();
+    } else if (user?.email && user.email.trim()) {
+      return user.email.charAt(0).toUpperCase();
     }
+    return 'U';
   };
-  
+
   if (!user) {
     navigate('/login');
     return null;
@@ -203,6 +183,7 @@ const Profile = () => {
 
         <div className="profile-card">
           <div className="profile-header">
+            {/* Update all avatar displays with new logic */}
             <div className="profile-avatar" onClick={handleImageClick}>
               {profileImageUrl ? (
                 <img
@@ -212,7 +193,7 @@ const Profile = () => {
                 />
               ) : (
                 <div className="avatar-placeholder">
-                  {name.charAt(0).toUpperCase()}
+                  {getInitialLetter()}
                 </div>
               )}
               {!uploadingImage && (

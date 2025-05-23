@@ -24,7 +24,6 @@ const ChatMessage = memo(({
   // Animation states
   const [displayedText, setDisplayedText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [typingComplete, setTypingComplete] = useState(false);
   const [animationStarted, setAnimationStarted] = useState(false);  // New state to track animation start
   const typeAnimationRef = useRef(null);
   
@@ -34,8 +33,17 @@ const ChatMessage = memo(({
       const user = auth.getCurrentUser();
       if (user?.id) {
         setProfileImageUrl(profileApi.getProfileImageUrl(user.id));
-        // Always use the name, not email
-        setUserName(user.name || 'You');
+        
+        // Update user name and initial logic
+        if (user.name && user.name.trim()) {
+          setUserName(user.name);
+        } else if (user.email && user.email.trim()) {
+          // Use email name part (before @) or full email
+          const emailName = user.email.split('@')[0] || user.email;
+          setUserName(emailName);
+        } else {
+          setUserName('You');
+        }
       }
     }
   }, [message.role]);
@@ -72,7 +80,6 @@ const ChatMessage = memo(({
       // Reset animation states when starting a new message
       setDisplayedText('');
       setIsTyping(true);
-      setTypingComplete(false);
       
       // Set animation started flag to false initially
       setAnimationStarted(false);
@@ -124,7 +131,6 @@ const ChatMessage = memo(({
           } else {
             // Animation complete
             setIsTyping(false);
-            setTypingComplete(true);
           }
         };
         
@@ -141,7 +147,6 @@ const ChatMessage = memo(({
     } else if (message.content) {
       // For user messages or history messages, show full content immediately
       setDisplayedText(message.content);
-      setTypingComplete(true);
       setIsTyping(false);  // Ensure isTyping is false for non-animating messages
       setAnimationStarted(true); // Mark as started for history messages
     }
@@ -226,24 +231,24 @@ const ChatMessage = memo(({
   }, [message.content, message.role, isTyping, displayedText, isHistoryMessage, animationStarted, enableAnimation]);
 
   return (
-    <div 
-      ref={messageRef}
-      className={`message-container ${message.role === 'user' ? 'user-message' : 'bot-message'}`}
-    >
-      <div className="message-avatar">
-        {message.role === 'user' ? (
-          profileImageUrl ? (
-            <img src={profileImageUrl} alt="User" className="user-avatar-img" loading="lazy" />
-          ) : (
-            <div className="user-avatar-placeholder">
-              {userName ? userName.charAt(0).toUpperCase() : 'U'}
-            </div>
-          )
+     <div 
+    ref={messageRef}
+    className={`message-container ${message.role === 'user' ? 'user-message' : 'bot-message'}`}
+  >
+    <div className="message-avatar">
+      {message.role === 'user' ? (
+        profileImageUrl ? (
+          <img src={profileImageUrl} alt="User" className="user-avatar-img" loading="lazy" />
         ) : (
-          <div className="bot-avatar">
-            <img src="/image.png" alt="BHAAI" className="bot-avatar-img" loading="lazy" />
+          <div className="user-avatar-placeholder">
+            {userName ? userName.charAt(0).toUpperCase() : 'U'}
           </div>
-        )}
+        )
+      ) : (
+        <div className="bot-avatar">
+          <img src="/image.png" alt="BHAAI" className="bot-avatar-img" loading="lazy" />
+        </div>
+      )}  
       </div>
       
       <div className="message-content">

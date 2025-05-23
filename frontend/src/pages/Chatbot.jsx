@@ -523,11 +523,20 @@ const Chatbot = () => {
   };
 
   const renderLoadingState = () => (
-    <div className="loading-container">
-      <div className="spinner"></div>
-      <p className="loading-text">Preparing your AI assistant...</p>
-      <div className="image-container loading-logo">
-        <img src="/image.png" alt="Bharat AI Lotus Logo" />
+    <div className="loading-overlay">
+      <div className="loading-container">
+        <div className="loading-content">
+          <div className="loading-logo-container">
+            <img src="/image.png" alt="Bharat AI Lotus Logo" className="loading-logo pulse-animation" />
+            <div className="loading-spinner-ring"></div>
+          </div>
+          <p className="loading-text">Preparing your AI assistant...</p>
+          <div className="loading-progress">
+            <div className="loading-bar">
+              <div className="loading-bar-fill"></div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -637,6 +646,16 @@ const Chatbot = () => {
     }
   }, [user]); // Depend on user object so it refreshes when user data changes
 
+  // Add this helper function near the beginning of the component
+  const getInitialLetter = () => {
+    if (user?.name && user.name.trim()) {
+      return user.name.charAt(0).toUpperCase();
+    } else if (user?.email && user.email.trim()) {
+      return user.email.charAt(0).toUpperCase();
+    }
+    return 'U';
+  };
+
   return (
     <div className={`chat-container ${darkMode ? 'dark-theme' : 'light-theme'}`}>
       {/* Background with particles animation matching Home.css */}
@@ -699,7 +718,7 @@ const Chatbot = () => {
                 {profileImageUrl ? (
                   <img src={profileImageUrl} alt="Profile" className="profile-image" />
                 ) : (
-                  <span className="avatar-letter">{user?.name ? user.name.charAt(0).toUpperCase() : 'U'}</span>
+                  <span className="avatar-letter">{getInitialLetter()}</span>
                 )}
               </div>
               
@@ -718,7 +737,7 @@ const Chatbot = () => {
                       {profileImageUrl ? (
                         <img src={profileImageUrl} alt="Profile" className="profile-image" />
                       ) : (
-                        <span className="avatar-letter">{user?.name ? user.name.charAt(0).toUpperCase() : 'U'}</span>
+                        <span className="avatar-letter">{getInitialLetter()}</span>
                       )}
                     </div>
                     <div>
@@ -984,12 +1003,12 @@ const Chatbot = () => {
                   <button
                     onClick={() => setHeaderProfileOpen(!headerProfileOpen)}
                     className="avatar header-avatar"
-                    title={user?.name || 'User'}
+                    title={user?.name || user?.email || 'User'}
                   >
                     {profileImageUrl ? (
                       <img src={profileImageUrl} alt="Profile" className="profile-image" />
                     ) : (
-                      <span className="avatar-letter">{user?.name ? user.name.charAt(0).toUpperCase() : 'U'}</span>
+                      <span className="avatar-letter">{getInitialLetter()}</span>
                     )}
                   </button>
                   
@@ -1000,7 +1019,7 @@ const Chatbot = () => {
                           {profileImageUrl ? (
                             <img src={profileImageUrl} alt="Profile" className="profile-image" />
                           ) : (
-                            <span className="avatar-letter">{user?.name ? user.name.charAt(0).toUpperCase() : 'U'}</span>
+                            <span className="avatar-letter">{getInitialLetter()}</span>
                           )}
                         </div>
                         <div>
@@ -1165,11 +1184,17 @@ const Chatbot = () => {
                 
                 <button
                   onClick={isResponding ? stopResponse : handleSend}
-                  className={`send-btn ${(!inputRef.current?.value.trim() && !isResponding) ? 'disabled' : ''}`}
+                  className={`send-btn ${(!inputRef.current?.value.trim() && !isResponding) ? 'disabled' : ''} ${isResponding ? 'responding' : ''}`}
                   disabled={!inputRef.current?.value.trim() && !isResponding}
                   title={isResponding ? "Stop response" : "Send message"}
                 >
-                  {isResponding ? <FaStop /> : <FaPaperPlane />}
+                  {isResponding ? (
+                    <div className="stop-response-indicator">
+                      <FaStop />
+                    </div>
+                  ) : (
+                    <FaPaperPlane />
+                  )}
                 </button>
               </div>
             </div>
