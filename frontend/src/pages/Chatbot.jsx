@@ -1,4 +1,5 @@
 // src/pages/Chatbot.jsx
+// eslint-disable-next-line no-unused-vars
 import React, { useState, useCallback, useEffect, useRef, useLayoutEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -38,6 +39,7 @@ const useDebounce = (callback, delay) => {
 const Chatbot = () => {
   const navigate = useNavigate();
   // Keep input state for component's awareness, but don't sync during typing
+  // eslint-disable-next-line no-unused-vars
   const [input, setInput] = useState("");  
   const {
     isListening,
@@ -211,7 +213,12 @@ const Chatbot = () => {
           const chatTitlesMap = {};
           
           Object.entries(userChats).forEach(([chatId, chat]) => {
-            chatHistoryMap[chatId] = chat.messages || [];
+            // Mark messages as history messages when loading from database
+            const historyMessages = (chat.messages || []).map(msg => ({
+              ...msg,
+              isHistory: true // Add a flag to identify history messages
+            }));
+            chatHistoryMap[chatId] = historyMessages;
             chatTitlesMap[chatId] = chat.title || 'New Chat';
           });
           
@@ -262,7 +269,16 @@ const Chatbot = () => {
     }
   }, [currentChatId, setCurrentLanguage]);
 
-  // Replace handleSend function with this improved uncontrolled-component version
+  // Update the renderTypingIndicator function to look more like ChatGPT
+  const renderTypingIndicator = () => (
+    <div className="typing-animation" key="typing-animation">
+      <div className="typing-dot"></div>
+      <div className="typing-dot"></div>
+      <div className="typing-dot"></div>
+    </div>
+  );
+
+  // Improve handleSend function to better support the typing animation
   const handleSend = async () => {
     // Get input value directly from DOM instead of React state
     const userMessageText = inputRef.current?.value.trim() || "";
@@ -303,6 +319,8 @@ const Chatbot = () => {
       inputRef.current.value = "";
       // Reset height to default
       inputRef.current.style.height = "auto"; 
+      // Keep focus on the textarea
+      inputRef.current.focus();
     }
     
     // Also update React state for other component usage
@@ -349,7 +367,8 @@ const Chatbot = () => {
       );
       
       if (response.reply) {
-        // Remove streaming and just show the full response immediately
+        // Remove streaming and just show the full response - the ChatMessage component
+        // will now handle the typing animation effect
         const finalChats = updatedChat.concat({
           role: "bot",
           content: response.reply,
@@ -362,7 +381,9 @@ const Chatbot = () => {
         setLoading(false);
         setIsResponding(false);
         abortController.current = null;
-        setTimeout(scrollToBottom, 20);
+        
+        // Allow the typing animation to display properly by scrolling after a short delay
+        setTimeout(scrollToBottom, 100);
       } else {
         toast.error('Failed to get response');
         setChats(updatedChat);
@@ -577,15 +598,6 @@ const Chatbot = () => {
       setProfileImageUrl(imageUrl);
     }
   }, [user]); // Only run when user changes
-
-  // Add the missing renderTypingIndicator function
-  const renderTypingIndicator = () => (
-    <div className="typing-animation" key="typing-animation">
-      <div className="typing-dot"></div>
-      <div className="typing-dot"></div>
-      <div className="typing-dot"></div>
-    </div>
-  );
 
   return (
     <div className={`chat-container ${darkMode ? 'dark-theme' : 'light-theme'}`}>
@@ -1018,6 +1030,7 @@ const Chatbot = () => {
                       darkMode={darkMode}
                       isLast={idx === chats.length - 1 && msg.role === 'bot' && loading}
                       typingIndicator={renderTypingIndicator}
+                      isHistoryMessage={msg.isHistory} // Pass the history flag to component
                     />
                   ))}
                   <div ref={chatEndRef} className="scroll-anchor" />
@@ -1068,7 +1081,7 @@ const Chatbot = () => {
                 <div className="textarea-container">
                   <textarea
                     ref={inputRef}
-                    onBlur={syncInputState} // Sync React state when focus is lost
+                    onBlur={syncInputState}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();
@@ -1090,6 +1103,7 @@ const Chatbot = () => {
                       onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                       className="emoji-btn"
                       title="Insert emoji"
+                      disabled={isResponding} // Disable emoji button when AI is responding
                     >
                       <FaSmile />
                     </button>
