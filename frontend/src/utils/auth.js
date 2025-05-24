@@ -1,3 +1,6 @@
+// Move this import to the top
+import { profileApi } from './profileApi';
+
 // Get the API base URL from environment variables
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://api.bhaai.org.in';
 //const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5001';
@@ -98,8 +101,34 @@ const apiCall = async (endpoint, method, body, retries = 2) => {
 
 // Authentication functions
 export const auth = {
+  // Add this method to get the API base URL
+  getApiBaseUrl: () => API_BASE_URL,
+  
   isAuthenticated: () => !!currentUser,
-  getCurrentUser: () => currentUser,
+  getCurrentUser: () => {
+    const userString = localStorage.getItem('user');
+    if (!userString) return null;
+    return JSON.parse(userString);
+  },
+  
+  // Add method to update current user in memory
+  updateCurrentUser: (userData) => {
+    const currentUser = auth.getCurrentUser();
+    if (!currentUser) return null;
+    
+    const updatedUser = { ...currentUser, ...userData };
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+    return updatedUser;
+  },
+  
+  // Add refresh method
+  refreshCurrentUser: async () => {
+    const currentUser = auth.getCurrentUser();
+    if (!currentUser || !currentUser.id) return null;
+    
+    const freshUserData = await profileApi.refreshUserData(currentUser.id);
+    return freshUserData;
+  },
 
   signup: async (email, password, fullName = '', phoneNumber = '') => {
     const data = await apiCall('/api/signup', 'POST', { 
@@ -146,6 +175,21 @@ export const auth = {
     return data;
   },
 
+  loginWithGoogle: async (googleUser) => {
+    const data = await apiCall('/api/login-with-google', 'POST', { 
+      email: googleUser.email,
+      fullName: googleUser.fullName,
+      googleId: googleUser.googleId,
+      photoURL: googleUser.photoURL
+    });
+    
+    if (data.success) {
+      currentUser = data.user;
+      localStorage.setItem('user', JSON.stringify(currentUser));
+    }
+    return data;
+  },
+  
   logout: () => {
     currentUser = null;
     localStorage.removeItem('user');

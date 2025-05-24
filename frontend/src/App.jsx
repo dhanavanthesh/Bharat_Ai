@@ -1,5 +1,5 @@
 // src/App.jsx
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -13,10 +13,24 @@ import Signup from './pages/Signup';
 import Profile from './pages/Profile';
 import Home from './pages/Home';
 import PdfSummarizer from './pages/PdfSummarizer';
+import GoogleSignupCompletion from './pages/GoogleSignupCompletion';
 
 import './styles/Home.css';
 
 import { SpeechProvider } from './context/SpeechContext';
+
+// Simple HOC to redirect authenticated users to /chat
+const RedirectIfAuthenticated = ({ children }) => {
+  const isAuthenticated = localStorage.getItem('user');
+  
+  useEffect(() => {
+    if (isAuthenticated) {
+      window.location.href = '/chat';
+    }
+  }, [isAuthenticated]);
+  
+  return isAuthenticated ? null : children;
+};
 
 function App() {
   return (
@@ -38,6 +52,13 @@ function App() {
             <Route path="/chat" element={<Chatbot />} />
             <Route path="/summarize" element={<PdfSummarizer />} />
           </Route>
+
+          {/* Wrap the GoogleSignupCompletion in RedirectIfAuthenticated */}
+          <Route path="/complete-google-signup" element={
+            <RedirectIfAuthenticated>
+              <GoogleSignupCompletion />
+            </RedirectIfAuthenticated>
+          } />
           
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>

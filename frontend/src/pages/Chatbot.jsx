@@ -1,5 +1,5 @@
-// src/pages/Chatbot.jsx
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+// eslint-disable-next-line no-unused-vars
+import React, { useState, useCallback, useEffect, useRef, useLayoutEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useSpeech } from '../context/SpeechContext';
@@ -14,22 +14,13 @@ import {
 import EmojiPicker from 'emoji-picker-react';
 import { auth } from '../utils/auth';
 import { chatApi } from '../utils/chatApi';
+import { profileApi } from '../utils/profileApi';
 import { exportChatToPDF } from '../utils/exportPdf';
 import ChatMessage from '../components/ChatMessage';
 import '../styles/Chatbot.css';
 
-// Modified resize observer for textarea auto-expand with enhanced reset
-const useAutosizeTextArea = (textAreaRef, value) => {
-  useEffect(() => {
-    if (textAreaRef.current) {
-      textAreaRef.current.style.height = "48px"; // Reset height first
-      const scrollHeight = textAreaRef.current.scrollHeight;
-      textAreaRef.current.style.height = Math.min(scrollHeight, 150) + "px";
-    }
-  }, [textAreaRef, value]);
-};
-
-// Add this improved debounced scroll function near the top of the component
+// REMOVE: Completely remove the empty auto-resize hook
+// eslint-disable-next-line no-unused-vars
 const useDebounce = (callback, delay) => {
   const timeoutRef = useRef(null);
   
@@ -46,7 +37,9 @@ const useDebounce = (callback, delay) => {
 // Ensure we use the correct background style that matches Home.jsx
 const Chatbot = () => {
   const navigate = useNavigate();
-  const [input, setInput] = useState("");
+  // Keep input state for component's awareness, but don't sync during typing
+  // eslint-disable-next-line no-unused-vars
+  const [input, setInput] = useState("");  
   const {
     isListening,
     currentLanguage,
@@ -77,16 +70,24 @@ const Chatbot = () => {
   
   const chatEndRef = useRef(null);
   const inputRef = useRef(null);
-  const user = auth.getCurrentUser();
+  const [user, setUser] = useState(auth.getCurrentUser());
+  // Add profileImageUrl state
+  const [profileImageUrl, setProfileImageUrl] = useState('');
   const [isResponding, setIsResponding] = useState(false);
   const abortController = useRef(null);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  // eslint-disable-next-line no-unused-vars
   const [isFocused, setIsFocused] = useState(false);
+  // eslint-disable-next-line no-unused-vars
   const [userScrolled, setUserScrolled] = useState(false);
+  // eslint-disable-next-line no-unused-vars
   const lastScrollPosition = useRef(0);
+  
+  // Add state to track image loading errors
+  const [profileImageError, setProfileImageError] = useState(false);
 
-  // Add auto-resize for textarea
-  useAutosizeTextArea(inputRef, input);
+  // Remove: No longer need this hook since we'll rely on CSS for auto-sizing
+  // useAutosizeTextArea(inputRef);
 
   useEffect(() => {
     // Force add dark class and remove light class
@@ -108,7 +109,8 @@ const Chatbot = () => {
     document.body.classList.toggle("light", !darkMode);
   }, [darkMode]);
 
-  // Add a smoothScrollInProgress flag to prevent duplicate scrolls
+  // Remove unused state
+  // eslint-disable-next-line no-unused-vars
   const [smoothScrollInProgress, setSmoothScrollInProgress] = useState(false);
   const messageListRef = useRef(null);
   
@@ -122,7 +124,7 @@ const Chatbot = () => {
     });
   }, []);
 
-  // Use a simpler handleScroll that doesn't interfere with normal scroll behavior
+  // eslint-disable-next-line no-unused-vars
   const handleScroll = useCallback((e) => {
     // Simple scroll handler that doesn't prevent scrolling up
   }, []);
@@ -160,6 +162,16 @@ const Chatbot = () => {
     };
   }, []);
 
+  // Enhanced getInitialLetter function with consistent casing and better fallbacks
+  const getInitialLetter = () => {
+    if (user?.name && user.name.trim()) {
+      return user.name.charAt(0).toUpperCase();
+    } else if (user?.email && user.email.trim()) {
+      return user.email.charAt(0).toUpperCase();
+    }
+    return 'U';
+  };
+
   const handleNewChat = useCallback(async () => {
     if (!user || !user.id) {
       toast.error('You need to log in first');
@@ -195,6 +207,20 @@ const Chatbot = () => {
     }
   }, [user, navigate]);
 
+  // Update handleSelectChat to properly mark messages as history
+  const handleSelectChat = (id) => {
+    setCurrentChatId(id);
+    
+    // Ensure all messages from chat history are marked as history when loaded
+    const selectedChatMessages = chatHistory[id] || [];
+    const messagesWithHistoryFlag = selectedChatMessages.map(msg => ({
+      ...msg,
+      isHistory: true
+    }));
+    
+    setChats(messagesWithHistoryFlag);
+  };
+
   useEffect(() => {
     const loadChats = async () => {
       if (!user || !user.id) {
@@ -213,7 +239,13 @@ const Chatbot = () => {
           const chatTitlesMap = {};
           
           Object.entries(userChats).forEach(([chatId, chat]) => {
-            chatHistoryMap[chatId] = chat.messages || [];
+            // Mark ALL messages from chat history as history messages
+            const historyMessages = (chat.messages || []).map(msg => ({
+              ...msg,
+              isHistory: true // Always mark loaded messages as history
+            }));
+            
+            chatHistoryMap[chatId] = historyMessages;
             chatTitlesMap[chatId] = chat.title || 'New Chat';
           });
           
@@ -253,15 +285,6 @@ const Chatbot = () => {
     }
   };
 
-  // Ensure textarea resets properly after sending
-  const resetTextareaHeight = () => {
-    if (inputRef.current) {
-      setTimeout(() => {
-        inputRef.current.style.height = "48px";
-      }, 10);
-    }
-  };
-
   // Fix handling of language selection
   useEffect(() => {
     // Load saved language preference when chat changes
@@ -273,8 +296,21 @@ const Chatbot = () => {
     }
   }, [currentChatId, setCurrentLanguage]);
 
+  // Update the renderTypingIndicator function to look more like ChatGPT
+  const renderTypingIndicator = () => (
+    <div className="typing-animation" key="typing-animation">
+      <div className="typing-dot"></div>
+      <div className="typing-dot"></div>
+      <div className="typing-dot"></div>
+    </div>
+  );
+
+  // Modify handleSend to ensure only new messages have animations
   const handleSend = async () => {
-    if (!input.trim() || (loading && !isResponding)) return;
+    // Get input value directly from DOM instead of React state
+    const userMessageText = inputRef.current?.value.trim() || "";
+    
+    if (!userMessageText || (loading && !isResponding)) return;
     
     // If currently responding, stop the response
     if (isResponding) {
@@ -293,30 +329,48 @@ const Chatbot = () => {
 
     setLoading(true);
     setIsResponding(true);
+    
     const userMessage = { 
       role: "user", 
-      content: input,
+      content: userMessageText,
       language: currentLanguage,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      isHistory: false // Explicitly mark as NOT history
     };
+    
+    // Update the chat immediately with user message
     const updatedChat = [...chats, userMessage];
     setChats(updatedChat);
+    
+    // Clear input directly in the DOM - which is faster and prevents re-renders
+    if (inputRef.current) {
+      inputRef.current.value = "";
+      // Reset height to default
+      inputRef.current.style.height = "auto"; 
+      // Keep focus on the textarea
+      inputRef.current.focus();
+    }
+    
+    // Also update React state for other component usage
     setInput("");
-    resetTextareaHeight(); // Reset textarea height after sending
     
     // Force scroll to bottom after sending user message
-    setTimeout(scrollToBottom, 50);
+    setTimeout(scrollToBottom, 20);
 
-    const placeholder = { role: "bot", content: "", language: currentLanguage };
+    // Add placeholder for bot response with "thinking" state
+    const placeholder = { 
+      role: "bot", 
+      content: "", 
+      language: currentLanguage,
+      thinking: true,
+      isHistory: false // Explicitly mark as NOT history
+    };
     const newChats = [...updatedChat, placeholder];
     setChats(newChats);
     
-    // Force scroll to bottom again after adding placeholder
-    setTimeout(scrollToBottom, 50);
-
     // Auto-title for new empty chats
     if (chatTitles[currentChatId] === 'New Chat' && chats.length === 0) {
-      const words = input.trim().split(" ");
+      const words = userMessageText.split(" ");
       const autoTitle = words.slice(0, 3).join(" ") + (words.length > 3 ? "..." : "");
       const formattedTitle = autoTitle.charAt(0).toUpperCase() + autoTitle.slice(1);
       setChatTitles(prev => ({ ...prev, [currentChatId]: formattedTitle }));
@@ -335,62 +389,35 @@ const Chatbot = () => {
       const response = await chatApi.sendMessage(
         user.id,
         currentChatId,
-        input,
+        userMessageText,
         model,
         currentLanguage,
         abortController.current.signal
       );
       
       if (response.reply) {
-        // Reset user scroll state when sending a new message
-        setUserScrolled(false);
+        // Add final bot response with explicit isHistory=false
+        const finalChats = updatedChat.concat({
+          role: "bot",
+          content: response.reply,
+          language: currentLanguage,
+          timestamp: new Date().toISOString(),
+          isHistory: false // Explicitly mark as NOT history
+        });
         
-        let i = 0;
-        const responseLength = response.reply.length;
+        setChats(finalChats);
         
-        // More gradual animation with smaller chunks
-        const chunkSize = Math.max(1, Math.min(5, Math.floor(responseLength / 50)));
-        let lastScrollTime = 0;
+        // When updating chat history, make sure to keep the isHistory flags
+        setChatHistory(prev => ({ 
+          ...prev, 
+          [currentChatId]: finalChats
+        }));
+        setLoading(false);
+        setIsResponding(false);
+        abortController.current = null;
         
-        const interval = setInterval(() => {
-          const now = Date.now();
-          const shouldScroll = now - lastScrollTime > 300;
-          
-          if (i <= responseLength) {
-            const streamingContent = response.reply.slice(0, i);
-            setChats(chats => 
-              chats.map((msg, idx) =>
-                idx === chats.length - 1 ? { ...msg, content: streamingContent } : msg
-              )
-            );
-            
-            // Only scroll periodically if user hasn't manually scrolled up
-            if (shouldScroll && !userScrolled) {
-              setTimeout(scrollToBottom, 10);
-              lastScrollTime = now;
-            }
-            
-            i += chunkSize;
-          } else {
-            clearInterval(interval);
-            const finalChats = updatedChat.concat({
-              role: "bot",
-              content: response.reply,
-              language: currentLanguage,
-              timestamp: new Date().toISOString()
-            });
-            setChats(finalChats);
-            setChatHistory(prev => ({ ...prev, [currentChatId]: finalChats }));
-            setLoading(false);
-            setIsResponding(false);
-            abortController.current = null;
-            
-            // Final scroll once animation is complete, but respect user's scroll position
-            if (!userScrolled) {
-              setTimeout(scrollToBottom, 50);
-            }
-          }
-        }, 30); // A bit faster but more granular
+        // Allow the typing animation to display properly by scrolling after a short delay
+        setTimeout(scrollToBottom, 100);
       } else {
         toast.error('Failed to get response');
         setChats(updatedChat);
@@ -410,11 +437,6 @@ const Chatbot = () => {
       setIsResponding(false);
       abortController.current = null;
     }
-  };
-
-  const handleSelectChat = (id) => {
-    setCurrentChatId(id);
-    setChats(chatHistory[id] || []);
   };
 
   const handleDeleteChat = async (id, e) => {
@@ -513,34 +535,68 @@ const Chatbot = () => {
   };
 
   const renderLoadingState = () => (
-    <div className="loading-container">
-      <div className="spinner"></div>
-      <p className="loading-text">Preparing your AI assistant...</p>
-      <div className="image-container loading-logo">
-        <img src="/image.png" alt="Bharat AI Lotus Logo" />
+    <div className="loading-overlay">
+      <div className="loading-container">
+        <div className="loading-content">
+          <div className="loading-logo-container">
+            <img src="/image.png" alt="Bharat AI Lotus Logo" className="loading-logo pulse-animation" />
+            <div className="loading-spinner-ring"></div>
+          </div>
+          <p className="loading-text">Preparing your AI assistant...</p>
+          <div className="loading-progress">
+            <div className="loading-bar">
+              <div className="loading-bar-fill"></div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
 
-  const onEmojiClick = (emojiData) => {
-    setInput(prevInput => prevInput + emojiData.emoji);
+  // Optimize emoji handling for better text input performance
+  const onEmojiClick = useCallback((emojiData) => {
+    if (!inputRef.current) return;
+    
+    // Get current cursor position
+    const start = inputRef.current.selectionStart;
+    const end = inputRef.current.selectionEnd;
+    
+    // Get current value directly from DOM
+    const currentValue = inputRef.current.value;
+    
+    // Insert emoji at cursor position
+    const newText = 
+      currentValue.substring(0, start) + 
+      emojiData.emoji + 
+      currentValue.substring(end);
+    
+    // Update textarea value directly (faster than state updates)
+    inputRef.current.value = newText;
+    
+    // Close picker immediately for better performance
     setShowEmojiPicker(false);
-    inputRef.current?.focus();
+    
+    // Focus and place cursor after emoji
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+        inputRef.current.selectionStart = start + emojiData.emoji.length;
+        inputRef.current.selectionEnd = start + emojiData.emoji.length;
+      }
+    }, 10);
+    
+    // Update state only when needed (not during typing)
+    syncInputState();
+  }, []); // No dependencies needed since we access DOM directly
+
+  // Replace handleInputChange with a function that only updates state on blur for non-typing actions
+  const syncInputState = () => {
+    if (inputRef.current) {
+      setInput(inputRef.current.value);
+    }
   };
 
-  const renderTypingIndicator = () => (
-    <div className="typing-animation" key="typing-animation">
-      <div className="typing-dot"></div>
-      <div className="typing-dot"></div>
-      <div className="typing-dot"></div>
-    </div>
-  );
-
-  const handleInputChange = (e) => {
-    setInput(e.target.value);
-  };
-
-  // Enhanced handler for language changes
+  // Fix 2: Define handleLanguageChange function
   const handleLanguageChange = (e) => {
     const newLang = e.target.value;
     setCurrentLanguage(newLang);
@@ -553,7 +609,7 @@ const Chatbot = () => {
     toast.info(`Language changed to ${supportedLanguages[newLang]}`);
   };
 
-  // Enhanced theme toggle handler with visual feedback
+  // Fix 3: Define toggleTheme function
   const toggleTheme = () => {
     const newMode = !darkMode;
     setDarkMode(newMode);
@@ -565,85 +621,74 @@ const Chatbot = () => {
     });
   };
 
-  // Enhanced handling for mobile sidebar
+  // Fix 4: Define handleToggleMobileSidebar function
   const handleToggleMobileSidebar = (isOpen) => {
     setMobileSidebarOpen(isOpen);
     // Prevent body scrolling when sidebar is open
     document.body.style.overflow = isOpen ? 'hidden' : '';
   };
 
-  // Add mobile viewport height fix for iOS
-  useEffect(() => {
-    // Fix for iOS viewport height issue
-    const setVh = () => {
-      const vh = window.innerHeight * 0.01;
-      document.documentElement.style.setProperty('--vh', `${vh}px`);
-    };
-    
-    setVh();
-    window.addEventListener('resize', setVh);
-    
-    return () => {
-      window.removeEventListener('resize', setVh);
-    };
-  }, []);
-  
-  // Enhanced scroll handling for mobile - prevent rubber banding effect
-  useEffect(() => {
-    // Fix for mobile keyboards pushing content up
-    const handleFocus = () => {
-      // On mobile, scroll to bottom with a short delay
-      if (window.innerWidth <= 768) {
-        setTimeout(scrollToBottom, 300);
-      }
-    };
-    
-    const textArea = inputRef.current;
-    if (textArea) {
-      textArea.addEventListener('focus', handleFocus);
+  // Add a function to refresh user data
+  const refreshUserData = useCallback(async () => {
+    const freshUserData = await auth.refreshCurrentUser();
+    if (freshUserData) {
+      setUser(freshUserData);
     }
-    
-    return () => {
-      if (textArea) {
-        textArea.removeEventListener('focus', handleFocus);
-      }
-    };
-  }, [scrollToBottom]);
+  }, []);
 
-  // Handle viewport changes when virtual keyboard appears/disappears
+  // Add effect to refresh user data on component mount and focus
   useEffect(() => {
-    // Detect virtual keyboard and adjust layout
-    const handleVisualViewportResize = () => {
-      if (window.visualViewport) {
-        // Get the current visual viewport height
-        const viewportHeight = window.visualViewport.height;
-        const windowHeight = window.innerHeight;
-        
-        // If visual viewport is significantly smaller than window height,
-        // keyboard is probably visible
-        const keyboardVisible = windowHeight - viewportHeight > 150;
-        
-        if (keyboardVisible) {
-          // Ensure chat container adjusts to keyboard
-          document.documentElement.style.setProperty('--keyboard-height', 
-            `${windowHeight - viewportHeight}px`);
-        } else {
-          document.documentElement.style.setProperty('--keyboard-height', '0px');
-        }
-      }
-    };
+    refreshUserData();
     
-    // Setup event listeners if visualViewport API is available
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', handleVisualViewportResize);
-    }
+    // Also refresh when window regains focus (user might have updated profile in another tab)
+    const handleFocus = () => refreshUserData();
+    window.addEventListener('focus', handleFocus);
     
     return () => {
-      if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', handleVisualViewportResize);
-      }
+      window.removeEventListener('focus', handleFocus);
     };
-  }, []);
+  }, [refreshUserData]);
+
+  // Update the profile image fetching logic with error handling
+  useEffect(() => {
+    // Reset error state when user changes
+    setProfileImageError(false);
+    
+    // Load profile image if user exists
+    if (user?.id) {
+      const imageUrl = profileApi.getProfileImageUrl(user.id);
+      setProfileImageUrl(imageUrl);
+    }
+  }, [user]); // Depend on user object so it refreshes when user data changes
+
+  // Handle profile image loading error
+  const handleProfileImageError = () => {
+    setProfileImageError(true);
+  };
+
+  // Component for avatar with letter fallback
+  const ProfileAvatar = ({ size = "default", className = "" }) => {
+    const baseClass = `avatar ${size === "large" ? "large" : size === "small" ? "small" : ""} ${className}`;
+    
+    if (profileImageUrl && !profileImageError) {
+      return (
+        <div className={baseClass}>
+          <img 
+            src={profileImageUrl} 
+            alt={user?.name || "Profile"} 
+            className="profile-image" 
+            onError={handleProfileImageError}
+          />
+        </div>
+      );
+    } else {
+      return (
+        <div className={`${baseClass} letter-avatar`}>
+          <span className="avatar-letter">{getInitialLetter()}</span>
+        </div>
+      );
+    }
+  };
 
   return (
     <div className={`chat-container ${darkMode ? 'dark-theme' : 'light-theme'}`}>
@@ -698,13 +743,13 @@ const Chatbot = () => {
               </button>
             </div>
             
-            {/* User Info - More compact profile */}
+            {/* User Info - More compact profile - UPDATED with ProfileAvatar component */}
             <div className={`user-info ${sidebarCollapsed ? 'collapsed' : ''}`} ref={sidebarProfileRef}>
               <div 
-                className="avatar"
+                className="avatar-container"
                 onClick={() => sidebarCollapsed && setSidebarProfileOpen(!sidebarProfileOpen)}
               >
-                {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                <ProfileAvatar />
               </div>
               
               {!sidebarCollapsed && (
@@ -718,9 +763,7 @@ const Chatbot = () => {
               {sidebarCollapsed && sidebarProfileOpen && (
                 <div className="popup-menu profile-popup">
                   <div className="popup-header">
-                    <div className="avatar">
-                      {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
-                    </div>
+                    <ProfileAvatar size="large" />
                     <div>
                       <p className="popup-title">{user?.name || 'User'}</p>
                       <p className="popup-subtitle">{user?.email || ''}</p>
@@ -983,18 +1026,16 @@ const Chatbot = () => {
                 <div className="profile-dropdown" ref={headerProfileRef}>
                   <button
                     onClick={() => setHeaderProfileOpen(!headerProfileOpen)}
-                    className="avatar header-avatar"
-                    title={user?.name || 'User'}
+                    className="header-avatar-btn"
+                    title={user?.name || user?.email || 'User'}
                   >
-                    {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                    <ProfileAvatar />
                   </button>
                   
                   {headerProfileOpen && (
                     <div className="popup-menu header-profile-popup">
                       <div className="popup-header">
-                        <div className="avatar">
-                          {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
-                        </div>
+                        <ProfileAvatar size="large" />
                         <div>
                           <p className="popup-title">{user?.name || 'User'}</p>
                           <p className="popup-subtitle">{user?.email || ''}</p>
@@ -1060,6 +1101,12 @@ const Chatbot = () => {
                       darkMode={darkMode}
                       isLast={idx === chats.length - 1 && msg.role === 'bot' && loading}
                       typingIndicator={renderTypingIndicator}
+                      isHistoryMessage={msg.isHistory} // Pass through the isHistory flag
+                      enableAnimation={true} // Pass animation control flag
+                      // Pass user profile info for bot messages
+                      userProfileImage={msg.role === 'user' ? profileImageUrl : null}
+                      userProfileError={msg.role === 'user' ? profileImageError : false}
+                      userInitial={msg.role === 'user' ? getInitialLetter() : null}
                     />
                   ))}
                   <div ref={chatEndRef} className="scroll-anchor" />
@@ -1067,7 +1114,7 @@ const Chatbot = () => {
               )}
             </div>
             
-            {/* Chat Input Area - Better organized with auto-expanding textarea */}
+            {/* Chat Input Area - Refactored for uncontrolled textarea */}
             <div className="chat-input-area">
               <div className="input-wrapper">
                 <button
@@ -1078,7 +1125,11 @@ const Chatbot = () => {
                       try {
                         const result = await startListening(currentLanguage);
                         if (result) {
-                          setInput(result.text);
+                          // Update textarea DOM directly for better performance
+                          if (inputRef.current) {
+                            inputRef.current.value = result.text;
+                            syncInputState(); // Update React state to match DOM
+                          }
                           if (result.language && result.language !== currentLanguage) {
                             setCurrentLanguage(result.language);
                           }
@@ -1095,7 +1146,6 @@ const Chatbot = () => {
                   <FaMicrophoneAlt />
                 </button>
                 
-                {/* Keep only this one attachment button */}
                 <button
                   onClick={() => navigate('/summarize')}
                   className="upload-btn"
@@ -1107,27 +1157,29 @@ const Chatbot = () => {
                 <div className="textarea-container">
                   <textarea
                     ref={inputRef}
-                    value={input}
-                    onChange={handleInputChange}
+                    onBlur={syncInputState}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();
                         handleSend();
                       }
                     }}
-                    onFocus={() => setIsFocused(true)}
-                    onBlur={() => setIsFocused(false)}
-                    placeholder={input.trim() ? "Press Enter to send" : (loading ? "AI is thinking..." : "Type your message here...")}
-                    className={`chat-input ${isFocused ? 'focused' : ''}`}
-                    disabled={loading && isResponding}
+                    placeholder={isResponding ? "AI is thinking..." : "Type your message here..."}
+                    className="chat-input"
+                    disabled={isResponding}
                     rows={1}
-                  ></textarea>
+                    spellCheck="false"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    data-gramm="false"
+                  />
                   
                   <div className="emoji-container" ref={emojiPickerRef}>
                     <button
                       onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                       className="emoji-btn"
                       title="Insert emoji"
+                      disabled={isResponding} // Disable emoji button when AI is responding
                     >
                       <FaSmile />
                     </button>
@@ -1139,6 +1191,9 @@ const Chatbot = () => {
                           theme={darkMode ? "dark" : "light"}
                           width={window.innerWidth <= 768 ? "280px" : "350px"}
                           height="350px"
+                          lazyLoadEmojis={true}
+                          searchDisabled={true}
+                          previewConfig={{ showPreview: false }}
                         />
                       </div>
                     )}
@@ -1147,11 +1202,17 @@ const Chatbot = () => {
                 
                 <button
                   onClick={isResponding ? stopResponse : handleSend}
-                  className={`send-btn ${(!input.trim() && !isResponding) ? 'disabled' : ''}`}
-                  disabled={!input.trim() && !isResponding}
+                  className={`send-btn ${(!inputRef.current?.value.trim() && !isResponding) ? 'disabled' : ''} ${isResponding ? 'responding' : ''}`}
+                  disabled={!inputRef.current?.value.trim() && !isResponding}
                   title={isResponding ? "Stop response" : "Send message"}
                 >
-                  {isResponding ? <FaStop /> : <FaPaperPlane />}
+                  {isResponding ? (
+                    <div className="stop-response-indicator">
+                      <FaStop />
+                    </div>
+                  ) : (
+                    <FaPaperPlane />
+                  )}
                 </button>
               </div>
             </div>
