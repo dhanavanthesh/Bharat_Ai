@@ -1,21 +1,28 @@
 // src/pages/Signup.jsx
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { auth } from '../utils/auth';
 import VerifyEmail from '../components/VerifyEmail';
 import '../styles/Auth.css';
 
 const Signup = () => {
-  const [email, setEmail] = useState('');
-  const [fullName, setFullName] = useState('');
+  const location = useLocation();
+  const googleUser = location.state?.googleUser;
+  const fromGoogle = location.state?.fromGoogle;
+  
+  // Initialize state with Google data if available
+  const [email, setEmail] = useState(googleUser?.email || '');
+  const [fullName, setFullName] = useState(googleUser?.fullName || '');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [countryCode, setCountryCode] = useState('+91'); // Default to India
   const [loading, setLoading] = useState(false);
+  
+  // If coming from Google, we'll use the password-only flow
+  const [verificationMethod, setVerificationMethod] = useState(fromGoogle ? 'password' : 'email');
   const [verificationNeeded, setVerificationNeeded] = useState(false);
-  const [verificationMethod, setVerificationMethod] = useState('email'); // 'email' or 'password'
   const [passwordStrength, setPasswordStrength] = useState({
     score: 0,
     message: '',
@@ -139,34 +146,40 @@ const Signup = () => {
       </div>
       
       <div className="auth-header">
-        <h2>Create Account</h2>
-        <p>Sign up to start your AI conversations</p>
-      </div>
-      
-      <div className="verification-method">
-        <div className="method-title">Verification Method</div>
-        <div className="method-buttons">
-          <button
-            type="button"
-            onClick={() => setVerificationMethod('email')}
-            className={`method-btn ${verificationMethod === 'email' ? 'active' : ''}`}
-          >
-            Email Verification
-          </button>
-          <button
-            type="button"
-            onClick={() => setVerificationMethod('password')}
-            className={`method-btn ${verificationMethod === 'password' ? 'active' : ''}`}
-          >
-            Password Only
-          </button>
-        </div>
-        <p className="method-description">
-          {verificationMethod === 'email' 
-            ? 'Email verification provides better security by confirming your identity.' 
-            : 'Password-only signup is faster but less secure.'}
+        <h2>{fromGoogle ? 'Complete Your Registration' : 'Create Account'}</h2>
+        <p>
+          {fromGoogle 
+            ? 'Set a password to finalize your account' 
+            : 'Sign up to start your AI conversations'}
         </p>
       </div>
+      
+      {!fromGoogle && (
+        <div className="verification-method">
+          <div className="method-title">Verification Method</div>
+          <div className="method-buttons">
+            <button
+              type="button"
+              onClick={() => setVerificationMethod('email')}
+              className={`method-btn ${verificationMethod === 'email' ? 'active' : ''}`}
+            >
+              Email Verification
+            </button>
+            <button
+              type="button"
+              onClick={() => setVerificationMethod('password')}
+              className={`method-btn ${verificationMethod === 'password' ? 'active' : ''}`}
+            >
+              Password Only
+            </button>
+          </div>
+          <p className="method-description">
+            {verificationMethod === 'email' 
+              ? 'Email verification provides better security by confirming your identity.' 
+              : 'Password-only signup is faster but less secure.'}
+          </p>
+        </div>
+      )}
       
       <form onSubmit={handleSubmit} className="auth-form">
         <div className="form-group">
@@ -186,8 +199,11 @@ const Signup = () => {
               className="auth-input"
               placeholder="you@example.com"
               required
+              readOnly={fromGoogle} // Make it read-only if from Google
+              disabled={fromGoogle}
             />
           </div>
+          {fromGoogle && <p className="input-note">Email from your Google account</p>}
         </div>
         
         {verificationMethod === 'email' && (

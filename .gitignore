@@ -32,3 +32,4 @@ Thumbs.db
 /backend/.env
 backend/profile_images
 backend/static
+backend/firebase-credentials.json

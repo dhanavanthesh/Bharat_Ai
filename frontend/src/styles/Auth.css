@@ -536,3 +536,50 @@
     width: 100%;
   }
 }
+
+/* Google Sign-in Button */
+.google-signin-container {
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.google-signin-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: #ffffff;
+  color: #333333;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 0.5rem;
+}
+
+.google-signin-btn svg {
+  margin-right: 10px;
+}
+
+.google-signin-btn:hover {
+  background-color: #f5f5f5;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* For Google pre-filled fields */
+.input-note {
+  font-size: 0.75rem;
+  color: #8a94a6;
+  margin-top: 0.25rem;
+}
+
+/* Disabled input styling */
+input.auth-input:disabled,
+input.auth-input[readonly] {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.6);
+  cursor: not-allowed;
+}

@@ -25,6 +25,8 @@ from io import BytesIO
 import json
 import re
 from PIL import Image
+from functools import wraps
+
 # Configure logging first - before any logger references
 logging.basicConfig(
     level=logging.DEBUG,
@@ -34,7 +36,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-# Create console handler only (removing file handler)
+# Create console handler
 stream_handler = logging.StreamHandler()
 
 # Create formatter and add it to handler
@@ -43,6 +45,20 @@ stream_handler.setFormatter(formatter)
 
 # Add handler to the logger
 logger.addHandler(stream_handler)
+
+# Import Firebase configuration
+try:
+    from firebase_admin_config import (
+        verify_firebase_token, 
+        firebase_initialized,
+        create_firebase_user,
+        get_user_by_email
+    )
+    FIREBASE_ENABLED = firebase_initialized
+    logger.info(f"Firebase integration: {'Enabled' if FIREBASE_ENABLED else 'Disabled'}")
+except ImportError:
+    FIREBASE_ENABLED = False
+    logger.warning("Firebase Admin SDK not available. Firebase authentication will be disabled.")
 
 # Now check for optional imports
 try:
@@ -521,11 +537,12 @@ def extract_text_from_file(file_path, file_type):
         except:
             return f"Unsupported file type: {file_type}"
 
-# API Routes
+
+# Move this decorator before the routes
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve(path):
-    if path != "" and os.path.exists(app.static_folder + '/' + path): # Fixed comparison
+    if path != "" and os.path.exists(app.static_folder + '/' + path):
         return send_from_directory(app.static_folder, path)
     else:
         return send_from_directory(app.static_folder, 'index.html')
@@ -580,6 +597,14 @@ def chat():
     language = data.get("language", "")
     chat_id = data.get("chatId", "")
     user_id = data.get("userId", "")
+
+    # Check if using Firebase auth
+    if hasattr(request, 'firebase_user') and request.firebase_user:
+        firebase_uid = request.firebase_user.get('uid')
+        # Find MongoDB user by Firebase UID
+        mongo_user = db.users.find_one({"firebase_uid": firebase_uid})
+        if mongo_user:
+            user_id = str(mongo_user["_id"])
 
     # Auto-detect language if not specified
     if not language and user_message:
@@ -639,7 +664,7 @@ def chat():
                     # Auto-generate title from the first message
                     words = user_message.split()
                     auto_title = " ".join(words[:3]) + ("..." if len(words) > 3 else "")
-                    title = auto_title.capitalize()
+                    title = auto_title.capitalize();
                     
                     db.chats.insert_one({
                         "_id": chat_id,
@@ -1526,6 +1551,7 @@ def update_profile():
             "message": "Profile updated successfully",
             "user": {
                 "id": str(updated_user["_id"]),
+                "id": str(updated_user["_id"]),
                 "name": updated_user.get("name"),
                 "email": updated_user.get("email"),
                 "phoneNumber": updated_user.get("phone_number", "")  # Use updated_user instead of user
@@ -2201,20 +2227,201 @@ def update_user_profile(user_id):
         logger.error(f"Profile update error: {str(e)}")
         return jsonify({"success": False, "message": f"An error occurred during profile update: {str(e)}"}), 500
 
-if __name__ == "__main__":
-    # Define the port for the server
-    port = int(os.environ.get("PORT", 5000))
+def firebase_auth_required(f):
+    """
+    Decorator to require Firebase authentication for endpoints
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not FIREBASE_ENABLED:
+            # Fallback to existing authentication if Firebase is not enabled
+            return f(*args, **kwargs)
+        
+        # Get the Authorization header
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return jsonify({'error': 'No valid authorization token provided'}), 401
+        
+        # Extract the token
+        id_token = auth_header.split('Bearer ')[1]
+        
+        # Verify the token with increased clock skew tolerance
+        decoded_token = verify_firebase_token(id_token, clock_skew_seconds=30)
+        if not decoded_token:
+            return jsonify({'error': 'Invalid or expired token'}), 401
+        
+        # Add the decoded token to the request context
+        request.firebase_user = decoded_token
+        return f(*args, **kwargs)
+    
+    return decorated_function
+
+def optional_firebase_auth(f):
+    """
+    Decorator for optional Firebase authentication
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not FIREBASE_ENABLED:
+            return f(*args, **kwargs)
+        
+        # Get the Authorization header
+        auth_header = request.headers.get('Authorization')
+        if auth_header and auth_header.startswith('Bearer '):
+            # Extract and verify the token
+            id_token = auth_header.split('Bearer ')[1]
+            decoded_token = verify_firebase_token(id_token, clock_skew_seconds=30)
+            if decoded_token:
+                request.firebase_user = decoded_token
+        
+        return f(*args, **kwargs)
+    
+    return decorated_function  # This return statement was missing
+
+@app.route("/api/auth/firebase-signup", methods=["POST"])
+def firebase_signup():
+    """Firebase-based signup with enhanced clock tolerance"""
+    if not FIREBASE_ENABLED:
+        return jsonify({"error": "Firebase authentication is not enabled"}), 503
     
     if db is None:
-        logger.critical("MongoDB connection failed. Application may not function correctly.")
+        return jsonify({"error": "Database connection is not available"}), 500
         
+    data = request.get_json()
+    email = data.get("email", "").lower()
+    password = data.get("password", "")
+    full_name = data.get("fullName", "")
+    phone_number = data.get("phoneNumber", "")
+
+    if not email or not password:
+        return jsonify({"success": False, "message": "Missing required fields"}), 400
+
+    if '@' not in email:
+        return jsonify({"success": False, "message": "Invalid email format"}), 400
+
     try:
-        from waitress import serve
-        logger.info(f"Starting server with Waitress at {datetime.now().isoformat()} on port {port}")
-        serve(app, host="0.0.0.0", port=port)
-    except ImportError:
-        logger.warning("Waitress not found, using Flask development server instead")
-        app.run(host="0.0.0.0", port=port, debug=False)
+        # Check if user already exists in MongoDB
+        existing_user = db.users.find_one({"email": email})
+        if existing_user:
+            return jsonify({"success": False, "message": "Email already registered"}), 400
+        
+        # Check if Firebase user exists
+        firebase_user = get_user_by_email(email)
+        if firebase_user:
+            return jsonify({"success": False, "message": "Email already registered with Firebase"}), 400
+        
+        # Use email username as name if not provided
+        if not full_name:
+            full_name = email.split('@')[0]
+            
+        # Create Firebase user
+        firebase_user = create_firebase_user(
+            email=email, 
+            password=password, 
+            display_name=full_name,
+            phone_number=phone_number
+        )
+        
+        if not firebase_user:
+            return jsonify({"success": False, "message": "Failed to create Firebase user"}), 500
+        
+        # Create corresponding user in MongoDB
+        user = {
+            "firebase_uid": firebase_user.uid,
+            "name": full_name,
+            "email": email,
+            "phone_number": phone_number,
+            "created_at": datetime.now()
+        }
+        
+        result = db.users.insert_one(user)
+        user_id = str(result.inserted_id)
+        
+        logger.info(f"Firebase user created with UID: {firebase_user.uid}, MongoDB ID: {user_id}")
+        
+        return jsonify({
+            "success": True,
+            "user": {
+                "id": user_id,
+                "firebase_uid": firebase_user.uid,
+                "name": full_name,
+                "email": email,
+                "phoneNumber": phone_number
+            }
+        })
     except Exception as e:
-        logger.critical(f"Failed to start server: {str(e)}")
-        print(f"Fatal error: {str(e)}")
+        logger.error(f"Firebase signup error: {str(e)}")
+        return jsonify({"success": False, "message": f"An error occurred during signup: {str(e)}"}), 500
+
+@app.route("/api/auth/firebase-verify", methods=["POST"])
+def firebase_verify():
+    """Verify Firebase ID token with enhanced clock tolerance"""
+    if not FIREBASE_ENABLED:
+        return jsonify({"error": "Firebase authentication is not enabled"}), 503
+    
+    if db is None:
+        return jsonify({"error": "Database connection is not available"}), 500
+
+    data = request.get_json()
+    id_token = data.get("idToken", "")
+
+    if not id_token:
+        return jsonify({"success": False, "message": "ID token is required"}), 400
+
+    try:
+        # Verify token with increased clock skew tolerance (30 seconds)
+        decoded_token = verify_firebase_token(id_token, clock_skew_seconds=30)
+        
+        if not decoded_token:
+            return jsonify({"success": False, "message": "Invalid or expired token"}), 401
+        
+        # Find user in MongoDB by Firebase UID
+        firebase_uid = decoded_token.get('uid')
+        user = db.users.find_one({"firebase_uid": firebase_uid})
+        
+        if not user:
+            # Create user if not exists
+            email = decoded_token.get('email', '')
+            name = decoded_token.get('name', email.split('@')[0] if email else 'User')
+            
+            user = {
+                "firebase_uid": firebase_uid,
+                "name": name,
+                "email": email,
+                "phone_number": decoded_token.get('phone_number', ''),
+                "created_at": datetime.now()
+            }
+            
+            result = db.users.insert_one(user)
+            user_id = str(result.inserted_id)
+            
+            logger.info(f"Created new user for Firebase UID: {firebase_uid}")
+        else:
+            user_id = str(user["_id"])
+        
+        return jsonify({
+            "success": True,
+            "message": "Token verified successfully",
+            "user": {
+                "id": user_id,
+                "firebase_uid": firebase_uid,
+                "name": user.get("name", ""),
+                "email": user.get("email", ""),
+                "phoneNumber": user.get("phone_number", "")
+            }
+        })
+    except Exception as e:
+        logger.error(f"Firebase verification error: {str(e)}")
+        return jsonify({"success": False, "message": f"An error occurred during verification: {str(e)}"}), 500
+
+# Add this at the end of the file
+if __name__ == "__main__":
+    # Get port from environment variable or default to 5000
+    port = int(os.environ.get("PORT", 5000))
+    
+    # Run the Flask app
+    app.run(
+        host="0.0.0.0",
+        port=port,
+        debug=True  # Set to False in production
+    )
