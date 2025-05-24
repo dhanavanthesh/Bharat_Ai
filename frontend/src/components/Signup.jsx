@@ -52,7 +52,12 @@ const Signup = () => {
         email={email}
         fullName={fullName}
         password={password}
-        onSuccess={() => navigate('/chat')}
+        onSuccess={() => {
+          toast.success('Email verified successfully!');
+          setTimeout(() => {
+            window.location.href = '/chat';
+          }, 1000);
+        }}
       />
     );
   }

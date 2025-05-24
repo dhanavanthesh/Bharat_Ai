@@ -101,6 +101,9 @@ const apiCall = async (endpoint, method, body, retries = 2) => {
 
 // Authentication functions
 export const auth = {
+  // Add this method to get the API base URL
+  getApiBaseUrl: () => API_BASE_URL,
+  
   isAuthenticated: () => !!currentUser,
   getCurrentUser: () => {
     const userString = localStorage.getItem('user');
@@ -172,6 +175,21 @@ export const auth = {
     return data;
   },
 
+  loginWithGoogle: async (googleUser) => {
+    const data = await apiCall('/api/login-with-google', 'POST', { 
+      email: googleUser.email,
+      fullName: googleUser.fullName,
+      googleId: googleUser.googleId,
+      photoURL: googleUser.photoURL
+    });
+    
+    if (data.success) {
+      currentUser = data.user;
+      localStorage.setItem('user', JSON.stringify(currentUser));
+    }
+    return data;
+  },
+  
   logout: () => {
     currentUser = null;
     localStorage.removeItem('user');

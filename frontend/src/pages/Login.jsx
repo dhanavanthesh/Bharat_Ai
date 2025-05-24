@@ -20,10 +20,13 @@ const Login = () => {
     
     try {
       const result = await auth.login(email, password);
-      
+
       if (result.success) {
         toast.success('Login successful!');
-        navigate('/chat');
+        // Force page reload to ensure client-side state is reset
+        setTimeout(() => {
+          window.location.href = '/chat';
+        }, 1000);
       } else {
         // Check if this is a verification issue
         if (result.message && result.message.toLowerCase().includes('verify')) {
@@ -58,17 +61,29 @@ const Login = () => {
   };
   
   const handleGoogleSignIn = async () => {
-    const result = await signInWithGoogle();
-    if (result.success) {
-      // Navigate to signup with pre-filled data
-      navigate('/signup', { 
-        state: { 
-          googleUser: result.user,
-          fromGoogle: true 
-        } 
-      });
-    } else {
-      toast.error(result.message || 'Google sign-in failed');
+    setLoading(true);
+    try {
+      const result = await signInWithGoogle();
+
+      if (result.success) {
+        toast.success('Login successful!');
+        // Force reload to /chat for Google login as well
+        setTimeout(() => {
+          window.location.href = '/chat';
+        }, 1000);
+      } else if (result.requireSignup) {
+        // New user - redirect to signup completion
+        navigate('/complete-google-signup', { 
+          state: { googleProfile: result.googleProfile }
+        });
+      } else {
+        toast.error(result.message || 'Google sign-in failed');
+      }
+    } catch (error) {
+      console.error("Google sign-in process error:", error);
+      toast.error('Failed to sign in with Google. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
   

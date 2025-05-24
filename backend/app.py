@@ -27,6 +27,15 @@ import re
 from PIL import Image
 from functools import wraps
 
+try:
+    import pytesseract
+    tesseract_available = True
+except ImportError:
+    tesseract_available = False
+
+import training
+import model_utils
+
 # Configure logging first - before any logger references
 logging.basicConfig(
     level=logging.DEBUG,
@@ -2413,6 +2422,176 @@ def firebase_verify():
     except Exception as e:
         logger.error(f"Firebase verification error: {str(e)}")
         return jsonify({"success": False, "message": f"An error occurred during verification: {str(e)}"}), 500
+
+@app.route("/api/check-user-exists", methods=["POST"])
+def check_user_exists():
+    """Check if a user with the given email exists"""
+    if db is None:
+        return jsonify({"error": "Database connection is not available"}), 500
+        
+    data = request.get_json()
+    email = data.get("email", "").lower()
+
+    if not email:
+        return jsonify({"success": False, "message": "Email is required"}), 400
+
+    try:
+        # Check if user already exists
+        existing_user = db.users.find_one({"email": email})
+        
+        return jsonify({
+            "success": True,
+            "exists": existing_user is not None
+        })
+    except Exception as e:
+        logger.error(f"Check user exists error: {str(e)}")
+        return jsonify({"success": False, "message": f"An error occurred: {str(e)}"}), 500
+
+@app.route("/api/auth/google-signin", methods=["POST"])
+def google_signin():
+    """Process Google sign-in data and determine if user needs to complete registration"""
+    logger.info(f"Received request to /api/auth/google-signin with method {request.method}")
+    if db is None:
+        return jsonify({"error": "Database connection is not available"}), 500
+        
+    data = request.get_json()
+    id_token = data.get("idToken", "")
+    
+    if not id_token:
+        return jsonify({"success": False, "message": "ID token is required"}), 400
+        
+    try:
+        # Verify the Google token
+        if FIREBASE_ENABLED:
+            # Use Firebase to verify the token
+            decoded_token = verify_firebase_token(id_token, clock_skew_seconds=30)
+            if not decoded_token:
+                return jsonify({"success": False, "message": "Invalid or expired token"}), 401
+                
+            # Extract user info from token
+            email = decoded_token.get('email', '').lower()
+            name = decoded_token.get('name', '')
+            photo_url = decoded_token.get('picture', '')
+            firebase_uid = decoded_token.get('uid', '')
+        else:
+            # For development without Firebase
+            # In production, you should always verify tokens
+            return jsonify({"success": False, "message": "Firebase authentication not enabled"}), 501
+            
+        # Check if user exists in our database
+        existing_user = db.users.find_one({"email": email})
+        
+        if existing_user:
+            # User exists - update Google info if needed and log them in
+            update_data = {}
+            if not existing_user.get("firebase_uid") and firebase_uid:
+                update_data["firebase_uid"] = firebase_uid
+            if not existing_user.get("photo_url") and photo_url:
+                update_data["photo_url"] = photo_url
+                
+            if update_data:
+                db.users.update_one(
+                    {"_id": existing_user["_id"]},
+                    {"$set": update_data}
+                )
+            # Return user info for login
+            return jsonify({
+                "success": True,
+                "message": "Login successful",
+                "user": {
+                    "id": str(existing_user["_id"]),
+                    "name": existing_user.get("name", name),
+                    "email": email,
+                    "phoneNumber": existing_user.get("phone_number", ""),
+                    "photoURL": existing_user.get("photo_url", photo_url)
+                }
+            })
+        else:
+            # User doesn't exist - need to complete registration
+            return jsonify({
+                "success": False,
+                "requireSignup": True,
+                "message": "Please complete your registration",
+                "googleProfile": {
+                    "email": email,
+                    "name": name,
+                    "photoURL": photo_url,
+                    "firebaseUid": firebase_uid
+                }
+            })
+            
+    except Exception as e:
+        logger.error(f"Google sign-in error: {str(e)}")
+        return jsonify({"success": False, "message": f"An error occurred: {str(e)}"}), 500
+
+
+@app.route("/api/auth/complete-google-signup", methods=["POST"])
+def complete_google_signup():
+    """Complete signup process for Google users by adding required fields"""
+    if db is None:
+        return jsonify({"error": "Database connection is not available"}), 500
+        
+    data = request.get_json()
+    email = data.get("email", "").lower()
+    name = data.get("name", "")
+    firebase_uid = data.get("firebaseUid", "")
+    photo_url = data.get("photoURL", "")
+    phone_number = data.get("phoneNumber", "")
+    password = data.get("password", "")  # Password for non-Google logins
+    
+    if not email or not phone_number:
+        return jsonify({"success": False, "message": "Email and phone number are required"}), 400
+        
+    try:
+        # Check if user already exists
+        existing_user = db.users.find_one({"email": email})
+        if existing_user:
+            return jsonify({
+                "success": True,
+                "existingUser": True,
+                "message": "Email already registered",
+                "user": {
+                    "id": str(existing_user["_id"]),
+                    "name": existing_user.get("name", ""),
+                    "email": existing_user.get("email", ""),
+                    "phoneNumber": existing_user.get("phone_number", ""),
+                    "photoURL": existing_user.get("photo_url", "")
+                }
+            })
+            
+        # Create new user with all required fields
+        user = {
+            "name": name,
+            "email": email,
+            "firebase_uid": firebase_uid,
+            "photo_url": photo_url,
+            "phone_number": phone_number,
+            "password": password,  # Store password if provided
+            "auth_provider": "google",  # Track how they signed up
+            "created_at": datetime.now()
+        }
+        
+        result = db.users.insert_one(user)
+        user_id = str(result.inserted_id)
+        
+        logger.info(f"User created with Google signup: {user_id}, email: {email}")
+        
+        return jsonify({
+            "success": True,
+            "user": {
+                "id": user_id,
+                "name": name,
+                "email": email,
+                "phoneNumber": phone_number,
+                "photoURL": photo_url
+            }
+        })
+    except Exception as e:
+        logger.error(f"Complete Google signup error: {str(e)}")
+        return jsonify({"success": False, "message": f"An error occurred: {str(e)}"}), 500
+
+
+
 
 # Add this at the end of the file
 if __name__ == "__main__":
