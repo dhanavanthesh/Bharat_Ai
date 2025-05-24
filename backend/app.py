@@ -91,8 +91,8 @@ except ImportError:
     pptx_available = False
     logger.warning("python-pptx not installed - PowerPoint processing will be limited")
 
-#load_dotenv('/etc/bharatai.env')
-load_dotenv('.env')
+load_dotenv('/etc/bharatai.env')
+#load_dotenv('.env')
 
 # Function to create directory with proper permissions for VPS
 def create_directory_with_permissions(dir_path):
