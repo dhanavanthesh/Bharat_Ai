@@ -12,6 +12,77 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* User Avatar with Letter Fallback */
+.user-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.user-avatar-letter {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(45deg, #8159c1, #4a32a0);
+  color: white;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  user-select: none;
+  text-transform: uppercase;
+}
+
+/* Make sure to add these to your existing ChatMessage.css */
+.message-avatar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  margin-right: 12px;
+}
+
+.bot-avatar, 
+.user-avatar-placeholder {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bot-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Dark mode specific styles for avatar */
+.dark-mode .user-avatar-letter {
+  background: linear-gradient(45deg, #4f46e5, #1e40af);
+}
+
+/* Media queries for responsive design */
+@media (max-width: 768px) {
+  .user-avatar-letter {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+  
+  .message-avatar {
+    width: 36px;
+    min-width: 36px;
+    height: 36px;
+  }
+}
+
 .user-message {
   margin-left: auto;
   background-color: rgba(99, 102, 241, 0.1);

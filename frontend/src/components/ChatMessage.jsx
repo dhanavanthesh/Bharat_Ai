@@ -15,10 +15,15 @@ const ChatMessage = memo(({
   isLast, 
   typingIndicator, 
   isHistoryMessage = false, 
-  enableAnimation = true // Add enableAnimation prop with default true
+  enableAnimation = true, // Add enableAnimation prop with default true
+  // Add new props for profile image fallback system
+  userProfileImage = null,
+  userProfileError = false,
+  userInitial = null
 }) => {
   const messageRef = useRef(null);
   const [profileImageUrl, setProfileImageUrl] = useState('');
+  const [profileImageError, setProfileImageError] = useState(false);
   const [userName, setUserName] = useState('');
   
   // Animation states
@@ -30,23 +35,51 @@ const ChatMessage = memo(({
   // Effect for loading user info - including profile image
   useEffect(() => {
     if (message.role === 'user') {
-      const user = auth.getCurrentUser();
-      if (user?.id) {
-        setProfileImageUrl(profileApi.getProfileImageUrl(user.id));
-        
-        // Update user name and initial logic
-        if (user.name && user.name.trim()) {
-          setUserName(user.name);
-        } else if (user.email && user.email.trim()) {
-          // Use email name part (before @) or full email
-          const emailName = user.email.split('@')[0] || user.email;
-          setUserName(emailName);
-        } else {
-          setUserName('You');
+      // First try to use the props passed from parent
+      if (userProfileImage) {
+        setProfileImageUrl(userProfileImage);
+        setProfileImageError(userProfileError);
+      } else {
+        // Fall back to fetching if props not provided
+        const user = auth.getCurrentUser();
+        if (user?.id) {
+          setProfileImageUrl(profileApi.getProfileImageUrl(user.id));
+          
+          // Update user name and initial logic
+          if (user.name && user.name.trim()) {
+            setUserName(user.name);
+          } else if (user.email && user.email.trim()) {
+            // Use email name part (before @) or full email
+            const emailName = user.email.split('@')[0] || user.email;
+            setUserName(emailName);
+          } else {
+            setUserName('You');
+          }
         }
       }
     }
-  }, [message.role]);
+  }, [message.role, userProfileImage, userProfileError, userInitial]);
+
+  // Get initial letter for avatar fallback
+  const getInitialLetter = () => {
+    // First try to use the userInitial prop if provided
+    if (userInitial) {
+      return userInitial;
+    }
+    
+    // Otherwise derive from username
+    if (userName && userName.trim()) {
+      return userName.charAt(0).toUpperCase();
+    }
+    
+    // Default fallback
+    return 'U';
+  };
+
+  // Handle profile image loading error
+  const handleProfileImageError = () => {
+    setProfileImageError(true);
+  };
 
   // Add highlight effect for new messages
   useEffect(() => {
@@ -231,24 +264,32 @@ const ChatMessage = memo(({
   }, [message.content, message.role, isTyping, displayedText, isHistoryMessage, animationStarted, enableAnimation]);
 
   return (
-     <div 
-    ref={messageRef}
-    className={`message-container ${message.role === 'user' ? 'user-message' : 'bot-message'}`}
-  >
-    <div className="message-avatar">
-      {message.role === 'user' ? (
-        profileImageUrl ? (
-          <img src={profileImageUrl} alt="User" className="user-avatar-img" loading="lazy" />
+    <div 
+      ref={messageRef}
+      className={`message-container ${message.role === 'user' ? 'user-message' : 'bot-message'}`}
+    >
+      <div className="message-avatar">
+        {message.role === 'user' ? (
+          // Enhanced user avatar with fallback system
+          (!profileImageError && profileImageUrl) ? (
+            <img 
+              src={profileImageUrl} 
+              alt="User" 
+              className="user-avatar-img" 
+              loading="lazy" 
+              onError={handleProfileImageError}
+            />
+          ) : (
+            <div className="user-avatar-letter">
+              {getInitialLetter()}
+            </div>
+          )
         ) : (
-          <div className="user-avatar-placeholder">
-            {userName ? userName.charAt(0).toUpperCase() : 'U'}
+          // Bot avatar remains unchanged
+          <div className="bot-avatar">
+            <img src="/image.png" alt="BHAAI" className="bot-avatar-img" loading="lazy" />
           </div>
-        )
-      ) : (
-        <div className="bot-avatar">
-          <img src="/image.png" alt="BHAAI" className="bot-avatar-img" loading="lazy" />
-        </div>
-      )}  
+        )}  
       </div>
       
       <div className="message-content">

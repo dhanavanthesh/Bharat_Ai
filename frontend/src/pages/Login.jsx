@@ -162,23 +162,8 @@ const Login = () => {
       </form>
       
       <div className="auth-helper">
-        <button 
-          onClick={() => email ? requestVerification() : toast.error('Please enter your email first')}
-          className="auth-link"
-        >
-          Trouble logging in? Get verification code
-        </button>
+        {/* Verification and signup links removed */}
         
-        <div className="divider">
-          <span className="divider-text">Or</span>
-        </div>
-        
-        <p className="auth-footer">
-          Don't have an account?{' '}
-          <Link to="/signup" className="signup-link">
-            Sign up
-          </Link>
-        </p>
       </div>
       
       {/* Add Google Sign-in Button */}

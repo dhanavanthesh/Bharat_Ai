@@ -1,4 +1,3 @@
-// src/pages/Chatbot.jsx
 // eslint-disable-next-line no-unused-vars
 import React, { useState, useCallback, useEffect, useRef, useLayoutEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -83,6 +82,9 @@ const Chatbot = () => {
   const [userScrolled, setUserScrolled] = useState(false);
   // eslint-disable-next-line no-unused-vars
   const lastScrollPosition = useRef(0);
+  
+  // Add state to track image loading errors
+  const [profileImageError, setProfileImageError] = useState(false);
 
   // Remove: No longer need this hook since we'll rely on CSS for auto-sizing
   // useAutosizeTextArea(inputRef);
@@ -159,6 +161,16 @@ const Chatbot = () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  // Enhanced getInitialLetter function with consistent casing and better fallbacks
+  const getInitialLetter = () => {
+    if (user?.name && user.name.trim()) {
+      return user.name.charAt(0).toUpperCase();
+    } else if (user?.email && user.email.trim()) {
+      return user.email.charAt(0).toUpperCase();
+    }
+    return 'U';
+  };
 
   const handleNewChat = useCallback(async () => {
     if (!user || !user.id) {
@@ -637,8 +649,11 @@ const Chatbot = () => {
     };
   }, [refreshUserData]);
 
-  // Update the profile image fetching logic
+  // Update the profile image fetching logic with error handling
   useEffect(() => {
+    // Reset error state when user changes
+    setProfileImageError(false);
+    
     // Load profile image if user exists
     if (user?.id) {
       const imageUrl = profileApi.getProfileImageUrl(user.id);
@@ -646,14 +661,33 @@ const Chatbot = () => {
     }
   }, [user]); // Depend on user object so it refreshes when user data changes
 
-  // Add this helper function near the beginning of the component
-  const getInitialLetter = () => {
-    if (user?.name && user.name.trim()) {
-      return user.name.charAt(0).toUpperCase();
-    } else if (user?.email && user.email.trim()) {
-      return user.email.charAt(0).toUpperCase();
+  // Handle profile image loading error
+  const handleProfileImageError = () => {
+    setProfileImageError(true);
+  };
+
+  // Component for avatar with letter fallback
+  const ProfileAvatar = ({ size = "default", className = "" }) => {
+    const baseClass = `avatar ${size === "large" ? "large" : size === "small" ? "small" : ""} ${className}`;
+    
+    if (profileImageUrl && !profileImageError) {
+      return (
+        <div className={baseClass}>
+          <img 
+            src={profileImageUrl} 
+            alt={user?.name || "Profile"} 
+            className="profile-image" 
+            onError={handleProfileImageError}
+          />
+        </div>
+      );
+    } else {
+      return (
+        <div className={`${baseClass} letter-avatar`}>
+          <span className="avatar-letter">{getInitialLetter()}</span>
+        </div>
+      );
     }
-    return 'U';
   };
 
   return (
@@ -709,17 +743,13 @@ const Chatbot = () => {
               </button>
             </div>
             
-            {/* User Info - More compact profile - UPDATED */}
+            {/* User Info - More compact profile - UPDATED with ProfileAvatar component */}
             <div className={`user-info ${sidebarCollapsed ? 'collapsed' : ''}`} ref={sidebarProfileRef}>
               <div 
-                className="avatar"
+                className="avatar-container"
                 onClick={() => sidebarCollapsed && setSidebarProfileOpen(!sidebarProfileOpen)}
               >
-                {profileImageUrl ? (
-                  <img src={profileImageUrl} alt="Profile" className="profile-image" />
-                ) : (
-                  <span className="avatar-letter">{getInitialLetter()}</span>
-                )}
+                <ProfileAvatar />
               </div>
               
               {!sidebarCollapsed && (
@@ -733,13 +763,7 @@ const Chatbot = () => {
               {sidebarCollapsed && sidebarProfileOpen && (
                 <div className="popup-menu profile-popup">
                   <div className="popup-header">
-                    <div className="avatar">
-                      {profileImageUrl ? (
-                        <img src={profileImageUrl} alt="Profile" className="profile-image" />
-                      ) : (
-                        <span className="avatar-letter">{getInitialLetter()}</span>
-                      )}
-                    </div>
+                    <ProfileAvatar size="large" />
                     <div>
                       <p className="popup-title">{user?.name || 'User'}</p>
                       <p className="popup-subtitle">{user?.email || ''}</p>
@@ -1002,26 +1026,16 @@ const Chatbot = () => {
                 <div className="profile-dropdown" ref={headerProfileRef}>
                   <button
                     onClick={() => setHeaderProfileOpen(!headerProfileOpen)}
-                    className="avatar header-avatar"
+                    className="header-avatar-btn"
                     title={user?.name || user?.email || 'User'}
                   >
-                    {profileImageUrl ? (
-                      <img src={profileImageUrl} alt="Profile" className="profile-image" />
-                    ) : (
-                      <span className="avatar-letter">{getInitialLetter()}</span>
-                    )}
+                    <ProfileAvatar />
                   </button>
                   
                   {headerProfileOpen && (
                     <div className="popup-menu header-profile-popup">
                       <div className="popup-header">
-                        <div className="avatar">
-                          {profileImageUrl ? (
-                            <img src={profileImageUrl} alt="Profile" className="profile-image" />
-                          ) : (
-                            <span className="avatar-letter">{getInitialLetter()}</span>
-                          )}
-                        </div>
+                        <ProfileAvatar size="large" />
                         <div>
                           <p className="popup-title">{user?.name || 'User'}</p>
                           <p className="popup-subtitle">{user?.email || ''}</p>
@@ -1089,6 +1103,10 @@ const Chatbot = () => {
                       typingIndicator={renderTypingIndicator}
                       isHistoryMessage={msg.isHistory} // Pass through the isHistory flag
                       enableAnimation={true} // Pass animation control flag
+                      // Pass user profile info for bot messages
+                      userProfileImage={msg.role === 'user' ? profileImageUrl : null}
+                      userProfileError={msg.role === 'user' ? profileImageError : false}
+                      userInitial={msg.role === 'user' ? getInitialLetter() : null}
                     />
                   ))}
                   <div ref={chatEndRef} className="scroll-anchor" />

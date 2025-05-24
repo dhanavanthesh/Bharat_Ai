@@ -120,7 +120,7 @@ const GoogleSignupCompletion = () => {
   return (
     <div className="min-h-screen bg-[#1A0933] flex flex-col items-center justify-center p-4 text-white">
       <div className="w-full max-w-md">
-        <h1 className="text-4xl font-bold text-center mb-8 text-pink-400">Bharat AI</h1>
+        <h1 className="text-4xl font-bold text-center mb-8 text-pink-400">Bharat AI (BHAAI)</h1>
         
         <div className="mb-8 text-center">
           <h2 className="text-2xl font-bold mb-2">Complete Your Registration</h2>
@@ -264,9 +264,7 @@ const GoogleSignupCompletion = () => {
           </form>
         </div>
         
-        <div className="text-center text-xs text-gray-400">
-          By registering, you agree to our <Link to="/terms" className="text-purple-400 hover:text-purple-300">Terms of Service</Link> and <Link to="/privacy" className="text-purple-400 hover:text-purple-300">Privacy Policy</Link>
-        </div>
+        
       </div>
     </div>
   );
