@@ -82,7 +82,7 @@ const Home = () => {
                  style={{ border: '2px solid #ff00cc', borderRadius: '50px', padding: '10px 20px' }}>
               Login
             </button>
-            <button className="signup-btn" onClick={() => navigate('/signup')}
+            <button className="signup-btn" onClick={() => navigate('/')}
                  style={{ backgroundColor: '#ff00cc', borderRadius: '50px', padding: '10px 20px' }}>
               Get Started
             </button>
