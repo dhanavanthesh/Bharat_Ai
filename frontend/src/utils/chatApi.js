@@ -67,6 +67,55 @@ const apiRequest = async (url, options, retries = 1) => {
   return makeRequest();
 };
 
+/**
+ * Send a message to the AI model and get a response
+ * Optimized version with better error handling and timeout
+ */
+const sendMessage = async (userId, chatId, message, model, language, abortSignal) => {
+  try {
+    // Set a longer timeout for message responses (30 seconds)
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
+    
+    // Combine user's abort signal with our timeout signal
+    const combinedSignal = abortSignal 
+      ? { signal: AbortSignal.any([abortSignal, controller.signal]) }
+      : { signal: controller.signal };
+    
+    const response = await fetch(`${API_BASE_URL}/api/chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      ...combinedSignal,
+      body: JSON.stringify({
+        userId,
+        chatId,
+        message,
+        model,
+        language,
+      }),
+    });
+
+    clearTimeout(timeout);
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to send message');
+    }
+
+    return await response.json();
+  } catch (error) {
+    // Don't log abort errors loudly
+    if (error.name === 'AbortError') {
+      console.log('Message request was aborted');
+    } else {
+      console.error('Error sending message:', error);
+    }
+    throw error;
+  }
+};
+
 // API for chat functionality
 export const chatApi = {
   // Get all chats for a user
@@ -137,30 +186,7 @@ export const chatApi = {
   },
   
   // Send a message and get a response
-  sendMessage: async (userId, chatId, message, model, language) => {
-    try {
-      return await apiRequest(`${API_BASE_URL}/api/chat`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId,
-          chatId,
-          message,
-          model,
-          language
-        }),
-      }, 2); // Allow 2 retries for sending messages
-    } catch (error) {
-      console.error('Send message error:', error);
-      return { 
-        success: false, 
-        message: error.message || 'Failed to send message',
-        reply: "I'm sorry, I'm having trouble connecting to the server. Please try again in a moment."
-      };
-    }
-  },
+  sendMessage: sendMessage,
   
   // Speech to text conversion
   speechToText: async (audioBlob, language) => {
