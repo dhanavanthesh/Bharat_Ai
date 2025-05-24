@@ -152,15 +152,6 @@ export const profileApi = {
   },
 
   /**
-   * Get profile image URL
-   * @param {string} userId - User ID
-   * @returns {string} - URL to fetch profile image
-   */
-  getProfileImageUrl: (userId) => {
-    return `${API_BASE_URL}/api/profile/image/${userId}`;
-  },
-
-  /**
    * Update user profile information
    * @param {string} userId - User ID
    * @param {Object} userData - User data to update
@@ -189,26 +180,70 @@ export const profileApi = {
   },
   
   /**
+   * Get the base URL for API calls
+   * @returns {string} - API base URL
+   */
+  getBaseUrl: () => {
+    return API_BASE_URL;
+  },
+  
+  /**
    * Refresh user data from the backend
    * @param {string} userId - User ID
    * @returns {Promise<Object|null>} - Refreshed user data or null if failed
    */
   refreshUserData: async (userId) => {
     try {
-      // Use apiCall instead of direct fetch for consistency and error handling
-      const data = await apiCall(`/api/profile/${userId}`, 'GET');
+      // Use the API_BASE_URL to ensure correct endpoint
+      const response = await fetch(`${API_BASE_URL}/api/profile/${userId}`, {
+        ...fetchOptions,
+        method: 'GET'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to refresh user data. Status: ${response.status}`);
+      }
+      
+      // Check content type to avoid parsing HTML as JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        console.error('Server returned non-JSON response:', contentType);
+        // Try to get user data from local storage
+        const cachedUser = JSON.parse(localStorage.getItem('user') || '{}');
+        return cachedUser;
+      }
+      
+      const data = await response.json();
+      console.log("Raw API response for user data:", data);
       
       if (data.success && data.user) {
-        // Update local storage with fresh data
-        localStorage.setItem('user', JSON.stringify(data.user));
-        console.log('User data refreshed successfully:', data.user);
-        return data.user;
+        // Make sure we preserve photo_url if it exists in the database
+        const enhancedUser = data.user;
+        
+        // Store the updated user in localStorage
+        localStorage.setItem('user', JSON.stringify(enhancedUser));
+        return enhancedUser;
       }
-      console.error('Failed to refresh user data:', data);
       return null;
     } catch (error) {
-      console.error('Error refreshing user data:', error);
-      return null;
+      console.error("Error refreshing user data:", error);
+      // Return cached user data as fallback when API fails
+      try {
+        const cachedUser = JSON.parse(localStorage.getItem('user') || '{}');
+        return cachedUser;
+      } catch (e) {
+        return null;
+      }
     }
+  },
+  
+  /**
+   * Get profile image URL with fallback
+   * @param {string} userId - User ID
+   * @returns {string} - URL to fetch profile image
+   */
+  getProfileImageUrl: (userId) => {
+    // Update to use the API_BASE_URL
+    return `${API_BASE_URL}/api/profile/image/${userId}`;
   }
 };

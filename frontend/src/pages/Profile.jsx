@@ -9,7 +9,7 @@ import '../styles/Profile.css';
 const Profile = () => {
   // Add state variables for the form inputs
   const [user, setUser] = useState(auth.getCurrentUser());
-  const [displayName, setDisplayName] = useState(user?.name || '');
+  const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState(user?.email || '');
   const [loading, setLoading] = useState(false);
   
@@ -22,6 +22,7 @@ const Profile = () => {
   const [profileImageUrl, setProfileImageUrl] = useState('');
   const [uploadingImage, setUploadingImage] = useState(false);
   const fileInputRef = useRef(null);
+  const [photoUrlFallback, setPhotoUrlFallback] = useState(user?.photoURL || user?.photo_url || '');
 
   // Password reset states
   const [showPasswordReset, setShowPasswordReset] = useState(false);
@@ -33,17 +34,80 @@ const Profile = () => {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   useEffect(() => {
-    if (user?.id) {
-      const imageUrl = profileApi.getProfileImageUrl(user.id);
-      setProfileImageUrl(imageUrl);
+    const user = auth.getCurrentUser();
+    if (user) {
+      // Set displayName properly
+      if (user.name && user.name.trim()) {
+        setDisplayName(user.name);
+      } else if (user.email) {
+        setDisplayName(user.email.split('@')[0]);
+      } else {
+        setDisplayName('User');
+      }
     }
-  }, [user]);
+  }, []);
+
+  useEffect(() => {
+    if (user?.id) {
+      console.log("Fetching profile image for user:", user.id);
+      // Try to fetch profile image
+      fetch(`${profileApi.getBaseUrl()}/api/profile/image/${user.id}`)
+        .then(response => {
+          console.log("Profile image response:", {
+            ok: response.ok,
+            status: response.status,
+            contentType: response.headers.get('content-type'),
+            url: response.url
+          });
+          
+          // If content type is image, use it directly
+          if (response.ok && response.headers.get('content-type')?.includes('image/')) {
+            console.log("Received proper image response");
+            setProfileImageUrl(response.url);
+            return null;
+          } 
+          // If JSON response, try to extract photo URL
+          else if (response.ok && response.headers.get('content-type')?.includes('application/json')) {
+            console.log("Received JSON response for profile image");
+            return response.json();
+          } 
+          // For HTML or other unexpected responses, don't set profile image URL
+          else {
+            console.log("Received HTML or unexpected response - will use fallbacks");
+            return null;
+          }
+        })
+        .then(data => {
+          console.log("Processed profile image data:", data);
+          if (data && data.usePhotoUrl && data.photoUrl) {
+            console.log("Using photoUrl fallback from API response:", data.photoUrl);
+            setPhotoUrlFallback(data.photoUrl);
+          }
+        })
+        .catch(err => console.error('Error fetching profile image:', err));
+    
+    // Use photo_url from user as fallback if available
+    console.log("Setting photoUrlFallback from user data:", {
+      photoURL: user.photoURL,
+      photo_url: user.photo_url,
+      firebase_uid: user.firebase_uid
+    });
+    
+    // If we have a photo_url in the user object, use it
+    if (user.photo_url) {
+      setPhotoUrlFallback(user.photo_url);
+    } else if (user.photoURL) {
+      setPhotoUrlFallback(user.photoURL);
+    }
+  }
+}, [user]);
 
   // Update state if user data changes
   useEffect(() => {
     if (user) {
       setDisplayName(user.name || '');
       setEmail(user.email || '');
+      setPhotoUrlFallback(user.photoURL || user.photo_url || photoUrlFallback);
     }
   }, [user]);
 
@@ -51,15 +115,40 @@ const Profile = () => {
   useEffect(() => {
     const refreshUserData = async () => {
       if (user?.id) {
-        const freshUserData = await profileApi.refreshUserData(user.id);
-        if (freshUserData) {
-          setUser(freshUserData);
+        console.log("Refreshing user data for:", user.id);
+        try {
+          const freshUserData = await profileApi.refreshUserData(user.id);
+          console.log("Received fresh user data:", freshUserData);
+          
+          // Force photo_url detection from MongoDB
+          if (freshUserData) {
+            // Update user state with the fresh data
+            setUser(freshUserData);
+            
+            // Check if we have a photo_url in the fresh data
+            console.log("Checking for photo_url in fresh data:", {
+              photoURL: freshUserData.photoURL,
+              photo_url: freshUserData.photo_url,
+              firebase_uid: freshUserData.firebase_uid
+            });
+            
+            // Set photo URL fallback with proper precedence
+            if (freshUserData.photo_url) {
+              console.log("Using photo_url from fresh data:", freshUserData.photo_url);
+              setPhotoUrlFallback(freshUserData.photo_url);
+            } else if (freshUserData.photoURL) {
+              console.log("Using photoURL from fresh data:", freshUserData.photoURL);
+              setPhotoUrlFallback(freshUserData.photoURL);
+            }
+          }
+        } catch (error) {
+          console.error("Error in refreshUserData:", error);
         }
       }
     };
     
     refreshUserData();
-  }, [user?.id]); // Add user.id as dependency
+  }, [user?.id]); // Remove photoUrlFallback from dependencies to avoid loops
   
   const handleLogout = () => {
     auth.logout();
@@ -132,21 +221,30 @@ const Profile = () => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Optional: validate file type and size here
+    console.log("Selected file for upload:", {
+      name: file.name,
+      type: file.type,
+      size: `${(file.size / 1024).toFixed(2)} KB`
+    });
 
+    // Optional: validate file type and size here
     setUploadingImage(true);
     try {
       const result = await profileApi.uploadProfileImage(user.id, file);
+      console.log("Profile image upload result:", result);
+      
       if (result.success) {
         toast.success('Profile image updated successfully!');
         // Update profile image URL with cache buster to force reload
-        setProfileImageUrl(profileApi.getProfileImageUrl(user.id) + '?t=' + new Date().getTime());
+        const newImageUrl = profileApi.getProfileImageUrl(user.id) + '?t=' + new Date().getTime();
+        console.log("Setting new profile image URL:", newImageUrl);
+        setProfileImageUrl(newImageUrl);
       } else {
         toast.error(result.message || 'Failed to upload profile image');
       }
     } catch (error) {
+      console.error('Error uploading profile image:', error);
       toast.error('An error occurred while uploading profile image');
-      console.error(error);
     } finally {
       setUploadingImage(false);
     }
@@ -154,10 +252,11 @@ const Profile = () => {
 
   // Update the avatar placeholder to use email when name isn't available
   const getInitialLetter = () => {
-    if (user?.name && user.name.trim()) {
-      return user.name.charAt(0).toUpperCase();
-    } else if (user?.email && user.email.trim()) {
-      return user.email.charAt(0).toUpperCase();
+    if (name && name.trim()) {
+      return name.charAt(0).toUpperCase();
+    }
+    if (email && email.trim()) {
+      return email.charAt(0).toUpperCase();
     }
     return 'U';
   };
@@ -188,6 +287,12 @@ const Profile = () => {
               {profileImageUrl ? (
                 <img
                   src={profileImageUrl}
+                  alt="Profile"
+                  className="profile-image"
+                />
+              ) : photoUrlFallback ? (
+                <img
+                  src={photoUrlFallback}
                   alt="Profile"
                   className="profile-image"
                 />
